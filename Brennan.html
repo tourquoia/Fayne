@@ -1,0 +1,2275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Via Repetita — Practice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700&family=Source+Code+Pro:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --bg:#06080a;
+    --bg-hi: radial-gradient(1200px 700px at 15% -10%, #101a1c 0%, transparent 55%), radial-gradient(900px 620px at 108% 8%, #14100c 0%, transparent 55%), #06080a;
+    --card:#0b0d10;
+    --card-hi:#12161b;
+    --border:#2a2f38;
+    --border-soft:#1c2128;
+    --ink:#F4F1E6;
+    --ink-soft:#A9B0AE;
+    --ink-dim:#6E7579;
+    --amber:#F0A93E;
+    --amber-bright:#FFCE7A;
+    --amber-dim:#8a6a34;
+    --amber-glow: rgba(240,169,62,.5);
+    --amber-glow-soft: rgba(240,169,62,.22);
+    --teal:#2FD9C4;
+    --teal-bright:#8BFCEC;
+    --teal-dim:#1f8f80;
+    --teal-glow: rgba(47,217,196,.5);
+    --teal-glow-soft: rgba(47,217,196,.22);
+    --white-dot:#C8CCD2;
+    --ok:#4FB86B;
+    --danger:#D9614F;
+    --shadow: 0 1px 0 rgba(0,0,0,.5), 0 14px 34px -16px rgba(0,0,0,.85);
+    --radius-lg:18px;
+    --radius-md:13px;
+    /* Reserved clearance for a host-injected sticky/anchor ad bar at the
+       bottom of the viewport. Bump this if the ad unit is taller. */
+    --ad-safe-space:90px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0; height:100%;}
+  html{ -webkit-text-size-adjust:100%; }
+  body{
+    background:var(--bg-hi);
+    color:var(--ink);
+    font-family:'Inter', system-ui, sans-serif;
+    min-height:100%;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:16px 12px 24px;
+  }
+  .wrap{width:100%; max-width:520px;}
+  /* Explicit spacer element (not padding) — trailing padding on a scrolling
+     container like body is unreliably included in the scroll area on some
+     browsers/OSes. A real element guarantees the space is always there and
+     always scrollable-to, regardless of which screen (main/drill) is showing. */
+  .ad-safe-spacer{ height: calc(80px + var(--ad-safe-space, 90px)); width:100%; flex:none; }
+
+  /* ---- base card: amber neon-bordered dark panel ---- */
+  .card{
+    background:var(--card);
+    border:1.5px solid var(--amber-dim);
+    border-radius:var(--radius-lg);
+    box-shadow:0 0 0 1px var(--amber-glow-soft), 0 0 30px -10px var(--amber-glow), var(--shadow);
+    padding:14px 16px 13px;
+    margin-bottom:14px;
+    position:relative;
+  }
+  h2.section-title{
+    font-family:'Cormorant Garamond', serif;
+    font-size:17px; font-weight:700; font-style:italic;
+    margin:0 0 8px; color:var(--ink);
+  }
+  summary.section-title{
+    cursor:pointer; list-style:none; display:flex; align-items:center; justify-content:space-between;
+    margin:0;
+  }
+  summary.section-title::-webkit-details-marker{ display:none; }
+  summary.section-title .chev{ font-size:13px; color:var(--amber); transition:transform .15s; }
+  details[open] > summary.section-title .chev{ transform:rotate(180deg); }
+  details[open] > summary.section-title{ margin-bottom:10px; }
+  details > .details-body{ padding-top:2px; }
+  .summary-hint{ font-size:10.5px; color:var(--ink-dim); font-weight:400; font-style:normal; font-family:'Inter',inherit; margin-left:6px; }
+  .eyebrow-label{
+    font-family:'Source Code Pro', monospace;
+    font-size:11px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--ink-dim); margin:0 0 6px;
+  }
+
+  label.field-label{
+    display:block; font-size:10px; font-weight:600; color:var(--ink-soft);
+    text-transform:uppercase; letter-spacing:.1em; margin:8px 0 4px;
+    font-family:'Source Code Pro', monospace;
+  }
+  label.field-label:first-child{margin-top:0;}
+  select, input[type=text], input[type=number], textarea{
+    width:100%; font-family:'Inter', inherit; font-size:13.5px;
+    padding:8px 10px; border-radius:9px;
+    border:1.5px solid var(--border); background:#0d0f12;
+    color:var(--ink);
+  }
+  select:focus, input:focus, textarea:focus{ outline:2px solid var(--amber-dim); outline-offset:1px; }
+  select option{ background:#12161b; color:var(--ink); }
+
+  /* ---- language selector row ---- */
+  .lang-grid{ display:grid; grid-template-columns:1fr auto 1fr; gap:12px; align-items:end;
+    border-top:1px solid var(--border-soft); margin-top:10px; padding-top:12px; }
+  .lang-col{ border-left:3px solid var(--amber); padding-left:10px; }
+  .lang-col.tgt{ border-left-color:var(--teal); }
+  .lang-col .eyebrow-label.src{ color:var(--amber-bright); }
+  .lang-col .eyebrow-label.tgt{ color:var(--teal-bright); }
+  #srcLangSelect, #tgtLangSelect{ font-size:15px; font-weight:700; padding:9px 10px; border-color:var(--border-soft); background:#0d0f12; }
+  .swap-btn{
+    width:34px; height:34px; border-radius:50%;
+    border:1.5px solid var(--amber-dim); background:#0d0f12; color:var(--ink-soft);
+    font-size:14px; cursor:pointer; margin-bottom:6px;
+    box-shadow:0 0 16px -7px var(--amber-glow);
+  }
+  .swap-btn:hover{ color:var(--amber-bright); border-color:var(--amber); }
+
+  /* ---- characters ---- */
+  .char-card{
+    background:var(--card-hi);
+    border:1px solid var(--border-soft);
+    border-radius:var(--radius-md);
+    padding:9px 12px 8px;
+    margin-bottom:8px;
+  }
+  .char-card:last-child{ margin-bottom:0; }
+  .char-head{ display:flex; align-items:baseline; gap:6px; flex-wrap:wrap; margin-bottom:6px; }
+  .char-name{ font-family:'Cormorant Garamond', serif; font-weight:700; font-size:17px; }
+  .char-role-tag{ font-family:'Source Code Pro', monospace; font-size:10px; color:var(--ink-dim); letter-spacing:.08em; text-transform:uppercase; }
+  .char-role{ font-size:11.5px; color:var(--ink-soft); }
+  .char-divider{ display:none; }
+  .char-voice-row{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:8px; }
+  .voice-col{ min-width:0; }
+  .voice-label{ display:flex; align-items:center; font-family:'Source Code Pro', monospace; font-size:9.5px;
+    letter-spacing:.08em; text-transform:uppercase; margin-bottom:4px; color:var(--ink-soft); white-space:nowrap; }
+  .voice-label.src{ color:var(--amber-bright); }
+  .voice-label.tgt{ color:var(--teal-bright); }
+  .dot{ width:7px; height:7px; border-radius:50%; display:inline-block; margin-right:6px; background:var(--ink-dim); flex:none; box-shadow:0 0 6px 0 currentColor; }
+  .dot.amber{ background:var(--amber); color:var(--amber); }
+  .dot.teal{ background:var(--teal); color:var(--teal); }
+  .dot.white{ background:var(--white-dot); color:transparent; box-shadow:none; }
+  .dot.danger{ background:var(--danger); color:var(--danger); }
+  .voice-note-row{ display:flex; align-items:flex-start; gap:5px; margin-top:4px; }
+  .voice-note{ font-family:'Source Code Pro', monospace; font-size:9px; color:var(--ink-dim); flex:1 1 auto; min-width:0; margin-top:0; }
+  .voice-test-btn{
+    flex:none; padding:5px 10px; margin-top:-1px;
+    border-radius:7px; border:1px solid var(--border); background:#0d0f12;
+    color:var(--ink-soft); font-size:11px; font-weight:600; line-height:1.2; cursor:pointer;
+    font-family:'Inter', inherit; white-space:nowrap;
+    display:flex; align-items:center; gap:4px; justify-content:center;
+  }
+  .voice-test-btn:hover{ color:var(--ink); border-color:var(--ink-dim); }
+  .voice-test-btn.src:hover{ color:var(--amber-bright); border-color:var(--amber-dim); }
+  .voice-test-btn.tgt:hover{ color:var(--teal-bright); border-color:var(--teal-dim); }
+  .voice-test-btn:disabled{ opacity:.35; cursor:default; }
+  .voice-test-btn:disabled:hover{ color:var(--ink-soft); border-color:var(--border); }
+  .char-voice-row select{ font-size:12px; padding:7px 8px; width:100%; }
+
+  /* ---- course / section row ---- */
+  .course-row{ display:flex; gap:8px; align-items:flex-end; }
+  .course-row > div:first-child{ flex:1; }
+  .btn{
+    font-family:'Inter', inherit; font-weight:700; font-size:13px;
+    padding:9px 13px; border-radius:10px; border:1.5px solid transparent;
+    background:var(--amber); color:#1A1206; cursor:pointer;
+    box-shadow:0 0 18px -8px var(--amber-glow);
+  }
+  .btn:hover{ filter:brightness(1.08); }
+  .btn.secondary{ background:var(--teal); color:#062824; box-shadow:0 0 18px -8px var(--teal-glow); }
+  .btn.ghost{ background:transparent; border-color:var(--border); color:var(--ink-soft); box-shadow:none; }
+  .btn.ghost:hover{ color:var(--ink); border-color:var(--ink-dim); }
+  .btn.block{ width:100%; padding:11px; font-size:14px; margin-top:10px; }
+  .btn-icon{ padding:8px 11px; line-height:1; flex:none; }
+  .sheet-meta{ font-size:11px; color:var(--ink-dim); margin-top:4px; }
+  .course-row-mini{ display:flex; gap:8px; align-items:flex-end; }
+  .course-row-mini > div:first-child{ flex:1; min-width:0; }
+
+  /* ---- hero "start practice" panel ---- */
+  .hero-card{
+    background:linear-gradient(160deg, #0e2d2a 0%, #0a201f 55%, #071615 100%);
+    border:1.5px solid var(--teal);
+    border-radius:var(--radius-lg);
+    box-shadow:0 0 0 1px var(--teal-glow-soft), 0 0 44px -10px var(--teal-glow), var(--shadow);
+    padding:16px 18px;
+    margin-bottom:14px;
+    position:relative;
+  }
+  .hero-start-btn{
+    display:flex; align-items:center; gap:16px; width:100%;
+    background:transparent; border:none; margin:0; padding:0;
+    cursor:pointer; text-align:left;
+  }
+  .hero-play{
+    flex:none; width:64px; height:64px; border-radius:50%;
+    background:#05100f; border:1.5px solid var(--amber);
+    color:var(--amber-bright); font-size:20px;
+    display:flex; align-items:center; justify-content:center; padding-left:4px;
+    box-shadow:0 0 20px -3px var(--amber-glow), inset 0 0 12px -4px var(--amber-glow);
+  }
+  .hero-text{ display:flex; flex-direction:column; gap:3px; min-width:0; flex:1 1 auto; }
+  .hero-eyebrow{
+    font-family:'Inter', inherit; font-size:15px; font-weight:800;
+    letter-spacing:.03em; text-transform:uppercase; color:var(--amber-bright);
+    line-height:1.2;
+  }
+  .hero-title{
+    font-family:'Inter', inherit; font-size:15px; font-weight:600;
+    color:var(--ink); line-height:1.3;
+  }
+  .hero-stats{
+    display:flex; align-items:center; flex-wrap:wrap; gap:5px;
+    font-size:11px; color:var(--ink-soft); margin-top:2px;
+  }
+  .hero-stats .sep{ color:var(--ink-dim); }
+  .hero-start-btn:hover .hero-play{ filter:brightness(1.1); }
+
+  /* ---- lessons grid ---- */
+  .lessons-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .lessons-header .eyebrow-label{ margin:0; }
+  .lessons-grid{ display:grid; grid-template-columns:repeat(2, 1fr); grid-auto-flow:column; gap:8px; }
+  .lesson-tile{
+    display:flex; align-items:center; gap:6px; min-width:0;
+    border:1.5px solid var(--border-soft); border-radius:10px;
+    background:#0d0f12; color:var(--ink-soft);
+    padding:11px 10px; font-size:12.5px; font-weight:600;
+    font-family:'Inter', inherit; cursor:pointer; text-align:left;
+  }
+  .lesson-tile .num{ color:var(--ink-dim); font-weight:700; flex:none; }
+  .lesson-tile .lbl{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lesson-tile:hover{ border-color:var(--amber-dim); color:var(--ink); }
+  .lesson-tile.active{
+    border-color:var(--teal); color:var(--ink);
+    box-shadow:0 0 0 1px var(--teal-glow-soft), 0 0 16px -6px var(--teal-glow);
+    background:#0c1517;
+  }
+  .lesson-tile.active .check{ margin-left:auto; color:var(--teal-bright); font-size:12px; flex:none; }
+  .lesson-tile.locked{ opacity:.4; cursor:default; }
+  .lesson-tile.locked:hover{ border-color:var(--border-soft); color:var(--ink-soft); }
+
+  /* ---- toggle pills ---- */
+  .toggle-row{ display:flex; gap:6px; }
+  .toggle-pill{
+    flex:1; padding:8px 10px; border-radius:9px; border:1.5px solid var(--border);
+    background:#0d0f12; color:var(--ink-soft); font-size:12.5px; font-weight:600; cursor:pointer;
+  }
+  .toggle-pill.on{ background:var(--amber); border-color:var(--amber); color:#1A1206; box-shadow:0 0 16px -7px var(--amber-glow); }
+
+  .rate-row{ display:flex; align-items:center; gap:10px; }
+  .rate-row input[type=range]{ flex:1; accent-color:var(--amber); }
+  .rate-row span{ font-family:'Source Code Pro', monospace; font-size:12px; color:var(--ink-soft); width:40px; text-align:right; }
+
+  .note{ font-size:11.5px; color:var(--ink-soft); margin-top:6px; line-height:1.45; }
+  .note.warn{ background:#1E1712; border:1px solid #4A3A1E; color:#E3C68A; border-radius:10px; padding:10px 12px; }
+  .speech-warn{ font-size:11.5px; color:var(--danger); margin-top:5px; display:none; }
+  .speech-warn.show{ display:block; }
+  .hidden{ display:none !important; }
+
+  /* ---- drill screen ---- */
+  .drill-wrap{ width:100%; max-width:520px; }
+
+  .player-nav{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:14px; }
+  .nav-btn{
+    display:flex; align-items:center; gap:6px;
+    height:36px; padding:0 14px; border-radius:18px;
+    border:1.5px solid var(--amber-dim); background:var(--card); color:var(--ink-soft);
+    font-family:'Source Code Pro', monospace; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
+    cursor:pointer; box-shadow:0 0 12px -7px var(--amber-glow); white-space:nowrap;
+  }
+  .nav-btn .arrow{ font-size:13px; line-height:1; }
+  .nav-btn:hover{ color:var(--ink); border-color:var(--amber); }
+  .nav-btn:disabled{ opacity:.3; cursor:default; }
+  .nav-btn:disabled:hover{ color:var(--ink-soft); border-color:var(--amber-dim); }
+  .nav-btn.nav-home{
+    flex:none; width:36px; height:36px; padding:0; border-radius:50%; justify-content:center;
+    border-color:var(--border); font-size:15px;
+  }
+  .nav-btn.nav-home:hover{ border-color:var(--ink-dim); }
+
+  .drill-lang-card{
+    background:var(--card-hi); border:1px solid var(--border-soft); border-radius:12px;
+    padding:10px 12px; margin-top:10px;
+  }
+  .drill-lang-row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .drill-lang-row .lang-col{ border-left:3px solid var(--amber); padding-left:8px; }
+  .drill-lang-row .lang-col.tgt{ border-left-color:var(--teal); }
+  .drill-lang-row select{ font-size:13px; padding:7px 8px; }
+
+  .milestone{ display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  .stone{
+    font-family:'Cormorant Garamond', serif; font-weight:700; font-size:11px; text-align:center; line-height:1.15;
+    width:40px; height:44px; flex:none; background:var(--card); border:1.5px solid var(--amber-dim);
+    border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--amber-bright);
+    box-shadow:0 0 14px -7px var(--amber-glow);
+  }
+  .road{ flex:1; }
+  .track{ height:6px; border-radius:5px; background:var(--border-soft); overflow:hidden; }
+  .fill{ height:100%; background:linear-gradient(90deg, var(--amber), var(--teal)); border-radius:5px; transition:width .3s; }
+  .cap{ display:flex; justify-content:space-between; font-size:10.5px; color:var(--ink-dim); margin-top:5px; font-family:'Source Code Pro', monospace; }
+
+  .stage{
+    background:var(--card); border:1.5px solid var(--amber-dim); border-radius:var(--radius-lg);
+    box-shadow:0 0 0 1px var(--amber-glow-soft), 0 0 30px -10px var(--amber-glow), var(--shadow);
+    padding:22px 18px; text-align:center; min-height:150px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+  }
+  .speaker-tag{ font-family:'Source Code Pro', monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--amber-bright); }
+  .tone-tag{ font-size:12px; color:var(--ink-dim); font-style:italic; }
+  .phase-label{ font-size:12px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.1em; font-family:'Source Code Pro', monospace; }
+  .source-line{ font-size:16px; color:var(--ink-soft); margin-top:6px; }
+  .target-line{ font-family:'Cormorant Garamond', serif; font-size:30px; font-weight:700; color:#FFFFFF; margin-top:4px; min-height:34px; }
+
+  .your-turn{ display:none; flex-direction:column; align-items:center; gap:10px; margin-top:10px; }
+  .your-turn.show{ display:flex; }
+  .mic-pulse{ width:14px; height:14px; border-radius:50%; background:var(--danger); animation:pulse 1.1s infinite; box-shadow:0 0 10px 0 var(--danger); }
+  @keyframes pulse{ 0%{opacity:.4;} 50%{opacity:1;} 100%{opacity:.4;} }
+  .small-muted{ font-size:12px; color:var(--ink-dim); }
+  .heard{ font-size:13px; color:var(--ink-soft); min-height:16px; }
+  .judge-btns{ display:flex; gap:10px; }
+  .judge-btns .btn{ padding:9px 14px; font-size:13px; }
+
+  .transport{ display:flex; justify-content:center; gap:7px; margin-top:14px; flex-wrap:wrap; }
+  .icon-btn{
+    width:40px; height:40px; border-radius:50%; border:1.5px solid var(--amber-dim);
+    background:var(--card); color:var(--ink-soft); font-size:14px; cursor:pointer;
+    box-shadow:0 0 12px -7px var(--amber-glow);
+  }
+  .icon-btn.primary{ background:var(--amber); border-color:var(--amber); color:#1A1206; box-shadow:0 0 18px -6px var(--amber-glow); }
+  .icon-btn:hover{ color:var(--ink); }
+
+  .settings-panel{ background:var(--card-hi); border:1px solid var(--border-soft); border-radius:12px; padding:10px 12px; margin-top:10px; }
+  .icon-btn.active{ background:var(--teal); border-color:var(--teal); color:#062824; box-shadow:0 0 18px -6px var(--teal-glow); }
+  .icon-btn.active:hover{ color:#062824; }
+
+  .drill-foot{ display:flex; justify-content:space-between; align-items:center; margin-top:16px; flex-wrap:wrap; gap:10px; }
+  .jump{ display:flex; align-items:center; gap:8px; }
+  .jump input{ width:64px; padding:8px 10px; }
+
+  .done{ text-align:center; }
+  .done h2{ font-family:'Cormorant Garamond', serif; font-style:italic; font-size:28px; margin:0 0 8px; color:var(--ink); text-shadow:0 0 18px rgba(47,217,196,.35); }
+
+  /* ---- column picker modal ---- */
+  .modal-overlay{
+    display:none; position:fixed; inset:0; background:rgba(4,5,6,.78);
+    align-items:center; justify-content:center; padding:20px; z-index:50;
+  }
+  .modal-overlay.show{ display:flex; }
+  .modal-card{
+    background:var(--card); border:1.5px solid var(--amber-dim); border-radius:var(--radius-lg);
+    box-shadow:0 0 0 1px var(--amber-glow-soft), 0 0 40px -10px var(--amber-glow), var(--shadow);
+    padding:22px 22px 20px; width:100%; max-width:420px;
+    max-height:calc(100vh - 40px); display:flex; flex-direction:column;
+  }
+  .modal-card h2{ font-family:'Cormorant Garamond', serif; font-style:italic; font-weight:700;
+    font-size:21px; margin:0 0 6px; color:var(--ink); flex:none; }
+  .modal-sub{ font-size:12.5px; color:var(--ink-soft); margin:0 0 14px; line-height:1.5; flex:none; }
+  .colopt-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:16px;
+    overflow-y:auto; min-height:0; flex:1 1 auto; }
+  .colopt-row{
+    display:flex; align-items:center; gap:10px; padding:10px 12px;
+    border:1.5px solid var(--border); border-radius:10px; background:#0d0f12;
+    font-size:14px; cursor:pointer;
+  }
+  .colopt-row:hover{ border-color:var(--amber-dim); }
+  .colopt-row input{ accent-color:var(--amber); width:16px; height:16px; flex:none; }
+  .modal-actions{ display:flex; gap:10px; justify-content:flex-end; flex:none; }
+  .colopt-confirm-btn{ padding:22px 16px; font-size:16px; }
+  .colopt-confirm-top{ width:100%; margin:0 0 14px; flex:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===================== START PRACTICE (hero) ===================== -->
+  <section class="hero-card setup-card">
+    <button class="hero-start-btn" id="startBtn">
+      <span class="hero-play">▶</span>
+      <span class="hero-text">
+        <span class="hero-eyebrow">Start Practice</span>
+        <span class="hero-title" id="heroLessonTitle">Lesson 1: Meeting Someone</span>
+        <span class="hero-stats" id="heroStats"></span>
+      </span>
+    </button>
+  </section>
+
+  <!-- ===================== LESSONS ===================== -->
+  <section class="card setup-card">
+    <div class="lessons-header">
+      <div class="eyebrow-label">Lessons</div>
+      <button class="btn ghost btn-icon" id="loadCourseBtn" title="Load a different .xlsx">＋</button>
+      <input type="file" id="courseFileInput" accept=".xlsx,.xls" class="hidden">
+    </div>
+    <div class="lessons-grid" id="lessonsGrid"></div>
+    <select id="courseSelect" class="hidden"></select>
+    <div class="sheet-meta" id="sheetMeta"></div>
+    <div class="note" id="courseLoadNote"></div>
+  </section>
+
+  <!-- ===================== SETUP (single page) ===================== -->
+  <section id="setup" class="card setup-card">
+    <div class="lang-grid" style="margin-top:0; padding-top:0; border-top:none;">
+      <div class="lang-col src">
+        <div class="eyebrow-label src">Source language</div>
+        <select id="srcLangSelect"></select>
+      </div>
+      <button class="swap-btn" id="swapBtn" title="Swap source and target">⇄</button>
+      <div class="lang-col tgt">
+        <div class="eyebrow-label tgt">Target language</div>
+        <select id="tgtLangSelect"></select>
+      </div>
+    </div>
+    <div class="note warn hidden" id="osVoiceHelp"></div>
+  </section>
+
+  <section class="card setup-card">
+    <details open>
+      <summary class="section-title">Characters &amp; voices<span class="chev">▾</span></summary>
+      <div class="details-body">
+        <div id="charactersList"></div>
+      </div>
+    </details>
+  </section>
+
+  <section class="card setup-card" style="padding-top:10px;">
+    <details id="audioTestDetails" style="margin-top:0;">
+      <summary class="section-title" style="font-size:10.5px; color:var(--ink-dim); font-family:'Source Code Pro',monospace; text-transform:uppercase; letter-spacing:.08em;">Audio check<span class="chev">▾</span></summary>
+      <div class="details-body">
+        <div class="note" id="audioTestNote">
+          <button class="btn ghost" id="testAudioBtn">🔊 Test audio</button>
+          <span id="audioTestResult" style="margin-left:6px;"></span>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- hidden — kept so existing JS bindings (id references) still resolve; -->
+  <!-- session style / rate now live in the drill screen's settings panel   -->
+  <div class="hidden">
+    <div class="toggle-row" id="styleRow">
+      <button class="toggle-pill on" data-val="exposure">Hands-free</button>
+      <button class="toggle-pill" data-val="judge">Slow practice</button>
+    </div>
+    <div id="listenNote"></div>
+    <input type="range" id="rateSlider" min="0.6" max="1.4" step="0.05" value="0.92">
+    <span id="rateVal">0.92×</span>
+  </div>
+
+
+  <!-- ===================== DRILL SCREEN ===================== -->
+  <section id="drillScreen" class="drill-wrap hidden">
+    <div class="player-nav">
+      <button class="nav-btn" id="prevLessonBtn" title="Previous lesson"><span class="arrow">◀</span> Lesson</button>
+      <button class="nav-btn nav-home" id="playerHomeBtn" title="Main page">⌂</button>
+      <button class="nav-btn" id="nextLessonBtn" title="Next lesson">Lesson <span class="arrow">▶</span></button>
+    </div>
+    <div class="milestone">
+      <div class="stone" id="milestoneStone">I<br>/<br>I</div>
+      <div class="road">
+        <div class="track"><div class="fill" id="roadFill" style="width:0%"></div></div>
+        <div class="cap"><span id="capLeft">Line 1 of 1</span><span id="capRight" class="small-muted"></span></div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="speaker-tag" id="speakerTag">&nbsp;</div>
+      <div class="tone-tag" id="toneTag">&nbsp;</div>
+      <div class="phase-label" id="phaseLabel">Getting ready…</div>
+      <div class="source-line" id="sourceLineEl"></div>
+      <div class="target-line" id="targetLineEl"></div>
+
+      <div class="your-turn" id="yourTurn">
+        <div class="mic-pulse"></div>
+        <div class="small-muted">Your turn — say it out loud</div>
+        <div class="heard" id="heardText"></div>
+        <div class="judge-btns" id="judgeBtns">
+          <button class="btn" id="passBtn">✅ Got it</button>
+          <button class="btn secondary" id="retryBtn">🔁 Once more</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="transport">
+      <button class="icon-btn" id="prevBtn" title="Previous line">⏮</button>
+      <button class="icon-btn" id="repeatBtn" title="Repeat this line">↺</button>
+      <button class="icon-btn primary" id="playPauseBtn" title="Play / Pause">⏸</button>
+      <button class="icon-btn" id="nextBtn" title="Skip to next line">⏭</button>
+      <button class="icon-btn active" id="loopBtn" title="Loop (on by default — repeats from the start when finished, handy for hands-free)">🔁</button>
+      <button class="icon-btn" id="randomBtn" title="Shuffle line order">🔀</button>
+      <button class="icon-btn" id="stopBtn" title="End session">⏹</button>
+    </div>
+
+    <div class="drill-lang-card">
+      <div class="drill-lang-row">
+        <div class="lang-col src">
+          <div class="eyebrow-label src">Source</div>
+          <select id="drillSrcLangSelect"></select>
+        </div>
+        <div class="lang-col tgt">
+          <div class="eyebrow-label tgt">Target</div>
+          <select id="drillTgtLangSelect"></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-panel" id="settingsPanel">
+      <label class="field-label" style="margin-top:0;">Session style</label>
+      <div class="toggle-row" id="drillStyleRow">
+        <button class="toggle-pill on" data-val="exposure">Hands-free</button>
+        <button class="toggle-pill" data-val="judge">Slow practice</button>
+      </div>
+      <div class="note" id="drillListenNote"></div>
+
+      <label class="field-label">Speaking rate</label>
+      <div class="rate-row">
+        <input type="range" id="drillRateSlider" min="0.6" max="1.4" step="0.05" value="0.92">
+        <span id="drillRateVal">0.92×</span>
+      </div>
+      <div class="small-muted" style="margin-top:8px;">Voices are set per character back in setup. Changes here apply from the next line spoken. Loop is on by default so a session repeats hands-free; toggle 🔁 off to stop after one pass. Toggle 🔀 to shuffle the line order.</div>
+    </div>
+
+    <div class="drill-foot">
+      <div class="jump">
+        <label for="jumpInput" class="small-muted">Jump to line</label>
+        <input type="number" id="jumpInput" min="1" value="1">
+        <button class="btn ghost" id="jumpBtn">Go</button>
+      </div>
+      <div id="listenToggleWrap"></div>
+    </div>
+  </section>
+
+  <!-- ===================== DONE SCREEN ===================== -->
+  <footer class="done card hidden" id="doneScreen">
+    <h2>Session complete</h2>
+    <p class="section-title" id="doneStats" style="font-family:inherit; font-style:normal; font-size:14px; font-weight:400; color:var(--ink-soft);"></p>
+    <div class="drill-foot" style="justify-content:center; gap:10px;">
+      <button class="btn secondary" id="restartSameBtn">Run it again</button>
+      <button class="btn" id="newSetupBtn">New setup</button>
+    </div>
+  </footer>
+
+  <div class="ad-safe-spacer"></div>
+
+</div>
+
+<div class="modal-overlay" id="columnPickerModal">
+  <div class="modal-card">
+    <h2>Which column has the characters?</h2>
+    <p class="modal-sub" id="columnPickerSheetInfo"></p>
+    <button class="btn colopt-confirm-btn colopt-confirm-top" id="columnPickerConfirmTop" disabled>Use this column</button>
+    <div class="colopt-list" id="columnPickerOptions"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="columnPickerCancel">Cancel</button>
+      <button class="btn colopt-confirm-btn" id="columnPickerConfirm" disabled>Use this column</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   BUILT-IN COURSE — Brennan's Travel Dialogue Course
+   (Spain, Portugal & Morocco — generated from source spreadsheet)
+   Row shape: [SPEAKER, en, ar-MA, fr-AFR, fr-FR, es, es-ES, pt-PT, de]
+   ============================================================ */
+const BRENNAN_LANGS = [{"code": "en", "label": "English", "voiceLang": "en-US"}, {"code": "ar-MA", "label": "Darija Arabic", "voiceLang": "ar-MA"}, {"code": "fr-AFR", "label": "French (African)", "voiceLang": "fr-FR"}, {"code": "fr-FR", "label": "French (Parisian)", "voiceLang": "fr-FR"}, {"code": "es", "label": "Spanish (South American)", "voiceLang": "es-419"}, {"code": "es-ES", "label": "Spanish (Spain)", "voiceLang": "es-ES"}, {"code": "pt-PT", "label": "Portuguese (European)", "voiceLang": "pt-PT"}, {"code": "de", "label": "German", "voiceLang": "de-DE"}];
+
+const BRENNAN_CHARACTERS = [{"code": "BRENNAN", "name": "Brennan", "role": "the traveler"}, {"code": "LOCAL", "name": "Local", "role": "whoever Brennan is talking to"}];
+
+const BRENNAN_SHEETS = [{"name": "Language Rescue & Getting Lost", "desc": "Communication Breakdown; Getting Lost", "rows": [["LOCAL", "I said the platform changed to six.", "Gult rassif tbeddel l sitta.", "J'ai dit que le quai avait changé, c'est le six maintenant.", "J'ai dit que le quai était passé au six.", "Dije que el andén cambió al seis.", "He dicho que el andén ha cambiado al seis.", "Disse que a plataforma mudou para a seis.", "Ich habe gesagt, das Gleis wurde auf sechs geändert."], ["BRENNAN", "I'm sorry, I don't understand.", "Sme7 lia, ma fhemtsh.", "Je suis désolé, je ne comprends pas.", "Désolé, je ne comprends pas.", "Perdón, no entiendo.", "Lo siento, no entiendo.", "Desculpe, não percebo.", "Entschuldigung, ich verstehe nicht."], ["BRENNAN", "Could you say that again?", "Wash momkin t3awed?", "Est-ce que vous pourriez répéter, s'il vous plaît ?", "Vous pourriez répéter, s'il vous plaît ?", "¿Podría repetir eso, por favor?", "¿Podría repetirlo, por favor?", "Podia repetir, por favor?", "Könnten Sie das noch einmal sagen?"], ["BRENNAN", "Could you speak more slowly, please?", "Wash momkin thder b shwiya, 3afak?", "Est-ce que vous pourriez parler plus doucement, s'il vous plaît ?", "Vous pourriez parler plus lentement, s'il vous plaît ?", "¿Podría hablar más despacio, por favor?", "¿Podría hablar más despacio, por favor?", "Podia falar mais devagar, por favor?", "Könnten Sie bitte langsamer sprechen?"], ["LOCAL", "Sure — the platform changed to six.", "Wakha — rassif tbeddel l sitta.", "Bien sûr, mon frère — le quai a changé, c'est le six.", "Bien sûr — le quai est passé au six.", "Claro — el andén cambió al seis.", "Claro — el andén ha cambiado al seis.", "Claro — a plataforma mudou para a seis.", "Klar — das Gleis wurde auf sechs geändert."], ["BRENNAN", "Thank you, got it.", "Shukran, fhemt.", "Merci, j'ai bien compris.", "Merci, j'ai compris.", "Gracias, entendido.", "Gracias, entendido.", "Obrigado, percebi.", "Danke, alles klar."], ["BRENNAN", "Do you speak English?", "Wash kat-hder Ingliziya?", "Est-ce que vous parlez anglais ?", "Vous parlez anglais ?", "¿Habla inglés?", "¿Habla inglés?", "Fala inglês?", "Sprechen Sie Englisch?"], ["LOCAL", "A little.", "Shwiya.", "Un petit peu.", "Un peu.", "Un poco.", "Un poco.", "Um pouco.", "Ein bisschen."], ["BRENNAN", "I speak a little Spanish.", "Kanhder shwiya b Sbanyoliya.", "Je parle un petit peu espagnol.", "Je parle un peu espagnol.", "Hablo un poco de español.", "Hablo un poco de español.", "Falo um pouco de espanhol.", "Ich spreche ein bisschen Spanisch."], ["BRENNAN", "I speak a little Portuguese.", "Kanhder shwiya b Portugiziya.", "Je parle un petit peu portugais.", "Je parle un peu portugais.", "Hablo un poco de portugués.", "Hablo un poco de portugués.", "Falo um pouco de português.", "Ich spreche ein bisschen Portugiesisch."], ["BRENNAN", "I don't speak the language very well.", "Ma kanhdersh had logha mzyan bezzaf.", "Je ne parle pas très bien la langue.", "Je ne parle pas très bien la langue.", "No hablo muy bien el idioma.", "No hablo muy bien el idioma.", "Não falo muito bem a língua.", "Ich spreche die Sprache nicht sehr gut."], ["LOCAL", "Okay, no problem.", "Wakha, makayn mushkil.", "D'accord, il n'y a pas de problème.", "D'accord, pas de problème.", "Está bien, no hay problema.", "Vale, no hay problema.", "Está bem, sem problema.", "Okay, kein Problem."], ["LOCAL", "It means closed on Mondays.", "Kat3ni masdoud nhar tnayn.", "Ça veut dire que c'est fermé le lundi.", "Ça veut dire fermé le lundi.", "Significa que cierra los lunes.", "Significa que cierra los lunes.", "Significa que fecha à segunda-feira.", "Das heißt, montags ist geschlossen."], ["BRENNAN", "What does that mean?", "Ash kat3ni hadi?", "Qu'est-ce que ça veut dire ?", "Qu'est-ce que ça veut dire ?", "¿Qué significa eso?", "¿Qué significa eso?", "O que significa isso?", "Was bedeutet das?"], ["BRENNAN", "Ah, I understand now.", "Ah, daba fhemt.", "Ah, je comprends maintenant.", "Ah, je comprends maintenant.", "Ah, ahora entiendo.", "Ah, ahora entiendo.", "Ah, agora percebo.", "Ah, jetzt verstehe ich."], ["BRENNAN", "Could you write it down for me?", "Wash momkin tkatbha lia?", "Est-ce que vous pourriez me l'écrire, s'il vous plaît ?", "Vous pourriez me l'écrire, s'il vous plaît ?", "¿Podría escribírmelo?", "¿Podría escribírmelo?", "Podia escrever isso para mim?", "Könnten Sie mir das aufschreiben?"], ["LOCAL", "Sure, here you go.", "Wakha, ha hiya.", "Bien sûr, voilà pour vous.", "Bien sûr, voilà.", "Claro, aquí tiene.", "Claro, aquí tiene.", "Claro, aqui está.", "Klar, hier bitte."], ["BRENNAN", "Thank you very much.", "Shukran bezzaf.", "Merci beaucoup.", "Merci beaucoup.", "Muchas gracias.", "Muchas gracias.", "Muito obrigado.", "Vielen Dank."], ["BRENNAN", "Excuse me, I think I'm lost.", "Sme7 lia, kayban lia ana tweddert.", "Excusez-moi, je crois que je suis perdu.", "Excusez-moi, je crois que je suis perdu.", "Disculpe, creo que estoy perdido.", "Perdone, creo que estoy perdido.", "Desculpe, acho que estou perdido.", "Entschuldigung, ich glaube, ich habe mich verlaufen."], ["LOCAL", "Where are you trying to go?", "Fin bghiti tmshi?", "Où est-ce que vous essayez d'aller ?", "Où essayez-vous d'aller ?", "¿Adónde quiere ir?", "¿Adónde quiere ir?", "Para onde quer ir?", "Wohin möchten Sie?"], ["BRENNAN", "I can't find this address.", "Ma qadrsh nl9a had l3nwan.", "Je n'arrive pas à trouver cette adresse.", "Je n'arrive pas à trouver cette adresse.", "No encuentro esta dirección.", "No encuentro esta dirección.", "Não consigo encontrar esta morada.", "Ich kann diese Adresse nicht finden."], ["BRENNAN", "Can you help me find this place?", "Wash momkin t3awenni nl9a had lblasa?", "Est-ce que vous pouvez m'aider à trouver cet endroit ?", "Vous pouvez m'aider à trouver cet endroit ?", "¿Puede ayudarme a encontrar este lugar?", "¿Puede ayudarme a encontrar este sitio?", "Pode ajudar-me a encontrar este sítio?", "Können Sie mir helfen, diesen Ort zu finden?"], ["LOCAL", "Let me see... ", "Khalini nshouf...", "Laissez-moi voir...", "Voyons voir...", "A ver...", "A ver...", "Deixe-me ver...", "Lassen Sie mich sehen ..."], ["BRENNAN", "Could you show me on my phone?", "Wash momkin twriha lia f telephone dyali?", "Est-ce que vous pourriez me montrer sur mon téléphone ?", "Vous pourriez me montrer sur mon téléphone ?", "¿Podría mostrarme en mi celular?", "¿Podría enseñármelo en el móvil?", "Podia mostrar-me no meu telemóvel?", "Könnten Sie es mir auf meinem Handy zeigen?"], ["LOCAL", "Sure, it's this way.", "Wakha, mnhna.", "Bien sûr, c'est par ici.", "Bien sûr, c'est par ici.", "Claro, es por aquí.", "Claro, es por aquí.", "Claro, é por aqui.", "Klar, hier entlang."], ["BRENNAN", "Am I going the right way?", "Wash ana f triq s7i7a?", "Est-ce que je vais dans la bonne direction ?", "Je vais dans la bonne direction ?", "¿Voy bien?", "¿Voy bien?", "Estou a ir no caminho certo?", "Gehe ich in die richtige Richtung?"], ["LOCAL", "No, you need to go back the other way.", "La, khassek trje3 l jiha lokhra.", "Non, vous devez repartir de l'autre côté.", "Non, vous devez repartir dans l'autre sens.", "No, tiene que regresar por el otro lado.", "No, tiene que volver por el otro lado.", "Não, tem de voltar para trás.", "Nein, Sie müssen in die andere Richtung zurückgehen."], ["BRENNAN", "Thank you for your help.", "Shukran 3la mosa3ada dyalek.", "Merci pour votre aide.", "Merci pour votre aide.", "Gracias por su ayuda.", "Gracias por su ayuda.", "Obrigado pela ajuda.", "Danke für Ihre Hilfe."], ["BRENNAN", "I think I took the wrong train.", "Kayban lia rkebt tran ghalat.", "Je crois que je me suis trompé de train.", "Je crois que je me suis trompé de train.", "Creo que tomé el tren equivocado.", "Creo que he cogido el tren equivocado.", "Acho que apanhei o comboio errado.", "Ich glaube, ich bin in den falschen Zug eingestiegen."], ["BRENNAN", "I think I took the wrong bus.", "Kayban lia rkebt tobis ghalat.", "Je crois que je me suis trompé de bus.", "Je crois que je me suis trompé de bus.", "Creo que tomé el autobús equivocado.", "Creo que he cogido el autobús equivocado.", "Acho que apanhei o autocarro errado.", "Ich glaube, ich bin in den falschen Bus eingestiegen."], ["LOCAL", "Get off at the next stop and go back.", "Hbet f mahatta jaya w rje3.", "Descendez au prochain arrêt et repartez en arrière.", "Descendez au prochain arrêt et repartez en arrière.", "Bájese en la próxima parada y regrese.", "Bájese en la próxima parada y vuelva.", "Saia na próxima paragem e volte para trás.", "Steigen Sie an der nächsten Haltestelle aus und gehen Sie zurück."], ["BRENNAN", "Okay, thank you.", "Wakha, shukran.", "D'accord, merci.", "D'accord, merci.", "Está bien, gracias.", "Vale, gracias.", "Está bem, obrigado.", "Okay, danke."]]}, {"name": "Arrival, Airport & Hotel", "desc": "Immigration - Purpose & Length of Stay; Immigration - Documents; Customs; Baggage Claim; Hotel Check-In; Hotel - Basic Info; Hotel - Problems; Hotel - Room Issues; Hotel - Luggage & Towels; Hotel - Checkout", "rows": [["LOCAL", "What is the purpose of your visit?", "Ash howa lhadaf dyal zyaratek?", "Quel est le motif de votre visite ?", "Quel est le motif de votre visite ?", "¿Cuál es el motivo de su visita?", "¿Cuál es el motivo de su visita?", "Qual é o motivo da sua visita?", "Was ist der Zweck Ihres Besuchs?"], ["BRENNAN", "I'm here on vacation.", "Ana hna f 3otla.", "Je suis ici en vacances.", "Je suis ici en vacances.", "Estoy aquí de vacaciones.", "Estoy aquí de vacaciones.", "Estou aqui de férias.", "Ich bin im Urlaub hier."], ["BRENNAN", "I'm traveling for tourism.", "Ana hna dial siyaha.", "Je voyage pour le tourisme.", "Je voyage pour le tourisme.", "Viajo por turismo.", "Viajo por turismo.", "Estou a viajar por turismo.", "Ich reise touristisch."], ["BRENNAN", "I'm visiting family.", "Ana hna nzour 3ayla dyali.", "Je viens rendre visite à ma famille.", "Je rends visite à ma famille.", "Estoy visitando a mi familia.", "Estoy visitando a mi familia.", "Estou a visitar a família.", "Ich besuche meine Familie."], ["LOCAL", "How long are you staying?", "Shhal ghadi tb9a?", "Combien de temps est-ce que vous restez ?", "Combien de temps restez-vous ?", "¿Cuánto tiempo se va a quedar?", "¿Cuánto tiempo se va a quedar?", "Quanto tempo vai ficar?", "Wie lange bleiben Sie?"], ["BRENNAN", "About a week.", "Tqriban simana.", "Environ une semaine.", "Environ une semaine.", "Una semana, más o menos.", "Una semana, más o menos.", "Cerca de uma semana.", "Etwa eine Woche."], ["BRENNAN", "My trip is about a week long.", "Rehla dyali ghadi ddom tqriban simana.", "Mon voyage dure environ une semaine.", "Mon voyage dure environ une semaine.", "Mi viaje dura aproximadamente una semana.", "Mi viaje dura aproximadamente una semana.", "A minha viagem dura cerca de uma semana.", "Meine Reise dauert etwa eine Woche."], ["LOCAL", "How long will you be here?", "Shhal ghadi tdom hna?", "Combien de temps allez-vous rester ici ?", "Combien de temps allez-vous rester ici ?", "¿Cuánto tiempo va a estar aquí?", "¿Cuánto tiempo va a estar aquí?", "Quanto tempo vai estar aqui?", "Wie lange werden Sie hier sein?"], ["BRENNAN", "About a week.", "Tqriban simana.", "Environ une semaine.", "Environ une semaine.", "Una semana, más o menos.", "Una semana, más o menos.", "Cerca de uma semana.", "Etwa eine Woche."], ["LOCAL", "Your passport, please.", "Passport dyalek, 3afak.", "Votre passeport, s'il vous plaît.", "Votre passeport, s'il vous plaît.", "Su pasaporte, por favor.", "Su pasaporte, por favor.", "O seu passaporte, por favor.", "Ihren Pass, bitte."], ["BRENNAN", "Here you go.", "Ha huwa.", "Voilà.", "Voilà.", "Aquí tiene.", "Aquí tiene.", "Aqui está.", "Hier, bitte."], ["BRENNAN", "Here is my passport.", "Ha howa passport dyali.", "Voici mon passeport.", "Voici mon passeport.", "Aquí tiene mi pasaporte.", "Aquí tiene mi pasaporte.", "Aqui está o meu passaporte.", "Hier ist mein Pass."], ["LOCAL", "Where are you staying?", "Fin ghadi tb9a?", "Où est-ce que vous logez ?", "Où logez-vous ?", "¿Dónde se hospeda?", "¿Dónde se aloja?", "Onde vai ficar?", "Wo wohnen Sie?"], ["BRENNAN", "I'm staying at a hotel.", "Ghadi nb9a f hotel.", "Je loge à l'hôtel.", "Je loge à l'hôtel.", "Me hospedo en un hotel.", "Me alojo en un hotel.", "Estou a ficar num hotel.", "Ich wohne in einem Hotel."], ["BRENNAN", "I'm staying at a hotel in the city center.", "Ghadi nb9a f hotel f wist lmdina.", "Je loge à l'hôtel, au centre-ville.", "Je loge à l'hôtel, dans le centre-ville.", "Me hospedo en un hotel en el centro de la ciudad.", "Me alojo en un hotel en el centro de la ciudad.", "Estou a ficar num hotel no centro da cidade.", "Ich wohne in einem Hotel im Stadtzentrum."], ["BRENNAN", "I'm staying at a riad.", "Ghadi nb9a f riad.", "Je loge dans un riad.", "Je loge dans un riad.", "Me hospedo en un riad.", "Me alojo en un riad.", "Estou a ficar num riad.", "Ich wohne in einem Riad."], ["BRENNAN", "I'm staying at a friend's house.", "Ghadi nb9a f dar sa7bi.", "Je loge chez un ami.", "Je loge chez un ami.", "Me hospedo en casa de un amigo.", "Me alojo en casa de un amigo.", "Estou a ficar em casa de um amigo.", "Ich wohne bei einem Freund."], ["LOCAL", "Do you have anything to declare?", "Wash 3andek shi 7aja bash tsare7 biha?", "Est-ce que vous avez quelque chose à déclarer ?", "Avez-vous quelque chose à déclarer ?", "¿Tiene algo que declarar?", "¿Tiene algo que declarar?", "Tem alguma coisa a declarar?", "Haben Sie etwas zu verzollen?"], ["BRENNAN", "No, nothing to declare.", "La, walou bash nsare7 bih.", "Non, je n'ai rien à déclarer.", "Non, rien à déclarer.", "No, nada que declarar.", "No, nada que declarar.", "Não, nada a declarar.", "Nein, nichts zu verzollen."], ["BRENNAN", "I don't have anything to declare.", "Ma 3andi walou bash nsare7 bih.", "Je n'ai rien à déclarer.", "Je n'ai rien à déclarer.", "No tengo nada que declarar.", "No tengo nada que declarar.", "Não tenho nada a declarar.", "Ich habe nichts zu verzollen."], ["LOCAL", "Please open your bag.", "3afak 7el sac dyalek.", "Ouvrez votre sac, s'il vous plaît.", "Ouvrez votre sac, s'il vous plaît.", "Abra la maleta, por favor.", "Abra la bolsa, por favor.", "Abra a mala, por favor.", "Bitte öffnen Sie Ihre Tasche."], ["BRENNAN", "Of course.", "Wakha, bla mushkil.", "Bien sûr.", "Bien sûr.", "Por supuesto.", "Por supuesto.", "Com certeza.", "Natürlich."], ["BRENNAN", "Excuse me, where is baggage claim?", "Sme7 lia, fin kayn blast lbagage?", "Excusez-moi, où est-ce qu'on récupère les bagages ?", "Excusez-moi, où est la récupération des bagages ?", "Disculpe, ¿dónde está el reclamo de equipaje?", "Perdone, ¿dónde está la recogida de equipajes?", "Desculpe, onde é o levantamento de bagagem?", "Entschuldigung, wo ist die Gepäckausgabe?"], ["BRENNAN", "Excuse me, where is the exit?", "Sme7 lia, fin howa lkhrouj?", "Excusez-moi, où est la sortie ?", "Excusez-moi, où est la sortie ?", "Disculpe, ¿dónde está la salida?", "Perdone, ¿dónde está la salida?", "Desculpe, onde é a saída?", "Entschuldigung, wo ist der Ausgang?"], ["BRENNAN", "Excuse me, where is customs?", "Sme7 lia, fin houma jamarek?", "Excusez-moi, où est la douane ?", "Excusez-moi, où est la douane ?", "Disculpe, ¿dónde está la aduana?", "Perdone, ¿dónde está la aduana?", "Desculpe, onde é a alfândega?", "Entschuldigung, wo ist der Zoll?"], ["LOCAL", "Straight ahead, past the gate.", "Nishan lgddam, mora lbaba.", "Tout droit, après la porte.", "Tout droit, après la porte.", "Derecho, después de la puerta.", "Todo recto, después de la puerta.", "Em frente, depois do portão.", "Geradeaus, hinter dem Gate."], ["BRENNAN", "Thank you very much.", "Shukran bezzaf.", "Merci beaucoup.", "Merci beaucoup.", "Muchas gracias.", "Muchas gracias.", "Muito obrigado.", "Vielen Dank."], ["BRENNAN", "Hello, I have a reservation.", "Salam, 3andi reservation.", "Bonjour, j'ai une réservation.", "Bonjour, j'ai une réservation.", "Hola, tengo una reservación.", "Hola, tengo una reserva.", "Olá, tenho uma reserva.", "Hallo, ich habe eine Reservierung."], ["LOCAL", "What's your name, please?", "Ashnou smiytek, 3afak?", "Quel est votre nom, s'il vous plaît ?", "Quel est votre nom, s'il vous plaît ?", "¿Su nombre, por favor?", "¿Su nombre, por favor?", "O seu nome, por favor?", "Wie ist Ihr Name, bitte?"], ["BRENNAN", "Brennan.", "Brennan.", "Brennan.", "Brennan.", "Brennan.", "Brennan.", "Brennan.", "Brennan."], ["LOCAL", "Here is your key.", "Ha howa lmfte7 dyalek.", "Voici votre clé.", "Voici votre clé.", "Aquí tiene su llave.", "Aquí tiene su llave.", "Aqui está a sua chave.", "Hier ist Ihr Schlüssel."], ["LOCAL", "Room 305.", "Bit 305.", "Chambre 305.", "Chambre 305.", "Habitación 305.", "Habitación 305.", "Quarto 305.", "Zimmer 305."], ["BRENNAN", "What time is breakfast?", "Fuqash lftour?", "À quelle heure est le petit-déjeuner ?", "À quelle heure est le petit-déjeuner ?", "¿A qué hora es el desayuno?", "¿A qué hora es el desayuno?", "A que horas é o pequeno-almoço?", "Wann gibt es Frühstück?"], ["LOCAL", "From seven to ten.", "Mn sb3a l 3ashra.", "De sept heures à dix heures.", "De sept heures à dix heures.", "De siete a diez.", "De siete a diez.", "Das sete às dez.", "Von sieben bis zehn."], ["BRENNAN", "Is there wifi in the room?", "Wash kayn wifi f bit?", "Est-ce qu'il y a le wifi dans la chambre ?", "Il y a le wifi dans la chambre ?", "¿Hay wifi en la habitación?", "¿Hay wifi en la habitación?", "Há wifi no quarto?", "Gibt es WLAN im Zimmer?"], ["LOCAL", "Yes, the password is at the desk.", "Ah, password kayn 3nd lguichet.", "Oui, le mot de passe est à la réception.", "Oui, le mot de passe est à la réception.", "Sí, la contraseña está en recepción.", "Sí, la contraseña está en recepción.", "Sim, a palavra-passe está na receção.", "Ja, das Passwort bekommen Sie an der Rezeption."], ["BRENNAN", "My room key isn't working.", "Lmfte7 dyal bit dyali makhdemsh.", "Ma clé de chambre ne fonctionne pas.", "Ma clé de chambre ne fonctionne pas.", "La llave de mi habitación no funciona.", "La llave de mi habitación no funciona.", "A chave do meu quarto não está a funcionar.", "Mein Zimmerschlüssel funktioniert nicht."], ["BRENNAN", "My key card stopped working.", "Carte dyal bit dyali khessret.", "Ma carte-clé ne fonctionne plus.", "Ma carte-clé ne fonctionne plus.", "Mi tarjeta llave dejó de funcionar.", "Mi tarjeta llave ha dejado de funcionar.", "O meu cartão-chave deixou de funcionar.", "Meine Schlüsselkarte funktioniert nicht mehr."], ["LOCAL", "Let me check that for you.", "Khalini nshouf lik f hadshi.", "Laissez-moi vérifier ça pour vous.", "Laissez-moi vérifier ça pour vous.", "Déjeme revisar eso.", "Deje que lo compruebe.", "Deixe-me verificar isso.", "Lassen Sie mich das für Sie überprüfen."], ["BRENNAN", "Thank you.", "Shukran.", "Merci.", "Merci.", "Gracias.", "Gracias.", "Obrigado.", "Danke."], ["BRENNAN", "My room isn't ready yet.", "Bit dyali mazal ma wjdatsh.", "Ma chambre n'est pas encore prête.", "Ma chambre n'est pas encore prête.", "Mi habitación todavía no está lista.", "Mi habitación todavía no está lista.", "O meu quarto ainda não está pronto.", "Mein Zimmer ist noch nicht fertig."], ["LOCAL", "I'm sorry, it'll be ready shortly.", "Sme7 lia, ghadi tkoun wjda m3a shwiya.", "Je suis désolé, elle sera prête bientôt.", "Désolé, elle sera prête sous peu.", "Disculpe, va a estar lista en un momento.", "Lo siento, estará lista enseguida.", "Desculpe, vai estar pronto em breve.", "Es tut mir leid, es ist gleich fertig."], ["BRENNAN", "There's a problem with the room.", "Kayn mushkil f bit.", "Il y a un problème avec la chambre.", "Il y a un problème avec la chambre.", "Hay un problema con la habitación.", "Hay un problema con la habitación.", "Há um problema com o quarto.", "Es gibt ein Problem mit dem Zimmer."], ["BRENNAN", "There's no hot water.", "Makaynsh lma skhoun.", "Il n'y a pas d'eau chaude.", "Il n'y a pas d'eau chaude.", "No hay agua caliente.", "No hay agua caliente.", "Não há água quente.", "Es gibt kein warmes Wasser."], ["BRENNAN", "The air conditioning isn't working.", "Climatisation makhdemsh.", "La climatisation ne fonctionne pas.", "La climatisation ne fonctionne pas.", "El aire acondicionado no funciona.", "El aire acondicionado no funciona.", "O ar condicionado não está a funcionar.", "Die Klimaanlage funktioniert nicht."], ["BRENNAN", "The toilet isn't working.", "Twalett makhdemsh.", "Les toilettes ne fonctionnent pas.", "Les toilettes ne fonctionnent pas.", "El inodoro no funciona.", "El váter no funciona.", "A sanita não está a funcionar.", "Die Toilette funktioniert nicht."], ["LOCAL", "I'll send someone right away.", "Ghadi nssift shi wa7ed daba daba.", "J'envoie quelqu'un tout de suite.", "J'envoie quelqu'un tout de suite.", "Voy a mandar a alguien enseguida.", "Voy a enviar a alguien enseguida.", "Vou já enviar alguém.", "Ich schicke sofort jemanden."], ["BRENNAN", "Thank you.", "Shukran.", "Merci.", "Merci.", "Gracias.", "Gracias.", "Obrigado.", "Danke."], ["BRENNAN", "Can I get another towel?", "Wash momkin nakhod serviette okhra?", "Est-ce que je peux avoir une autre serviette ?", "Je pourrais avoir une autre serviette ?", "¿Podría traerme otra toalla?", "¿Podría traerme otra toalla?", "Podia trazer-me outra toalha?", "Kann ich noch ein Handtuch bekommen?"], ["LOCAL", "Of course, right away.", "Wakha, daba daba.", "Bien sûr, tout de suite.", "Bien sûr, tout de suite.", "Claro, enseguida.", "Claro, enseguida.", "Claro, já trago.", "Natürlich, sofort."], ["BRENNAN", "Can I leave my luggage here after checkout?", "Wash momkin nkhalli lbagage dyali hna mn b3d lkhoroj?", "Est-ce que je peux laisser mes bagages ici après le départ ?", "Je peux laisser mes bagages ici après le départ ?", "¿Puedo dejar mi equipaje aquí después del check-out?", "¿Puedo dejar mi equipaje aquí después del check-out?", "Posso deixar a minha bagagem aqui depois do check-out?", "Kann ich mein Gepäck nach dem Checkout hier lassen?"], ["LOCAL", "Yes, no problem.", "Ah, makayn mushkil.", "Oui, il n'y a pas de problème.", "Oui, pas de problème.", "Sí, no hay problema.", "Sí, no hay problema.", "Sim, sem problema.", "Ja, kein Problem."], ["BRENNAN", "What time is checkout?", "Fuqash lkhoroj?", "À quelle heure est le départ ?", "À quelle heure est le départ ?", "¿A qué hora es el check-out?", "¿A qué hora es el check-out?", "A que horas é o check-out?", "Wann ist Checkout?"], ["LOCAL", "Checkout is at eleven.", "Lkhoroj f l7dash.", "Le départ est à onze heures.", "Le départ est à onze heures.", "El check-out es a las once.", "El check-out es a las once.", "O check-out é às onze.", "Checkout ist um elf Uhr."], ["BRENNAN", "Can I get a late checkout?", "Wash momkin nakhod lkhoroj mte2akher?", "Est-ce que je peux avoir un départ tardif ?", "Je pourrais avoir un départ tardif ?", "¿Podría tener un check-out más tarde?", "¿Podría tener un check-out más tarde?", "Posso ter um check-out mais tarde?", "Kann ich einen späten Checkout bekommen?"], ["LOCAL", "Let me check availability.", "Khalini nshouf wash kayn blasa.", "Laissez-moi vérifier les disponibilités.", "Laissez-moi vérifier les disponibilités.", "Déjeme revisar la disponibilidad.", "Deje que compruebe la disponibilidad.", "Deixe-me verificar a disponibilidade.", "Lassen Sie mich die Verfügbarkeit prüfen."]]}, {"name": "Taxis, Transit & Directions", "desc": "Taxis - Starting a Ride; Taxis - Ending a Ride; Trains; Trains - Confirming a Stop; Buses; Renting a Car; Asking for Directions; Understanding Directions; Trains - Problems; Airport - Problems", "rows": [["BRENNAN", "Can you take me to this address?", "Wash momkin ddini l had l3nwan?", "Est-ce que vous pouvez m'emmener à cette adresse ?", "Vous pouvez m'emmener à cette adresse ?", "¿Puede llevarme a esta dirección?", "¿Puede llevarme a esta dirección?", "Pode levar-me a esta morada?", "Können Sie mich zu dieser Adresse bringen?"], ["LOCAL", "Of course, get in.", "Wakha, dkhol.", "Bien sûr, montez.", "Bien sûr, montez.", "Claro, suba.", "Claro, suba.", "Claro, entre.", "Natürlich, steigen Sie ein."], ["BRENNAN", "How much will it cost?", "Shhal ghadi ykoun taman?", "Combien est-ce que ça va coûter ?", "Ça va coûter combien ?", "¿Cuánto va a costar?", "¿Cuánto va a costar?", "Quanto vai custar?", "Wie viel wird es kosten?"], ["LOCAL", "About fifteen euros.", "Tqriban khamstash euro.", "Environ quinze euros.", "Environ quinze euros.", "Unos quince euros.", "Unos quince euros.", "Cerca de quinze euros.", "Etwa fünfzehn Euro."], ["BRENNAN", "Please stop here.", "Wqef hna, 3afak.", "Arrêtez-vous ici, s'il vous plaît.", "Arrêtez-vous ici, s'il vous plaît.", "Pare aquí, por favor.", "Pare aquí, por favor.", "Pare aqui, por favor.", "Bitte halten Sie hier."], ["LOCAL", "That's twelve euros.", "Hadi tnash euro.", "Ça fait douze euros.", "Ça fait douze euros.", "Son doce euros.", "Son doce euros.", "São doze euros.", "Das macht zwölf Euro."], ["BRENNAN", "Keep the change.", "Khalih l baqi 3ndek.", "Gardez la monnaie.", "Gardez la monnaie.", "Quédese con el cambio.", "Quédese con el cambio.", "Fique com o troco.", "Behalten Sie das Wechselgeld."], ["BRENNAN", "One ticket to Lisbon, please.", "Wa7ed billet l Lisbonne, 3afak.", "Un billet pour Lisbonne, s'il vous plaît.", "Un billet pour Lisbonne, s'il vous plaît.", "Un boleto a Lisboa, por favor.", "Un billete a Lisboa, por favor.", "Um bilhete para Lisboa, por favor.", "Ein Ticket nach Lissabon, bitte."], ["BRENNAN", "One ticket to Seville, please.", "Wa7ed billet l Seville, 3afak.", "Un billet pour Séville, s'il vous plaît.", "Un billet pour Séville, s'il vous plaît.", "Un boleto a Sevilla, por favor.", "Un billete a Sevilla, por favor.", "Um bilhete para Sevilha, por favor.", "Ein Ticket nach Sevilla, bitte."], ["BRENNAN", "One ticket to Porto, please.", "Wa7ed billet l Porto, 3afak.", "Un billet pour Porto, s'il vous plaît.", "Un billet pour Porto, s'il vous plaît.", "Un boleto a Oporto, por favor.", "Un billete a Oporto, por favor.", "Um bilhete para o Porto, por favor.", "Ein Ticket nach Porto, bitte."], ["LOCAL", "One way or round trip?", "Aller simple wella aller-retour?", "Aller simple ou aller-retour ?", "Aller simple ou aller-retour ?", "¿Ida o ida y vuelta?", "¿Ida o ida y vuelta?", "Ida ou ida e volta?", "Einfach oder hin und zurück?"], ["BRENNAN", "One way.", "Aller simple.", "Aller simple.", "Aller simple.", "Ida.", "Ida.", "Ida.", "Einfach."], ["LOCAL", "That's platform four.", "Hadak rassif rb3a.", "C'est le quai numéro quatre.", "C'est le quai quatre.", "Es el andén cuatro.", "Es el andén cuatro.", "É a via quatro.", "Das ist Gleis vier."], ["BRENNAN", "Does this train stop in Porto?", "Wash had tran kaywqef f Porto?", "Est-ce que ce train s'arrête à Porto ?", "Ce train s'arrête à Porto ?", "¿Este tren para en Oporto?", "¿Este tren para en Oporto?", "Este comboio para no Porto?", "Hält dieser Zug in Porto?"], ["LOCAL", "Yes, it's the third stop.", "Ah, hiya lmahatta talta.", "Oui, c'est le troisième arrêt.", "Oui, c'est le troisième arrêt.", "Sí, es la tercera parada.", "Sí, es la tercera parada.", "Sim, é a terceira paragem.", "Ja, das ist die dritte Haltestelle."], ["BRENNAN", "Thank you.", "Shukran.", "Merci.", "Merci.", "Gracias.", "Gracias.", "Obrigado.", "Danke."], ["BRENNAN", "Does this bus go downtown?", "Wash had tobis kaymshi l wist lmdina?", "Est-ce que ce bus va au centre-ville ?", "Ce bus va au centre-ville ?", "¿Este autobús va al centro?", "¿Este autobús va al centro?", "Este autocarro vai para o centro?", "Fährt dieser Bus in die Innenstadt?"], ["LOCAL", "Yes, get off at the next stop.", "Ah, hbet f mahatta jaya.", "Oui, descendez au prochain arrêt.", "Oui, descendez au prochain arrêt.", "Sí, bájese en la próxima parada.", "Sí, bájese en la próxima parada.", "Sim, saia na próxima paragem.", "Ja, steigen Sie an der nächsten Haltestelle aus."], ["BRENNAN", "Thank you.", "Shukran.", "Merci.", "Merci.", "Gracias.", "Gracias.", "Obrigado.", "Danke."], ["BRENNAN", "I'd like to rent a car.", "Bghit nkri tomobile.", "Je voudrais louer une voiture.", "Je voudrais louer une voiture.", "Me gustaría alquilar un carro.", "Me gustaría alquilar un coche.", "Gostava de alugar um carro.", "Ich möchte ein Auto mieten."], ["LOCAL", "For how many days?", "Shhal mn nhar?", "Pour combien de jours ?", "Pour combien de jours ?", "¿Para cuántos días?", "¿Para cuántos días?", "Para quantos dias?", "Für wie viele Tage?"], ["BRENNAN", "Five days.", "Khamsa iyam.", "Cinq jours.", "Cinq jours.", "Cinco días.", "Cinco días.", "Cinco dias.", "Fünf Tage."], ["LOCAL", "I'll need your license and passport.", "Ghadi n7taj permis dyalek w passport dyalek.", "J'aurai besoin de votre permis et de votre passeport.", "J'ai besoin de votre permis et de votre passeport.", "Voy a necesitar su licencia de conducir y su pasaporte.", "Voy a necesitar su carné de conducir y su pasaporte.", "Vou precisar da sua carta de condução e do passaporte.", "Ich brauche Ihren Führerschein und Ihren Pass."], ["BRENNAN", "Excuse me.", "Sme7 lia.", "Excusez-moi.", "Excusez-moi.", "Disculpe.", "Perdone.", "Desculpe.", "Entschuldigung."], ["BRENNAN", "How do I get to the train station?", "Kifash nwsel l mahatta dyal tran?", "Comment est-ce que je fais pour aller à la gare ?", "Pour aller à la gare, s'il vous plaît ?", "¿Cómo llego a la estación de tren?", "¿Cómo llego a la estación de tren?", "Como chego à estação de comboios?", "Wie komme ich zum Bahnhof?"], ["BRENNAN", "Excuse me.", "Sme7 lia.", "Excusez-moi.", "Excusez-moi.", "Disculpe.", "Perdone.", "Desculpe.", "Entschuldigung."], ["BRENNAN", "How do I get to the airport?", "Kifash nwsel l matar?", "Comment est-ce que je fais pour aller à l'aéroport ?", "Pour aller à l'aéroport, s'il vous plaît ?", "¿Cómo llego al aeropuerto?", "¿Cómo llego al aeropuerto?", "Como chego ao aeroporto?", "Wie komme ich zum Flughafen?"], ["BRENNAN", "Excuse me.", "Sme7 lia.", "Excusez-moi.", "Excusez-moi.", "Disculpe.", "Perdone.", "Desculpe.", "Entschuldigung."], ["BRENNAN", "How do I get to the old town?", "Kifash nwsel l mdina qdima?", "Comment est-ce que je fais pour aller à la vieille ville ?", "Pour aller à la vieille ville, s'il vous plaît ?", "¿Cómo llego al centro histórico?", "¿Cómo llego al casco antiguo?", "Como chego ao centro histórico?", "Wie komme ich zur Altstadt?"], ["LOCAL", "Go straight, then turn left.", "Sir nishan, mnbad dour l lisser.", "Allez tout droit, puis tournez à gauche.", "Allez tout droit, puis tournez à gauche.", "Siga derecho y después doble a la izquierda.", "Siga recto y después gire a la izquierda.", "Vá em frente e depois vire à esquerda.", "Gehen Sie geradeaus und biegen Sie dann links ab."], ["BRENNAN", "Is it far?", "Wash b3ida?", "Est-ce que c'est loin ?", "C'est loin ?", "¿Está lejos?", "¿Está lejos?", "É longe?", "Ist es weit?"], ["LOCAL", "About ten minutes on foot.", "Tqriban 3ashra dqayeq brjlik.", "Environ dix minutes à pied.", "Environ dix minutes à pied.", "Unos diez minutos a pie.", "Unos diez minutos a pie.", "Cerca de dez minutos a pé.", "Etwa zehn Minuten zu Fuß."], ["LOCAL", "Turn right at the church.", "Dour l limen 3nd lkanissa.", "Tournez à droite à l'église.", "Tournez à droite à l'église.", "Doble a la derecha en la iglesia.", "Gire a la derecha en la iglesia.", "Vire à direita na igreja.", "Biegen Sie an der Kirche rechts ab."], ["BRENNAN", "Right at the church, got it.", "Limen 3nd lkanissa, fhemt.", "À droite à l'église, j'ai compris.", "À droite à l'église, c'est noté.", "A la derecha en la iglesia, entendido.", "A la derecha en la iglesia, entendido.", "À direita na igreja, percebi.", "Rechts an der Kirche, verstanden."], ["LOCAL", "Then it's on your left.", "Mnbad ghadi tkoun 3la lisser dyalek.", "Ensuite, c'est sur votre gauche.", "Ensuite, c'est sur votre gauche.", "Después está a su izquierda.", "Después está a su izquierda.", "Depois é à sua esquerda.", "Dann ist es links."], ["BRENNAN", "Is this the right platform?", "Wash hada howa rassif s7i7?", "Est-ce que c'est le bon quai ?", "C'est le bon quai ?", "¿Es este el andén correcto?", "¿Es este el andén correcto?", "É esta a via certa?", "Ist das das richtige Gleis?"], ["LOCAL", "Yes, this is platform four.", "Ah, hada rassif rb3a.", "Oui, c'est le quai numéro quatre.", "Oui, c'est le quai quatre.", "Sí, este es el andén cuatro.", "Sí, este es el andén cuatro.", "Sim, esta é a via quatro.", "Ja, das ist Gleis vier."], ["BRENNAN", "Has the train been delayed?", "Wash tran t2akher?", "Est-ce que le train a du retard ?", "Est-ce que le train a du retard ?", "¿Se retrasó el tren?", "¿Se ha retrasado el tren?", "O comboio está atrasado?", "Hat der Zug Verspätung?"], ["LOCAL", "Yes, about ten minutes.", "Ah, tqriban 3ashra dqayeq.", "Oui, environ dix minutes.", "Oui, environ dix minutes.", "Sí, unos diez minutos.", "Sí, unos diez minutos.", "Sim, cerca de dez minutos.", "Ja, etwa zehn Minuten."], ["BRENNAN", "Where do I change trains?", "Fin ghadi nbeddel tran?", "Où est-ce que je change de train ?", "Où est-ce que je change de train ?", "¿Dónde tengo que hacer transbordo?", "¿Dónde tengo que hacer trasbordo?", "Onde é que mudo de comboio?", "Wo muss ich umsteigen?"], ["LOCAL", "You change at the next stop.", "Ghadi tbeddel f mahatta jaya.", "Vous changez au prochain arrêt.", "Vous changez au prochain arrêt.", "Hace transbordo en la próxima parada.", "Hace trasbordo en la próxima parada.", "Muda na próxima paragem.", "Sie steigen an der nächsten Haltestelle um."], ["BRENNAN", "I missed my train.", "Fatni tran dyali.", "J'ai raté mon train.", "J'ai raté mon train.", "Perdí el tren.", "He perdido el tren.", "Perdi o meu comboio.", "Ich habe meinen Zug verpasst."], ["LOCAL", "There's another one in an hour.", "Kayn wa7ed akhor f sa3a.", "Il y en a un autre dans une heure.", "Il y en a un autre dans une heure.", "Hay otro dentro de una hora.", "Hay otro dentro de una hora.", "Há outro dentro de uma hora.", "Es gibt einen weiteren in einer Stunde."], ["BRENNAN", "Where is the ticket machine?", "Fin howa distributeur dyal billets?", "Où est la machine à billets ?", "Où est le distributeur de billets ?", "¿Dónde está la máquina de boletos?", "¿Dónde está la máquina de billetes?", "Onde está a máquina de bilhetes?", "Wo ist der Fahrkartenautomat?"], ["LOCAL", "Over there, by the entrance.", "Tmma, 7da lbab.", "Là-bas, près de l'entrée.", "Là-bas, près de l'entrée.", "Allá, junto a la entrada.", "Allí, junto a la entrada.", "Ali, perto da entrada.", "Dort drüben, beim Eingang."], ["BRENNAN", "The machine isn't working.", "Lmakina makhdemsh.", "La machine ne fonctionne pas.", "La machine ne fonctionne pas.", "La máquina no funciona.", "La máquina no funciona.", "A máquina não está a funcionar.", "Der Automat funktioniert nicht."], ["LOCAL", "Try the ticket window instead.", "Jarreb lguichet dyal ttadaker 3wed.", "Essayez plutôt le guichet.", "Essayez plutôt le guichet.", "Pruebe en la taquilla.", "Pruebe en la taquilla.", "Tente a bilheteira.", "Versuchen Sie es stattdessen am Schalter."], ["BRENNAN", "Where is security?", "Fin houma lamn?", "Où est le contrôle de sécurité ?", "Où est le contrôle de sécurité ?", "¿Dónde está el control de seguridad?", "¿Dónde está el control de seguridad?", "Onde é a segurança?", "Wo ist die Sicherheitskontrolle?"], ["LOCAL", "Straight ahead, past the shops.", "Nishan lgddam, mora lmahallat.", "Tout droit, après les boutiques.", "Tout droit, après les boutiques.", "Derecho, después de las tiendas.", "Todo recto, después de las tiendas.", "Em frente, depois das lojas.", "Geradeaus, hinter den Geschäften."], ["BRENNAN", "Where is my gate?", "Fin howa bab dyali?", "Où est ma porte d'embarquement ?", "Où est ma porte d'embarquement ?", "¿Dónde está mi puerta de embarque?", "¿Dónde está mi puerta de embarque?", "Onde é a minha porta de embarque?", "Wo ist mein Gate?"], ["LOCAL", "Gate twelve, that way.", "Bab tnash, mnhadik jiha.", "Porte douze, par là.", "Porte douze, par là.", "Puerta doce, por allá.", "Puerta doce, por allí.", "Porta doze, por ali.", "Gate zwölf, dort entlang."], ["BRENNAN", "Has the gate changed?", "Wash bab tbeddel?", "Est-ce que la porte a changé ?", "Est-ce que la porte a changé ?", "¿Cambió la puerta de embarque?", "¿Ha cambiado la puerta de embarque?", "A porta de embarque mudou?", "Hat sich das Gate geändert?"], ["LOCAL", "Yes, it's now gate fifteen.", "Ah, daba howa bab khamstash.", "Oui, c'est maintenant la porte quinze.", "Oui, c'est maintenant la porte quinze.", "Sí, ahora es la puerta quince.", "Sí, ahora es la puerta quince.", "Sim, agora é a porta quinze.", "Ja, es ist jetzt Gate fünfzehn."], ["BRENNAN", "My luggage didn't arrive.", "Lbagage dyali mawslsh.", "Mes bagages ne sont pas arrivés.", "Mes bagages ne sont pas arrivés.", "Mi equipaje no llegó.", "Mi equipaje no ha llegado.", "A minha bagagem não chegou.", "Mein Gepäck ist nicht angekommen."], ["BRENNAN", "My luggage is missing.", "Lbagage dyali mfqoud.", "Mes bagages ont disparu.", "Mes bagages ont disparu.", "Mi equipaje desapareció.", "Mi equipaje ha desaparecido.", "A minha bagagem desapareceu.", "Mein Gepäck fehlt."], ["LOCAL", "Let's fill out a report at the counter.", "Yallah n3emru rapport f guichet.", "Nous allons remplir une déclaration au comptoir.", "On va remplir une déclaration au comptoir.", "Vamos a llenar un reporte en el mostrador.", "Vamos a rellenar un parte en el mostrador.", "Vamos preencher um relatório no balcão.", "Lassen Sie uns am Schalter eine Meldung ausfüllen."]]}, {"name": "Money, Shopping & Numbers", "desc": "Currency Exchange; Paying - Card; Paying - Cash; Asking Prices; Quantities & Numbers; Tipping", "rows": [["BRENNAN", "Where can I exchange money?", "Fin momkin nsaraf lflous?", "Où est-ce que je peux changer de l'argent ?", "Où est-ce que je peux changer de l'argent ?", "¿Dónde puedo cambiar dinero?", "¿Dónde puedo cambiar dinero?", "Onde posso trocar dinheiro?", "Wo kann ich Geld wechseln?"], ["LOCAL", "There's a bank around the corner.", "Kayn banka 7da zanka.", "Il y a une banque au coin de la rue.", "Il y a une banque au coin de la rue.", "Hay un banco a la vuelta de la esquina.", "Hay un banco a la vuelta de la esquina.", "Há um banco ali perto.", "Es gibt eine Bank um die Ecke."], ["BRENNAN", "What's the exchange rate today?", "Shhal howa taux dyal saraf lyoum?", "Quel est le taux de change aujourd'hui ?", "Quel est le taux de change aujourd'hui ?", "¿Cuál es el tipo de cambio hoy?", "¿Cuál es el tipo de cambio hoy?", "Qual é a taxa de câmbio hoje?", "Wie ist der Wechselkurs heute?"], ["LOCAL", "About 0.92 to the dollar.", "Tqriban 0.92 l dollar.", "Environ 0,92 pour un dollar.", "Environ 0,92 pour un dollar.", "Cerca de 0,92 por dólar.", "Cerca de 0,92 por dólar.", "Cerca de 0,92 por dólar.", "Etwa 0,92 zum Dollar."], ["BRENNAN", "Do you take credit cards?", "Wash kat9eblo carte?", "Est-ce que vous acceptez les cartes de crédit ?", "Vous prenez les cartes de crédit ?", "¿Aceptan tarjetas de crédito?", "¿Aceptan tarjetas de crédito?", "Aceitam cartão de crédito?", "Nehmen Sie Kreditkarten?"], ["LOCAL", "Yes, we do.", "Ah, kanqeblouha.", "Oui, tout à fait.", "Oui, tout à fait.", "Sí, aceptamos.", "Sí, aceptamos.", "Sim, aceitamos.", "Ja, das tun wir."], ["BRENNAN", "Great, I'll pay by card.", "Mezyan, ghadi nkhelles b carte.", "Parfait, je vais payer par carte.", "Parfait, je vais payer par carte.", "Genial, pago con tarjeta.", "Genial, pago con tarjeta.", "Ótimo, vou pagar com cartão.", "Super, ich zahle mit Karte."], ["LOCAL", "That'll be twenty-three euros.", "Ghadi ykoun tlata w 3ashrin euro.", "Ça fait vingt-trois euros.", "Ça fait vingt-trois euros.", "Son veintitrés euros.", "Son veintitrés euros.", "São vinte e três euros.", "Das macht dreiundzwanzig Euro."], ["BRENNAN", "Here you go.", "Ha huwa.", "Voilà.", "Voilà.", "Aquí tiene.", "Aquí tiene.", "Aqui está.", "Bitte schön."], ["LOCAL", "Here's your change and receipt.", "Ha howa lbaqi dyalek w ticket dyalek.", "Voici votre monnaie et votre reçu.", "Voici votre monnaie et votre ticket.", "Aquí tiene su cambio y el recibo.", "Aquí tiene su cambio y el recibo.", "Aqui está o seu troco e o recibo.", "Hier ist Ihr Wechselgeld und Ihre Quittung."], ["BRENNAN", "How much is this?", "Shhal hada?", "Combien coûte ceci ?", "Combien coûte ceci ?", "¿Cuánto cuesta esto?", "¿Cuánto cuesta esto?", "Quanto custa isto?", "Wie viel kostet das?"], ["BRENNAN", "How much is that?", "Shhal hadak?", "Combien coûte cela ?", "Combien coûte cela ?", "¿Cuánto cuesta eso?", "¿Cuánto cuesta eso?", "Quanto custa isso?", "Wie viel kostet das da?"], ["BRENNAN", "How much is the small one?", "Shhal dyal sghir?", "Combien coûte le petit ?", "Combien coûte le petit ?", "¿Cuánto cuesta el pequeño?", "¿Cuánto cuesta el pequeño?", "Quanto custa o pequeno?", "Wie viel kostet das kleine?"], ["LOCAL", "Fifteen euros.", "Khamstash euro.", "Quinze euros.", "Quinze euros.", "Quince euros.", "Quince euros.", "Quinze euros.", "Fünfzehn Euro."], ["BRENNAN", "And this one?", "W hada?", "Et celui-ci ?", "Et celui-ci ?", "¿Y este?", "¿Y este?", "E este?", "Und das hier?"], ["LOCAL", "Twelve euros.", "Tnash euro.", "Douze euros.", "Douze euros.", "Doce euros.", "Doce euros.", "Doze euros.", "Zwölf Euro."], ["LOCAL", "How many do you want?", "Shhal bghiti?", "Combien est-ce que vous en voulez ?", "Combien en voulez-vous ?", "¿Cuántos quiere?", "¿Cuántos quiere?", "Quantos quer?", "Wie viele möchten Sie?"], ["BRENNAN", "Three, please.", "Tlata, 3afak.", "Trois, s'il vous plaît.", "Trois, s'il vous plaît.", "Tres, por favor.", "Tres, por favor.", "Três, por favor.", "Drei, bitte."], ["BRENNAN", "Two, please.", "Jouj, 3afak.", "Deux, s'il vous plaît.", "Deux, s'il vous plaît.", "Dos, por favor.", "Dos, por favor.", "Dois, por favor.", "Zwei, bitte."], ["BRENNAN", "Just one, please.", "Ghi wa7ed, 3afak.", "Juste un, s'il vous plaît.", "Juste un, s'il vous plaît.", "Solo uno, por favor.", "Solo uno, por favor.", "Só um, por favor.", "Nur eins, bitte."], ["LOCAL", "Anything else?", "Shi 7aja okhra?", "Autre chose ?", "Autre chose ?", "¿Algo más?", "¿Algo más?", "Mais alguma coisa?", "Sonst noch etwas?"], ["BRENNAN", "No, that's all.", "La, hada howa kolshi.", "Non, c'est tout.", "Non, c'est tout.", "No, eso es todo.", "No, eso es todo.", "Não, é tudo.", "Nein, das ist alles."], ["BRENNAN", "Is a tip included?", "Wash pourboire dakhel f taman?", "Est-ce que le pourboire est inclus ?", "Est-ce que le pourboire est inclus ?", "¿Está incluida la propina?", "¿Está incluida la propina?", "A gorjeta está incluída?", "Ist Trinkgeld inbegriffen?"], ["LOCAL", "No, it's not included.", "La, machi dakhel.", "Non, il n'est pas inclus.", "Non, il n'est pas inclus.", "No, no está incluida.", "No, no está incluida.", "Não, não está incluída.", "Nein, das ist nicht inbegriffen."], ["BRENNAN", "Okay, thank you.", "Wakha, shukran.", "D'accord, merci.", "D'accord, merci.", "Está bien, gracias.", "Vale, gracias.", "Está bem, obrigado.", "Okay, danke."]]}, {"name": "Time, Days, Phone & Wifi", "desc": "Telling Time; Hours - Open & Close; Days of the Week; Making Plans; Buying a SIM Card; Wifi; Phone - Borrowing a Charger; Phone Problems", "rows": [["BRENNAN", "What time is it?", "Shhal f sa3a?", "Quelle heure est-il ?", "Quelle heure est-il ?", "¿Qué hora es?", "¿Qué hora es?", "Que horas são?", "Wie spät ist es?"], ["LOCAL", "It's about three thirty.", "Tqriban tlata w noss.", "Il est environ trois heures et demie.", "Il est environ trois heures et demie.", "Son cerca de las tres y media.", "Son las tres y media, más o menos.", "São cerca das três e meia.", "Es ist etwa halb vier."], ["BRENNAN", "Thank you.", "Shukran.", "Merci.", "Merci.", "Gracias.", "Gracias.", "Obrigado.", "Danke."], ["BRENNAN", "What time do you open?", "Fuqash kat7lo?", "À quelle heure est-ce que vous ouvrez ?", "Vous ouvrez à quelle heure ?", "¿A qué hora abren?", "¿A qué hora abren?", "A que horas abrem?", "Wann öffnen Sie?"], ["LOCAL", "We open at nine.", "Kan7lo f tis3a.", "Nous ouvrons à neuf heures.", "Nous ouvrons à neuf heures.", "Abrimos a las nueve.", "Abrimos a las nueve.", "Abrimos às nove.", "Wir öffnen um neun."], ["BRENNAN", "And what time do you close?", "W fuqash kat saddo?", "Et à quelle heure est-ce que vous fermez ?", "Et vous fermez à quelle heure ?", "¿Y a qué hora cierran?", "¿Y a qué hora cierran?", "E a que horas fecham?", "Und wann schließen Sie?"], ["LOCAL", "At eight in the evening.", "F tmnya fl 3shiya.", "À huit heures du soir.", "À huit heures du soir.", "A las ocho de la noche.", "A las ocho de la tarde.", "Às oito da noite.", "Um acht Uhr abends."], ["BRENNAN", "Are you open on Sundays?", "Wash 7alin nhar lhad?", "Est-ce que vous êtes ouverts le dimanche ?", "Vous êtes ouverts le dimanche ?", "¿Abren los domingos?", "¿Abren los domingos?", "Estão abertos aos domingos?", "Haben Sie sonntags geöffnet?"], ["LOCAL", "No, we're closed on Sundays.", "La, msdodin nhar lhad.", "Non, nous sommes fermés le dimanche.", "Non, nous sommes fermés le dimanche.", "No, cerramos los domingos.", "No, cerramos los domingos.", "Não, fechamos aos domingos.", "Nein, sonntags haben wir geschlossen."], ["BRENNAN", "What about Saturday?", "W nhar sebt?", "Et le samedi ?", "Et le samedi ?", "¿Y el sábado?", "¿Y el sábado?", "E ao sábado?", "Und samstags?"], ["LOCAL", "Yes, until two.", "Ah, l7ta jouj.", "Oui, jusqu'à deux heures.", "Oui, jusqu'à deux heures.", "Sí, hasta las dos.", "Sí, hasta las dos.", "Sim, até às duas.", "Ja, bis zwei."], ["BRENNAN", "Can we meet tomorrow morning?", "Wash momkin ntla9au ghedda fessba7?", "Est-ce que nous pouvons nous voir demain matin ?", "Nous pourrions nous voir demain matin ?", "¿Podemos vernos mañana por la mañana?", "¿Podemos quedar mañana por la mañana?", "Podemos encontrar-nos amanhã de manhã?", "Können wir uns morgen früh treffen?"], ["LOCAL", "Sure, how about ten?", "Wakha, ash rayek f l3ashra?", "Bien sûr, disons dix heures ?", "Bien sûr, disons dix heures ?", "Claro, ¿qué tal a las diez?", "Claro, ¿qué tal a las diez?", "Claro, que tal às dez?", "Klar, wie wäre es um zehn?"], ["BRENNAN", "That works for me.", "Hadi mzyana lia.", "Ça me convient.", "Ça me va.", "Me parece bien.", "Me viene bien.", "Fica bem para mim.", "Das passt mir."], ["BRENNAN", "Where can I buy a SIM card?", "Fin momkin nshri carte SIM?", "Où est-ce que je peux acheter une carte SIM ?", "Où est-ce que je peux acheter une carte SIM ?", "¿Dónde puedo comprar una tarjeta SIM?", "¿Dónde puedo comprar una tarjeta SIM?", "Onde posso comprar um cartão SIM?", "Wo kann ich eine SIM-Karte kaufen?"], ["LOCAL", "There's a shop near the station.", "Kayn 7anout 7da lmahatta.", "Il y a une boutique près de la gare.", "Il y a une boutique près de la gare.", "Hay una tienda cerca de la estación.", "Hay una tienda cerca de la estación.", "Há uma loja perto da estação.", "Es gibt einen Laden in der Nähe des Bahnhofs."], ["BRENNAN", "Do they have prepaid data plans?", "Wash 3andhom forfait dyal internet?", "Est-ce qu'ils ont des forfaits prépayés ?", "Est-ce qu'ils ont des forfaits prépayés ?", "¿Tienen planes de datos prepago?", "¿Tienen tarifas de datos de prepago?", "Têm planos de dados pré-pagos?", "Haben sie Prepaid-Datentarife?"], ["LOCAL", "Yes, several options.", "Ah, bezzaf dyal lkhtiyarat.", "Oui, il y a plusieurs options.", "Oui, plusieurs options.", "Sí, varias opciones.", "Sí, varias opciones.", "Sim, várias opções.", "Ja, mehrere Optionen."], ["BRENNAN", "Is there wifi here?", "Wash kayn wifi hna?", "Est-ce qu'il y a le wifi ici ?", "Il y a le wifi ici ?", "¿Hay wifi aquí?", "¿Hay wifi aquí?", "Há wifi aqui?", "Gibt es hier WLAN?"], ["LOCAL", "Yes, the password is on the receipt.", "Ah, password kayn f ticket.", "Oui, le mot de passe est sur le reçu.", "Oui, le mot de passe est sur le ticket.", "Sí, la contraseña está en el recibo.", "Sí, la contraseña está en el recibo.", "Sim, a palavra-passe está no recibo.", "Ja, das Passwort steht auf der Quittung."], ["BRENNAN", "Thank you.", "Shukran.", "Merci.", "Merci.", "Gracias.", "Gracias.", "Obrigado.", "Danke."], ["BRENNAN", "Do you have a charger I could borrow?", "Wash 3andek chargeur bash nsalfah?", "Est-ce que vous auriez un chargeur à me prêter ?", "Vous auriez un chargeur à me prêter ?", "¿Tiene un cargador que me pueda prestar?", "¿Tiene un cargador que me pueda prestar?", "Tem um carregador que me possa emprestar?", "Haben Sie ein Ladekabel, das ich mir leihen könnte?"], ["LOCAL", "Sure, one moment.", "Wakha, lla7za wahda.", "Bien sûr, un instant.", "Bien sûr, un instant.", "Claro, un momento.", "Claro, un momento.", "Claro, um momento.", "Klar, einen Moment."], ["BRENNAN", "My phone isn't working.", "Telephone dyali makhdemsh.", "Mon téléphone ne fonctionne pas.", "Mon téléphone ne fonctionne pas.", "Mi celular no funciona.", "Mi móvil no funciona.", "O meu telemóvel não está a funcionar.", "Mein Handy funktioniert nicht."], ["LOCAL", "What's wrong with it?", "Ashno fih lmushkil?", "Qu'est-ce qu'il a ?", "Qu'est-ce qu'il a ?", "¿Qué le pasa?", "¿Qué le pasa?", "O que se passa com ele?", "Was ist damit los?"], ["BRENNAN", "I don't have internet.", "Ma 3andi internet.", "Je n'ai pas internet.", "Je n'ai pas internet.", "No tengo internet.", "No tengo internet.", "Não tenho internet.", "Ich habe kein Internet."], ["BRENNAN", "Can I connect to your wifi?", "Wash momkin ndkhol l wifi dyalek?", "Est-ce que je peux me connecter à votre wifi ?", "Je peux me connecter à votre wifi ?", "¿Puedo conectarme a su wifi?", "¿Puedo conectarme a su wifi?", "Posso ligar-me ao vosso wifi?", "Kann ich mich mit Ihrem WLAN verbinden?"], ["LOCAL", "Sure, here's the password.", "Wakha, ha howa password.", "Bien sûr, voici le mot de passe.", "Bien sûr, voici le mot de passe.", "Claro, aquí tiene la contraseña.", "Claro, aquí tiene la contraseña.", "Claro, aqui está a palavra-passe.", "Klar, hier ist das Passwort."], ["BRENNAN", "My battery is dead.", "Batteria dyali mmatet.", "Ma batterie est déchargée.", "Ma batterie est morte.", "Se me acabó la batería.", "Se me ha acabado la batería.", "Fiquei sem bateria.", "Mein Akku ist leer."], ["BRENNAN", "Where can I charge my phone?", "Fin momkin nshargi telephone dyali?", "Où est-ce que je peux charger mon téléphone ?", "Où est-ce que je peux charger mon téléphone ?", "¿Dónde puedo cargar el celular?", "¿Dónde puedo cargar el móvil?", "Onde posso carregar o telemóvel?", "Wo kann ich mein Handy aufladen?"], ["LOCAL", "There's an outlet over there.", "Kayn prise tmma.", "Il y a une prise là-bas.", "Il y a une prise là-bas.", "Hay un enchufe allá.", "Hay un enchufe allí.", "Há uma tomada ali.", "Da drüben ist eine Steckdose."], ["BRENNAN", "Can you type the address into my phone?", "Wash momkin dkhel l3nwan f telephone dyali?", "Est-ce que vous pouvez taper l'adresse dans mon téléphone ?", "Vous pourriez taper l'adresse dans mon téléphone ?", "¿Puede escribir la dirección en mi celular?", "¿Puede escribir la dirección en mi móvil?", "Pode escrever a morada no meu telemóvel?", "Können Sie die Adresse in mein Handy eingeben?"], ["LOCAL", "Sure, one second.", "Wakha, sania wahda.", "Bien sûr, une seconde.", "Bien sûr, une seconde.", "Claro, un segundo.", "Claro, un segundo.", "Claro, um segundo.", "Klar, einen Moment."]]}, {"name": "Restaurants & Small Talk", "desc": "Ordering Food; Restaurant Requests; Dietary Questions; Cafes; Greetings; Small Talk - Where From; Small Talk - Work; Small Talk - Family & Languages; Small Talk - Hobbies & Interests; Small Talk - Why These Countries; Small Talk - Age; Small Talk - Traveling Alone & First Visit; Courtesies", "rows": [["LOCAL", "Are you ready to order?", "Wash wjjed bash tetlob?", "Est-ce que vous êtes prêt à commander ?", "Vous êtes prêt à commander ?", "¿Está listo para pedir?", "¿Está listo para pedir?", "Já está pronto para pedir?", "Sind Sie bereit zu bestellen?"], ["BRENNAN", "Yes, I'll have the grilled fish.", "Ah, ghadi nakhod lhout mshwi.", "Oui, je vais prendre le poisson grillé.", "Oui, je vais prendre le poisson grillé.", "Sí, voy a pedir el pescado a la parrilla.", "Sí, voy a tomar el pescado a la plancha.", "Sim, vou querer o peixe grelhado.", "Ja, ich nehme den gegrillten Fisch."], ["BRENNAN", "Yes, I'll have the soup.", "Ah, ghadi nakhod shorba.", "Oui, je vais prendre la soupe.", "Oui, je vais prendre la soupe.", "Sí, voy a pedir la sopa.", "Sí, voy a tomar la sopa.", "Sim, vou querer a sopa.", "Ja, ich nehme die Suppe."], ["BRENNAN", "Yes, I'll have the salad.", "Ah, ghadi nakhod salade.", "Oui, je vais prendre la salade.", "Oui, je vais prendre la salade.", "Sí, voy a pedir la ensalada.", "Sí, voy a tomar la ensalada.", "Sim, vou querer a salada.", "Ja, ich nehme den Salat."], ["LOCAL", "Anything to drink?", "Shi 7aja bash teshreb?", "Et comme boisson ?", "Quelque chose à boire ?", "¿Algo para tomar?", "¿Para beber?", "Para beber?", "Möchten Sie etwas zu trinken?"], ["BRENNAN", "Just water, please.", "Ghi lma, 3afak.", "De l'eau, s'il vous plaît.", "De l'eau, s'il vous plaît.", "Solo agua, por favor.", "Solo agua, por favor.", "Só água, por favor.", "Nur Wasser, bitte."], ["BRENNAN", "Could I see the menu again?", "Wash momkin nshouf menu 3wed?", "Est-ce que je pourrais revoir le menu ?", "Je pourrais revoir la carte ?", "¿Podría ver el menú otra vez?", "¿Podría ver la carta otra vez?", "Podia ver a ementa outra vez?", "Könnte ich noch einmal die Speisekarte sehen?"], ["LOCAL", "Of course.", "Tabi3an.", "Bien sûr.", "Bien sûr.", "Por supuesto.", "Por supuesto.", "Com certeza.", "Natürlich."], ["BRENNAN", "Can I get the check, please?", "Wash momkin ttiini l7sab, 3afak?", "Est-ce que je peux avoir l'addition, s'il vous plaît ?", "L'addition, s'il vous plaît ?", "¿Me trae la cuenta, por favor?", "¿Me trae la cuenta, por favor?", "Pode trazer a conta, por favor?", "Könnte ich bitte die Rechnung bekommen?"], ["LOCAL", "Right away.", "Daba daba.", "Tout de suite.", "Tout de suite.", "Enseguida.", "Enseguida.", "Já a trago.", "Sofort."], ["BRENNAN", "Is there any meat in this dish?", "Wash kayn lhem f had ttbeq?", "Est-ce qu'il y a de la viande dans ce plat ?", "Est-ce qu'il y a de la viande dans ce plat ?", "¿Este plato tiene carne?", "¿Este plato lleva carne?", "Este prato tem carne?", "Ist Fleisch in diesem Gericht?"], ["LOCAL", "No, it's vegetarian.", "La, hada végétarien.", "Non, c'est végétarien.", "Non, c'est végétarien.", "No, es vegetariano.", "No, es vegetariano.", "Não, é vegetariano.", "Nein, es ist vegetarisch."], ["BRENNAN", "Perfect, I'll take it.", "Mezyan bezzaf, ghadi nakhdou.", "Parfait, je le prends.", "Parfait, je le prends.", "Perfecto, quiero ese.", "Perfecto, tomaré ese.", "Perfeito, vou querer esse.", "Perfekt, ich nehme es."], ["LOCAL", "Do you have any dietary restrictions?", "Wash 3andek shi mane3 fl makla?", "Est-ce que vous avez des restrictions alimentaires ?", "Avez-vous des restrictions alimentaires ?", "¿Tiene alguna restricción alimentaria?", "¿Tiene alguna restricción alimentaria?", "Tem alguma restrição alimentar?", "Haben Sie irgendwelche Ernährungseinschränkungen?"], ["BRENNAN", "No, none.", "La, walou.", "Non, aucune.", "Non, aucune.", "No, ninguna.", "No, ninguna.", "Não, nenhuma.", "Nein, keine."], ["BRENNAN", "No, I eat everything.", "La, kanakol kolshi.", "Non, je mange de tout.", "Non, je mange de tout.", "No, como de todo.", "No, como de todo.", "Não, como de tudo.", "Nein, ich esse alles."], ["BRENNAN", "A coffee and a croissant, please.", "Wa7ed lqahwa w croissant, 3afak.", "Un café et un croissant, s'il vous plaît.", "Un café et un croissant, s'il vous plaît.", "Un café y un croissant, por favor.", "Un café y un cruasán, por favor.", "Um café e um croissant, por favor.", "Einen Kaffee und ein Croissant, bitte."], ["LOCAL", "For here or to go?", "Ghadi teshrbou hna wella temshiw bih?", "Sur place ou à emporter ?", "Sur place ou à emporter ?", "¿Para aquí o para llevar?", "¿Para tomar aquí o para llevar?", "Para tomar aqui ou para levar?", "Hier oder zum Mitnehmen?"], ["BRENNAN", "To go, thanks.", "Nemshi bih, shukran.", "À emporter, merci.", "À emporter, merci.", "Para llevar, gracias.", "Para llevar, gracias.", "Para levar, obrigado.", "Zum Mitnehmen, danke."], ["LOCAL", "How do you like your coffee?", "Kifash 7ebb lqahwa dyalek?", "Comment est-ce que vous le prenez ?", "Comment le prenez-vous ?", "¿Cómo le gusta el café?", "¿Cómo le gusta el café?", "Como gosta do café?", "Wie mögen Sie Ihren Kaffee?"], ["BRENNAN", "I'm not picky, whatever you recommend.", "Ma3andish ta7foudat, dir li bghiti.", "Je ne suis pas difficile, ce que vous me recommandez.", "Je ne suis pas difficile, ce que vous recommandez.", "No soy exigente, lo que recomiende.", "No soy exigente, lo que recomiende.", "Não sou exigente, o que recomendar.", "Ich bin nicht wählerisch, was Sie empfehlen."], ["BRENNAN", "How do you like yours?", "W nta kifash 7ebb dyalek?", "Et vous, comment est-ce que vous le prenez ?", "Et vous, comment le prenez-vous ?", "¿Y usted, cómo lo toma?", "¿Y usted, cómo lo toma?", "E como é que gosta do seu?", "Und wie mögen Sie Ihren?"], ["LOCAL", "Good morning!", "Sba7 lkhir!", "Bonjour ! Et la famille, tout va bien ?", "Bonjour !", "¡Buenos días!", "¡Buenos días!", "Bom dia!", "Guten Morgen!"], ["LOCAL", "How are you?", "Kidayer?", "Comment allez-vous ?", "Comment allez-vous ?", "¿Cómo está?", "¿Cómo está?", "Como está?", "Wie geht es Ihnen?"], ["BRENNAN", "I'm well, thank you.", "Labas, shukran.", "Je vais bien, merci.", "Je vais bien, merci.", "Bien, gracias.", "Bien, gracias.", "Estou bem, obrigado.", "Mir geht es gut, danke."], ["BRENNAN", "And you?", "W nta?", "Et vous ?", "Et vous ?", "¿Y usted?", "¿Y usted?", "E você?", "Und Ihnen?"], ["LOCAL", "Very well, thanks.", "Labas bezzaf, shukran.", "Très bien, merci.", "Très bien, merci.", "Muy bien, gracias.", "Muy bien, gracias.", "Muito bem, obrigado.", "Sehr gut, danke."], ["LOCAL", "Where are you from?", "Mnin nta?", "Vous venez d'où ?", "Vous venez d'où ?", "¿De dónde es?", "¿De dónde es?", "De onde é?", "Woher kommen Sie?"], ["BRENNAN", "I'm from the United States.", "Ana mn Amerika.", "Je viens des États-Unis.", "Je viens des États-Unis.", "Soy de Estados Unidos.", "Soy de Estados Unidos.", "Sou dos Estados Unidos.", "Ich komme aus den Vereinigten Staaten."], ["BRENNAN", "I'm from Salt Lake City, Utah.", "Ana mn Salt Lake City, f Utah.", "Je viens de Salt Lake City, dans l'Utah.", "Je viens de Salt Lake City, dans l'Utah.", "Soy de Salt Lake City, en Utah.", "Soy de Salt Lake City, en Utah.", "Sou de Salt Lake City, no Utah.", "Ich komme aus Salt Lake City, Utah."], ["BRENNAN", "I'm from Utah, in the United States.", "Ana mn Utah, f Amerika.", "Je viens de l'Utah, aux États-Unis.", "Je viens de l'Utah, aux États-Unis.", "Soy de Utah, en Estados Unidos.", "Soy de Utah, en Estados Unidos.", "Sou do Utah, nos Estados Unidos.", "Ich komme aus Utah, in den Vereinigten Staaten."], ["LOCAL", "How long have you been traveling?", "Shhal hadi w nta msafer?", "Depuis combien de temps est-ce que vous voyagez ?", "Depuis combien de temps voyagez-vous ?", "¿Cuánto tiempo lleva viajando?", "¿Cuánto tiempo lleva viajando?", "Há quanto tempo está a viajar?", "Wie lange reisen Sie schon?"], ["BRENNAN", "About a week so far.", "Tqriban simana l daba.", "Environ une semaine pour l'instant.", "Environ une semaine pour l'instant.", "Una semana, más o menos, hasta ahora.", "Una semana, más o menos, hasta ahora.", "Cerca de uma semana até agora.", "Bisher etwa eine Woche."], ["LOCAL", "What do you do?", "Ashno kate3mel?", "Qu'est-ce que vous faites dans la vie ?", "Qu'est-ce que vous faites dans la vie ?", "¿A qué se dedica?", "¿A qué se dedica?", "O que faz?", "Was machen Sie beruflich?"], ["BRENNAN", "I'm a technician.", "Ana technicien.", "Je suis technicien.", "Je suis technicien.", "Soy técnico.", "Soy técnico.", "Sou técnico.", "Ich bin Techniker."], ["BRENNAN", "I work in manufacturing.", "Khddam f sina3a.", "Je travaille dans l'industrie.", "Je travaille dans l'industrie.", "Trabajo en manufactura.", "Trabajo en el sector industrial.", "Trabalho na indústria.", "Ich arbeite in der Fertigung."], ["BRENNAN", "I make dental products.", "Kansna3 lmntojat dyal snan.", "Je fabrique des produits dentaires.", "Je fabrique des produits dentaires.", "Fabrico productos dentales.", "Fabrico productos dentales.", "Faço produtos dentários.", "Ich stelle Dentalprodukte her."], ["LOCAL", "Is your family from here?", "Wash 3ayltek mn hna?", "Est-ce que votre famille est d'ici ?", "Votre famille est d'ici ?", "¿Su familia es de aquí?", "¿Su familia es de aquí?", "A sua família é daqui?", "Kommt Ihre Familie von hier?"], ["BRENNAN", "My family is German.", "3ayla dyali almaniya.", "Ma famille est allemande.", "Ma famille est allemande.", "Mi familia es alemana.", "Mi familia es alemana.", "A minha família é alemã.", "Meine Familie ist deutsch."], ["BRENNAN", "My family is from Germany.", "3ayla dyali mn Almania.", "Ma famille vient d'Allemagne.", "Ma famille vient d'Allemagne.", "Mi familia es de Alemania.", "Mi familia es de Alemania.", "A minha família é da Alemanha.", "Meine Familie kommt aus Deutschland."], ["LOCAL", "What languages do you speak?", "Ashnou loghat li kathder?", "Quelles langues est-ce que vous parlez ?", "Quelles langues parlez-vous ?", "¿Qué idiomas habla?", "¿Qué idiomas habla?", "Que línguas fala?", "Welche Sprachen sprechen Sie?"], ["BRENNAN", "I speak German and English.", "Kanhder Almaniya w Ingliziya.", "Je parle allemand et anglais.", "Je parle allemand et anglais.", "Hablo alemán e inglés.", "Hablo alemán e inglés.", "Falo alemão e inglês.", "Ich spreche Deutsch und Englisch."], ["BRENNAN", "I speak a little Spanish.", "Kanhder shwiya b Sbanyoliya.", "Je parle un petit peu espagnol.", "Je parle un peu espagnol.", "Hablo un poco de español.", "Hablo un poco de español.", "Falo um pouco de espanhol.", "Ich spreche ein bisschen Spanisch."], ["BRENNAN", "I speak a little Portuguese.", "Kanhder shwiya b Portugiziya.", "Je parle un petit peu portugais.", "Je parle un peu portugais.", "Hablo un poco de portugués.", "Hablo un poco de portugués.", "Falo um pouco de português.", "Ich spreche ein bisschen Portugiesisch."], ["LOCAL", "What do you like to do?", "Ashno kayr9ebek dir?", "Qu'est-ce que vous aimez faire ?", "Qu'est-ce que vous aimez faire ?", "¿Qué le gusta hacer?", "¿Qué le gusta hacer?", "O que gosta de fazer?", "Was machen Sie gerne?"], ["BRENNAN", "I like to travel.", "Kanhab nsafer.", "J'aime voyager.", "J'aime voyager.", "Me gusta viajar.", "Me gusta viajar.", "Gosto de viajar.", "Ich reise gerne."], ["BRENNAN", "I like meeting new people.", "Kanhab ntla9a nas jodod.", "J'aime rencontrer de nouvelles personnes.", "J'aime rencontrer de nouvelles personnes.", "Me gusta conocer gente nueva.", "Me gusta conocer gente nueva.", "Gosto de conhecer pessoas novas.", "Ich lerne gerne neue Leute kennen."], ["LOCAL", "Why did you choose these places?", "3lash khtariti had lblayes?", "Pourquoi est-ce que vous avez choisi ces endroits ?", "Pourquoi avez-vous choisi ces endroits ?", "¿Por qué eligió estos lugares?", "¿Por qué eligió estos lugares?", "Porque escolheu estes lugares?", "Warum haben Sie diese Orte gewählt?"], ["BRENNAN", "I've never been here before.", "Ma jitsh lhna qbel.", "Je ne suis jamais venu ici.", "Je ne suis jamais venu ici.", "Nunca he estado aquí.", "Nunca he estado aquí.", "Nunca estive aqui.", "Ich war noch nie hier."], ["BRENNAN", "It's close to Germany.", "9riba mn Almania.", "C'est proche de l'Allemagne.", "C'est proche de l'Allemagne.", "Está cerca de Alemania.", "Está cerca de Alemania.", "É perto da Alemanha.", "Es liegt nahe an Deutschland."], ["BRENNAN", "I want to visit family.", "Bghit nzour 3ayla.", "Je veux rendre visite à ma famille.", "Je veux rendre visite à ma famille.", "Quiero visitar a mi familia.", "Quiero visitar a mi familia.", "Quero visitar a família.", "Ich möchte Familie besuchen."], ["LOCAL", "How old are you?", "Shhal f 3omrek?", "Quel âge est-ce que vous avez ?", "Quel âge avez-vous ?", "¿Cuántos años tiene?", "¿Cuántos años tiene?", "Que idade tem?", "Wie alt sind Sie?"], ["BRENNAN", "I'm around thirty.", "3andi tqriban tlatin 3am.", "J'ai environ trente ans.", "J'ai environ trente ans.", "Tengo unos treinta años.", "Tengo unos treinta años.", "Tenho à volta de trinta anos.", "Ich bin um die dreißig."], ["BRENNAN", "I'm about thirty.", "3andi tqriban tlatin.", "J'ai à peu près trente ans.", "J'ai à peu près trente ans.", "Tengo alrededor de treinta años.", "Tengo alrededor de treinta años.", "Tenho cerca de trinta anos.", "Ich bin etwa dreißig."], ["LOCAL", "Are you traveling alone?", "Wash kat sabar wa7dek?", "Est-ce que vous voyagez seul ?", "Vous voyagez seul ?", "¿Viaja solo?", "¿Viaja solo?", "Está a viajar sozinho?", "Reisen Sie allein?"], ["BRENNAN", "Yes, I'm traveling by myself.", "Ah, kanmshi wa7di.", "Oui, je voyage seul.", "Oui, je voyage seul.", "Sí, viajo solo.", "Sí, viajo solo.", "Sim, estou a viajar sozinho.", "Ja, ich reise allein."], ["BRENNAN", "Yes, just me.", "Ah, ghi ana.", "Oui, juste moi.", "Oui, juste moi.", "Sí, solo yo.", "Sí, solo yo.", "Sim, só eu.", "Ja, nur ich."], ["LOCAL", "Is this your first time here?", "Wash hadi lmarra lawla dyalek hna?", "Est-ce que c'est votre première fois ici ?", "C'est votre première fois ici ?", "¿Es su primera vez aquí?", "¿Es su primera vez aquí?", "É a primeira vez aqui?", "Sind Sie zum ersten Mal hier?"], ["BRENNAN", "Yes, first time.", "Ah, lmarra lawla.", "Oui, première fois.", "Oui, première fois.", "Sí, primera vez.", "Sí, primera vez.", "Sim, primeira vez.", "Ja, das erste Mal."], ["BRENNAN", "No, I've been here before.", "La, jit lhna men qbel.", "Non, je suis déjà venu.", "Non, je suis déjà venu.", "No, ya he estado aquí antes.", "No, ya he estado aquí antes.", "Não, já estive aqui antes.", "Nein, ich war schon einmal hier."], ["BRENNAN", "Excuse me, sorry to bother you.", "Sme7 lia, asfa 3la lz3aj.", "Excusez-moi, je suis désolé de vous déranger.", "Excusez-moi, désolé de vous déranger.", "Disculpe, siento molestarlo.", "Perdone, siento molestarle.", "Desculpe, não queria incomodar.", "Entschuldigung, tut mir leid, Sie zu stören."], ["LOCAL", "No problem at all.", "Makayn mushkil abadan.", "Il n'y a pas de problème du tout.", "Pas de problème du tout.", "No hay ningún problema.", "No hay ningún problema.", "Não há problema nenhum.", "Überhaupt kein Problem."], ["BRENNAN", "Thank you so much for your help.", "Shukran bezzaf 3la mosa3ada dyalek.", "Merci beaucoup pour votre aide.", "Merci beaucoup pour votre aide.", "Muchísimas gracias por su ayuda.", "Muchísimas gracias por su ayuda.", "Muito obrigado pela ajuda.", "Vielen Dank für Ihre Hilfe."], ["LOCAL", "You're welcome.", "La shukr 3la wajib.", "Je vous en prie.", "Je vous en prie.", "De nada.", "De nada.", "De nada.", "Gern geschehen."], ["LOCAL", "Enjoy your trip!", "Rehla sa3ida!", "Bon voyage, mon ami !", "Bon voyage !", "¡Buen viaje!", "¡Buen viaje!", "Boa viagem!", "Schöne Reise!"]]}, {"name": "Emergencies & Health", "desc": "Getting Help; Calling for Help; Pharmacy; At the Doctor; Lost Items; Reporting a Theft; Calling the Police or Ambulance; Finding a Hospital or Pharmacy; Medical Information; Reporting a Stolen Item", "rows": [["BRENNAN", "I need help, please.", "Khassni lmosa3ada, 3afak.", "J'ai besoin d'aide, s'il vous plaît.", "J'ai besoin d'aide, s'il vous plaît.", "Necesito ayuda, por favor.", "Necesito ayuda, por favor.", "Preciso de ajuda, por favor.", "Ich brauche Hilfe, bitte."], ["LOCAL", "What's wrong?", "Ashno fik?", "Qu'est-ce qui ne va pas ?", "Qu'est-ce qui ne va pas ?", "¿Qué le pasa?", "¿Qué le pasa?", "O que se passa?", "Was ist los?"], ["BRENNAN", "I feel sick.", "Ana mrid.", "Je me sens mal.", "Je me sens mal.", "Me siento mal.", "Me siento mal.", "Sinto-me mal.", "Mir ist schlecht."], ["BRENNAN", "Can you call a doctor?", "Wash momkin t3aet ltbib?", "Est-ce que vous pouvez appeler un médecin ?", "Vous pouvez appeler un médecin ?", "¿Podría llamar a un médico?", "¿Puede llamar a un médico?", "Pode chamar um médico?", "Können Sie einen Arzt rufen?"], ["LOCAL", "Yes, right away.", "Ah, daba daba.", "Oui, tout de suite.", "Oui, tout de suite.", "Sí, enseguida.", "Sí, ahora mismo.", "Sim, já.", "Ja, sofort."], ["BRENNAN", "Thank you.", "Shukran.", "Merci.", "Merci.", "Gracias.", "Gracias.", "Obrigado.", "Danke."], ["BRENNAN", "Do you have something for a headache?", "Wash 3andek shi 7aja dyal wja3 ras?", "Est-ce que vous avez quelque chose contre le mal de tête ?", "Vous avez quelque chose contre le mal de tête ?", "¿Tiene algo para el dolor de cabeza?", "¿Tiene algo para el dolor de cabeza?", "Tem alguma coisa para dor de cabeça?", "Haben Sie etwas gegen Kopfschmerzen?"], ["LOCAL", "Yes, this should help.", "Ah, hada ghadi y3awnek.", "Oui, ça devrait aider.", "Oui, ça devrait aider.", "Sí, esto debería ayudar.", "Sí, esto debería ayudar.", "Sim, isto deve ajudar.", "Ja, das sollte helfen."], ["BRENNAN", "How many should I take?", "Shhal khassni nakhod?", "Combien est-ce que je dois en prendre ?", "Combien est-ce que je dois en prendre ?", "¿Cuántas debo tomar?", "¿Cuántas debo tomar?", "Quantos devo tomar?", "Wie viele soll ich nehmen?"], ["LOCAL", "One every six hours.", "Wa7ed koul stta swayi3.", "Un toutes les six heures.", "Un toutes les six heures.", "Una cada seis horas.", "Una cada seis horas.", "Um a cada seis horas.", "Eine alle sechs Stunden."], ["LOCAL", "What are your symptoms?", "Ashnou houma l3alamat dyalek?", "Quels sont vos symptômes ?", "Quels sont vos symptômes ?", "¿Cuáles son sus síntomas?", "¿Cuáles son sus síntomas?", "Quais são os seus sintomas?", "Was sind Ihre Symptome?"], ["BRENNAN", "I have a fever and a sore throat.", "3andi skhana w 7alqi kaywj3ni.", "J'ai de la fièvre et mal à la gorge.", "J'ai de la fièvre et mal à la gorge.", "Tengo fiebre y dolor de garganta.", "Tengo fiebre y dolor de garganta.", "Tenho febre e dor de garganta.", "Ich habe Fieber und Halsschmerzen."], ["LOCAL", "Let me take a look.", "Khalini nshouf.", "Laissez-moi regarder.", "Laissez-moi regarder.", "Déjeme revisar.", "Déjeme ver.", "Deixe-me ver.", "Lassen Sie mich mal sehen."], ["BRENNAN", "I lost my wallet.", "Fqedt portfeuille dyali.", "J'ai perdu mon portefeuille.", "J'ai perdu mon portefeuille.", "Perdí mi billetera.", "He perdido la cartera.", "Perdi a minha carteira.", "Ich habe meine Brieftasche verloren."], ["BRENNAN", "I lost my passport.", "Fqedt passport dyali.", "J'ai perdu mon passeport.", "J'ai perdu mon passeport.", "Perdí mi pasaporte.", "He perdido el pasaporte.", "Perdi o meu passaporte.", "Ich habe meinen Pass verloren."], ["BRENNAN", "I lost my phone.", "Fqedt telephone dyali.", "J'ai perdu mon téléphone.", "J'ai perdu mon téléphone.", "Perdí mi teléfono.", "He perdido el móvil.", "Perdi o meu telemóvel.", "Ich habe mein Handy verloren."], ["LOCAL", "Did you check with the front desk?", "Wash shefti m3a lguichet?", "Est-ce que vous avez vérifié à la réception ?", "Vous avez vérifié à la réception ?", "¿Consultó en la recepción?", "¿Ha preguntado en recepción?", "Já perguntou na receção?", "Haben Sie an der Rezeption nachgefragt?"], ["BRENNAN", "Not yet, I'll go now.", "Mazal, ghadi nmshi daba.", "Pas encore, j'y vais tout de suite.", "Pas encore, j'y vais tout de suite.", "Todavía no, voy ahora.", "Todavía no, voy ahora.", "Ainda não, vou já.", "Noch nicht, ich gehe jetzt hin."], ["BRENNAN", "I'd like to report a theft.", "Bghit n3emmer rapport dyal sriqa.", "Je voudrais signaler un vol.", "Je voudrais signaler un vol.", "Quisiera denunciar un robo.", "Quiero denunciar un robo.", "Gostava de participar um roubo.", "Ich möchte einen Diebstahl melden."], ["LOCAL", "What did you lose?", "Ashno fqedti?", "Qu'est-ce que vous avez perdu ?", "Qu'est-ce que vous avez perdu ?", "¿Qué perdió?", "¿Qué ha perdido?", "O que perdeu?", "Was haben Sie verloren?"], ["BRENNAN", "My phone and my wallet.", "Telephone dyali w portfeuille dyali.", "Mon téléphone et mon portefeuille.", "Mon téléphone et mon portefeuille.", "Mi teléfono y mi billetera.", "El móvil y la cartera.", "O telemóvel e a carteira.", "Mein Handy und meine Brieftasche."], ["LOCAL", "Let's fill out a report.", "Yallah n3emru rapport.", "Nous allons remplir un rapport.", "On va remplir un rapport.", "Llenemos un informe.", "Vamos a rellenar una denuncia.", "Vamos preencher um relatório.", "Lassen Sie uns eine Meldung ausfüllen."], ["BRENNAN", "Call the police, please.", "3ayet lbolice, 3afak.", "Appelez la police, s'il vous plaît.", "Appelez la police, s'il vous plaît.", "Llame a la policía, por favor.", "Llame a la policía, por favor.", "Chame a polícia, por favor.", "Rufen Sie bitte die Polizei."], ["BRENNAN", "Call an ambulance, please.", "3ayet l ambulance, 3afak.", "Appelez une ambulance, s'il vous plaît.", "Appelez une ambulance, s'il vous plaît.", "Llame a una ambulancia, por favor.", "Llame a una ambulancia, por favor.", "Chame uma ambulância, por favor.", "Rufen Sie bitte einen Krankenwagen."], ["LOCAL", "Right away.", "Daba daba.", "Tout de suite.", "Tout de suite.", "Enseguida.", "Ahora mismo.", "Já.", "Sofort."], ["BRENNAN", "I need a hospital.", "Khassni sbitar.", "J'ai besoin d'un hôpital.", "J'ai besoin d'un hôpital.", "Necesito un hospital.", "Necesito un hospital.", "Preciso de um hospital.", "Ich brauche ein Krankenhaus."], ["BRENNAN", "Where is the nearest hospital?", "Fin howa sbitar li 9rib?", "Où est l'hôpital le plus proche ?", "Où est l'hôpital le plus proche ?", "¿Dónde está el hospital más cercano?", "¿Dónde está el hospital más cercano?", "Onde é o hospital mais próximo?", "Wo ist das nächste Krankenhaus?"], ["LOCAL", "It's a few blocks that way.", "Shi shwiya mn zanqat mnhadik jiha.", "C'est à quelques rues par là.", "C'est à quelques rues par là.", "Está a algunas cuadras por allá.", "Está a unas calles por allí.", "Fica ali, a alguns quarteirões.", "Es ist ein paar Straßen in diese Richtung."], ["BRENNAN", "I need a pharmacy.", "Khassni farmacia.", "J'ai besoin d'une pharmacie.", "J'ai besoin d'une pharmacie.", "Necesito una farmacia.", "Necesito una farmacia.", "Preciso de uma farmácia.", "Ich brauche eine Apotheke."], ["LOCAL", "There's one just around the corner.", "Kayn wa7da ghi 7da zanka.", "Il y en a une juste au coin de la rue.", "Il y en a une juste au coin de la rue.", "Hay una a la vuelta de la esquina.", "Hay una a la vuelta de la esquina.", "Há uma mesmo aqui perto.", "Es gibt eine gleich um die Ecke."], ["BRENNAN", "I'm allergic to penicillin.", "3andi 7asasiya dyal penicilline.", "Je suis allergique à la pénicilline.", "Je suis allergique à la pénicilline.", "Soy alérgico a la penicilina.", "Soy alérgico a la penicilina.", "Sou alérgico à penicilina.", "Ich bin allergisch gegen Penicillin."], ["BRENNAN", "I take this medication.", "Kanakhod had ddwa.", "Je prends ce médicament.", "Je prends ce médicament.", "Tomo este medicamento.", "Tomo este medicamento.", "Tomo este medicamento.", "Ich nehme dieses Medikament."], ["BRENNAN", "I don't feel well.", "Ma7essnish mzyan.", "Je ne me sens pas bien.", "Je ne me sens pas bien.", "No me siento bien.", "No me siento bien.", "Não me sinto bem.", "Mir geht es nicht gut."], ["BRENNAN", "I need help now.", "Khassni lmosa3ada daba.", "J'ai besoin d'aide maintenant.", "J'ai besoin d'aide maintenant.", "Necesito ayuda ahora.", "Necesito ayuda ahora.", "Preciso de ajuda agora.", "Ich brauche jetzt Hilfe."], ["LOCAL", "Stay calm, help is coming.", "Bqa hadi, lmosa3ada jaya.", "Restez calme, mon ami, l'aide arrive.", "Restez calme, l'aide arrive.", "Mantenga la calma, la ayuda está en camino.", "Tranquilo, la ayuda está en camino.", "Fique calmo, a ajuda está a chegar.", "Bleiben Sie ruhig, Hilfe ist unterwegs."], ["BRENNAN", "My passport was stolen.", "Passport dyali tsreq.", "On m'a volé mon passeport.", "On m'a volé mon passeport.", "Me robaron el pasaporte.", "Me han robado el pasaporte.", "Roubaram-me o passaporte.", "Mein Pass wurde gestohlen."], ["BRENNAN", "My wallet was stolen.", "Portfeuille dyali tsreq.", "On m'a volé mon portefeuille.", "On m'a volé mon portefeuille.", "Me robaron la billetera.", "Me han robado la cartera.", "Roubaram-me a carteira.", "Meine Brieftasche wurde gestohlen."], ["BRENNAN", "Someone stole my phone.", "Shi wa7ed sreq telephone dyali.", "Quelqu'un m'a volé mon téléphone.", "Quelqu'un m'a volé mon téléphone.", "Alguien me robó el teléfono.", "Alguien me ha robado el móvil.", "Alguém me roubou o telemóvel.", "Jemand hat mein Handy gestohlen."], ["LOCAL", "Let's fill out a report.", "Yallah n3emru rapport.", "Nous allons remplir un rapport.", "On va remplir un rapport.", "Llenemos un informe.", "Vamos a rellenar una denuncia.", "Vamos preencher um relatório.", "Lassen Sie uns eine Meldung ausfüllen."]]}, {"name": "Morocco-Specific", "desc": "Souk Bargaining - Opening; Souk Bargaining - Pushing Back; Petit-Taxi; Petit-Taxi - Sharing the Ride; Tea & Hospitality; Tea & Hospitality - Declining Politely; Asking for the Medina; Bargaining - Closing the Deal; Money in the Medina", "rows": [["LOCAL", "For you, special price — three hundred dirhams.", "Lik, taman khas — tlt myat dirham.", "Pour vous, mon ami, prix spécial — trois cents dirhams.", "Pour vous, prix spécial — trois cents dirhams.", "", "", "", ""], ["BRENNAN", "That's too much.", "Hadi bezzaf.", "C'est trop cher.", "C'est trop cher.", "", "", "", ""], ["BRENNAN", "How about one fifty?", "Ash rayek f myat w khamsin?", "Et cent cinquante ?", "Et cent cinquante ?", "", "", "", ""], ["LOCAL", "Two hundred, final offer.", "Myatayn, akhir taman.", "Deux cents, dernier prix.", "Deux cents, dernier prix.", "", "", "", ""], ["BRENNAN", "Deal.", "Wakha, tafqna.", "Marché conclu.", "Marché conclu.", "", "", "", ""], ["BRENNAN", "Can you do better on the price?", "Wash momkin dir shi 7aja f taman?", "Est-ce que vous pouvez faire un meilleur prix ?", "Vous pouvez faire un meilleur prix ?", "", "", "", ""], ["LOCAL", "This is my best price.", "Hada howa a7san taman 3ndi.", "C'est mon meilleur prix.", "C'est mon meilleur prix.", "", "", "", ""], ["BRENNAN", "I'll think about it, thank you.", "Ghadi nfker fih, shukran.", "Je vais y réfléchir, merci.", "Je vais y réfléchir, merci.", "", "", "", ""], ["BRENNAN", "How much to the medina?", "Shhal l lmedina?", "Combien pour aller à la médina ?", "Combien pour aller à la médina ?", "", "", "", ""], ["LOCAL", "Thirty dirhams.", "Tlatin dirham.", "Trente dirhams.", "Trente dirhams.", "", "", "", ""], ["BRENNAN", "Can we use the meter?", "Wash momkin nkhedmo b compteur?", "Est-ce que nous pouvons utiliser le compteur ?", "On peut utiliser le compteur ?", "", "", "", ""], ["LOCAL", "Sure, no problem.", "Wakha, makayn mushkil.", "Bien sûr, il n'y a pas de problème.", "Bien sûr, pas de problème.", "", "", "", ""], ["LOCAL", "Petit-taxis can pick up other passengers along the way.", "Petit-taxi momkin yakhod rakib akhor fe ttriq.", "Les petits taxis peuvent prendre d'autres passagers en chemin.", "Les petits taxis peuvent prendre d'autres passagers en chemin.", "", "", "", ""], ["BRENNAN", "Oh, I didn't know that.", "Ah, ma knntsh 3aref hadshi.", "Ah, je ne savais pas.", "Ah, je ne savais pas.", "", "", "", ""], ["LOCAL", "It's normal here, don't worry.", "3adi hna, matqlqsh.", "C'est normal ici, ne vous inquiétez pas.", "C'est normal ici, ne vous inquiétez pas.", "", "", "", ""], ["LOCAL", "Please, sit.", "3afak, gles.", "Je vous en prie, asseyez-vous, mon ami.", "Je vous en prie, asseyez-vous.", "", "", "", ""], ["LOCAL", "Would you like some tea?", "Wash bghiti shi atay?", "Est-ce que vous voulez du thé ?", "Vous voulez du thé ?", "", "", "", ""], ["BRENNAN", "Yes, thank you, I'd love some.", "Ah, shukran, ghadi n7eb bezzaf.", "Oui, merci, avec plaisir.", "Oui, merci, avec plaisir.", "", "", "", ""], ["LOCAL", "It's mint tea, our specialty.", "Hada atay bnn3na3, ttkhassos dyalna.", "C'est du thé à la menthe, notre spécialité.", "C'est du thé à la menthe, notre spécialité.", "", "", "", ""], ["BRENNAN", "It smells wonderful.", "Rai7tou bnina bezzaf.", "Ça sent merveilleusement bon.", "Ça sent merveilleusement bon.", "", "", "", ""], ["LOCAL", "How do you like your tea?", "Kifash 7ebb atay dyalek?", "Comment est-ce que vous aimez votre thé ?", "Comment aimez-vous votre thé ?", "", "", "", ""], ["BRENNAN", "I'm not picky, however you make it.", "Ma3andish ta7foudat, dirou kifash bghitiw.", "Je ne suis pas difficile, comme vous le préparez.", "Je ne suis pas difficile, comme vous le préparez.", "", "", "", ""], ["BRENNAN", "How do you like yours?", "W nta kifash 7ebb dyalek?", "Et vous, comment est-ce que vous l'aimez ?", "Et vous, comment l'aimez-vous ?", "", "", "", ""], ["LOCAL", "Have some more.", "Khod shwiya kthar.", "Reprenez-en un peu.", "Reprenez-en un peu.", "", "", "", ""], ["BRENNAN", "Thank you, I'm quite full.", "Shukran, shbe3t bezzaf.", "Merci, je suis assez rassasié.", "Merci, je suis assez rassasié.", "", "", "", ""], ["BRENNAN", "But it was delicious.", "Walakin kan bnin bezzaf.", "Mais c'était délicieux.", "Mais c'était délicieux.", "", "", "", ""], ["LOCAL", "Just a little more?", "Ghi shwiya kthar?", "Juste un peu plus ?", "Juste un peu plus ?", "", "", "", ""], ["BRENNAN", "Okay, just a little.", "Wakha, ghi shwiya.", "D'accord, juste un peu.", "D'accord, juste un peu.", "", "", "", ""], ["BRENNAN", "Where is the medina?", "Fin hiya lmedina?", "Où est la médina ?", "Où est la médina ?", "", "", "", ""], ["LOCAL", "Just up ahead, past the square.", "Ghi lgddam, mora sa7a.", "Juste devant, après la place.", "Juste devant, après la place.", "", "", "", ""], ["BRENNAN", "Is this the right way to the medina?", "Wash hadi triq s7i7a l lmedina?", "Est-ce que c'est le bon chemin pour la médina ?", "C'est le bon chemin pour la médina ?", "", "", "", ""], ["LOCAL", "Yes, keep going straight.", "Ah, kammel nishan.", "Oui, continuez tout droit.", "Oui, continuez tout droit.", "", "", "", ""], ["BRENNAN", "How much does this cost?", "Shhal taman dyal hada?", "Combien ça coûte ?", "Combien ça coûte ?", "", "", "", ""], ["LOCAL", "One hundred fifty dirhams.", "Myat w khamsin dirham.", "Cent cinquante dirhams.", "Cent cinquante dirhams.", "", "", "", ""], ["BRENNAN", "That's too expensive.", "Hadi ghalya bezzaf.", "C'est trop cher.", "C'est trop cher.", "", "", "", ""], ["BRENNAN", "No, thank you.", "La, shukran.", "Non, merci.", "Non, merci.", "", "", "", ""], ["BRENNAN", "I'm just looking.", "Ghi kanshouf.", "Je regarde juste.", "Je regarde juste.", "", "", "", ""], ["BRENNAN", "I'll come back later.", "Ghadi nrje3 mnba3d.", "Je reviendrai plus tard.", "Je reviendrai plus tard.", "", "", "", ""], ["BRENNAN", "Where is the nearest ATM?", "Fin howa ATM li 9rib?", "Où est le distributeur le plus proche ?", "Où est le distributeur le plus proche ?", "", "", "", ""], ["LOCAL", "There's one near the entrance.", "Kayn wa7ed 7da lmadkhal.", "Il y en a un près de l'entrée.", "Il y en a un près de l'entrée.", "", "", "", ""], ["BRENNAN", "Is this price in dirhams?", "Wash had taman b ddarahim?", "Est-ce que ce prix est en dirhams ?", "Ce prix est en dirhams ?", "", "", "", ""], ["LOCAL", "Yes, dirhams.", "Ah, ddarahim.", "Oui, en dirhams.", "Oui, en dirhams.", "", "", "", ""]]}];
+
+const BUILT_IN_COURSE = {
+  id: 'brennan_travel_dialogue',
+  title: "Brennan's Travel Dialogue Course \u2014 Spain, Portugal & Morocco",
+  langs: BRENNAN_LANGS,
+  characters: BRENNAN_CHARACTERS,
+  sheets: BRENNAN_SHEETS,
+};
+
+/* ============================================================
+   COURSES REGISTRY + STATE
+   ============================================================ */
+const COURSES = [BUILT_IN_COURSE];
+const DEFAULT_SRC = 'en';
+const DEFAULT_TGT = 'pt-PT';
+
+const S = {
+  courseIdx: 0,
+  sheetIdx: 0,
+  srcCode: DEFAULT_SRC,
+  tgtCode: DEFAULT_TGT,
+  style: 'exposure',
+  rate: 0.92,
+  targetLangGuess: 'en-US',
+  sourceLangGuess: 'es-ES',
+  activeLines: [],
+  voices: [],
+  charVoices: {},     // { speakerCode: {src, tgt, srcLang, tgtLang, srcUserPicked, tgtUserPicked} } —
+                       // *Lang stamps the langCode a URI was picked for, so a language change can
+                       // tell a still-valid-but-stale voice apart from a real manual override.
+                       // *UserPicked marks an explicit choice from the dropdown, so re-populating
+                       // the list as more voices finish loading never overwrites it — mirrors the
+                       // Luna player's fix for getting stuck on an early, low-quality voice.
+  listenEnabled: false,
+
+  idx: 0,           // position within `order`, not a raw line index
+  order: [],        // playback order — indices into activeLines
+  loop: true,       // on by default so a session repeats hands-free (e.g. driving)
+  random: false,
+  attempt: 1,
+  token: 0,
+  running: false,
+  paused: false,
+  linesCompleted: 0,
+  sessionStart: null,
+};
+
+function shuffleOrder(){
+  const arr = S.order;
+  for(let i=arr.length-1; i>0; i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
+function currentCourse(){ return COURSES[S.courseIdx]; }
+function langByCode(course, code){ return course.langs.find(l=>l.code===code); }
+
+/* ============================================================
+   GENDER INFERENCE (character + voice) — best-effort, template-friendly.
+   A course/character object may set an explicit gender: 'male'|'female'
+   to override guessing entirely (recommended for non-English character
+   codes when building new courses on this template).
+   ============================================================ */
+const CHAR_GENDER_TOKENS = {
+  female: ['WOMAN','GIRL','MOTHER','MOM','MAMA','MAMAN','WIFE','SISTER','DAUGHTER','QUEEN','PRINCESS','LADY','MRS','MS','MISS','FEMALE','F','SHE','HER','GIRLFRIEND','AUNT','GRANDMOTHER','GRANDMA','NIECE','BRIDE'],
+  male:   ['MAN','BOY','FATHER','DAD','PAPA','HUSBAND','BROTHER','SON','KING','PRINCE','MR','SIR','LORD','MALE','M','HE','HIM','BOYFRIEND','UNCLE','GRANDFATHER','GRANDPA','NEPHEW','GROOM'],
+};
+function guessCharGender(ch){
+  if(!ch) return 'unknown';
+  if(ch.gender==='male' || ch.gender==='female') return ch.gender;
+  const tokens = (String(ch.code||'')+' '+String(ch.name||'')).toUpperCase().split(/[^A-Z]+/).filter(Boolean);
+  if(tokens.some(t=>CHAR_GENDER_TOKENS.female.includes(t))) return 'female';
+  if(tokens.some(t=>CHAR_GENDER_TOKENS.male.includes(t))) return 'male';
+  return 'unknown';
+}
+
+const VOICE_GENDER_NAME_TOKENS = {
+  female: ['female','woman','samantha','victoria','karen','moira','tessa','fiona','susan','zira','hazel','salli','joanna','kimberly','ivy','kendra','amy','emma','olivia','ana','elena','paulina','monica','conchita','lucia','carmen','francesca','allegra','luciana','camila','vitoria','celine','audrey','lea','marie','anna','petra','katja','helena','sabina','laura','sara','paloma','isabela','yara','aditi','raveena','xiaoxiao','yaoyao','meijia','yuna','seoyeon','mizuki','kyoko','nanami','veena','shelley','martha','flo','sandy','grandma','nicky','allison','ava','susan','vicki','anna','helena'],
+  male:   ['male','man','daniel','david','alex','fred','tom','oliver','george','arthur','james','ryan','matthew','justin','joey','miguel','diego','enrique','carlos','jorge','pablo','mateus','ricardo','thiago','felix','yannick','henri','nicolas','thomas','klaus','stefan','dieter','luca','marco','giorgio','roberto','takumi','ichiro','junwoo','minho','eddy','reed','rocko','grandpa','aaron','bruce','fred','gordon','jacques','diego'],
+};
+function guessVoiceGender(voice){
+  if(!voice || !voice.name) return 'unknown';
+  const name = voice.name.toLowerCase();
+  if(/\bfemale\b/.test(name)) return 'female';
+  if(/\bmale\b/.test(name)) return 'male';
+  const words = name.split(/[^a-z]+/).filter(Boolean);
+  if(words.some(w=>VOICE_GENDER_NAME_TOKENS.female.includes(w))) return 'female';
+  if(words.some(w=>VOICE_GENDER_NAME_TOKENS.male.includes(w))) return 'male';
+  return 'unknown';
+}
+
+function stripTags(raw){
+  if(raw===null||raw===undefined) return {clean:'', tags:[]};
+  let text = String(raw);
+  const tags = [];
+  text = text.replace(/\[([^\]]+)\]/g, (m,g)=>{ tags.push(g); return ''; });
+  text = text.replace(/\.\.\.\s*$/,'').trim();
+  text = text.replace(/\s{2,}/g,' ').trim();
+  return {clean:text, tags};
+}
+function escapeHtml(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function titleCase(s){
+  return String(s).toLowerCase().replace(/(^|\s)\w/g, m=>m.toUpperCase());
+}
+function sanitizeId(s){ return String(s).replace(/[^a-zA-Z0-9_]/g,'_'); }
+
+/* ============================================================
+   SETUP UI — general
+   ============================================================ */
+function show(id){ document.getElementById(id).classList.remove('hidden'); }
+function hide(id){ document.getElementById(id).classList.add('hidden'); }
+
+function populateCourseSelect(){
+  const sel = document.getElementById('courseSelect');
+  sel.innerHTML = '';
+  COURSES.forEach((c,i)=>{
+    const o = document.createElement('option'); o.value=i; o.textContent = c.title; sel.appendChild(o);
+  });
+  sel.value = S.courseIdx;
+  sel.onchange = ()=>{ switchCourse(parseInt(sel.value,10)); };
+}
+
+function chooseDefaultLangsForCourse(course){
+  const has = code => !!langByCode(course, code);
+  S.tgtCode = has(DEFAULT_TGT) ? DEFAULT_TGT : course.langs[0].code;
+  if(has(DEFAULT_SRC) && DEFAULT_SRC!==S.tgtCode){
+    S.srcCode = DEFAULT_SRC;
+  } else {
+    const alt = course.langs.find(l=>l.code!==S.tgtCode);
+    S.srcCode = alt ? alt.code : '';
+  }
+}
+
+function switchCourse(idx){
+  S.courseIdx = idx;
+  S.sheetIdx = 0;
+  S.charVoices = {};
+  chooseDefaultLangsForCourse(currentCourse());
+  populateLangSelects();
+  populateSheetSelect();
+  buildActiveLines();
+  renderCharacterCards();
+  updateSheetMeta();
+  populateVoicesForOSHelp();
+  updateListenNote();
+}
+
+function fillLangOptions(selectEl, course, allowNone){
+  selectEl.innerHTML = allowNone ? '<option value="">— none (target only) —</option>' : '';
+  course.langs.forEach(l=>{
+    const o = document.createElement('option'); o.value=l.code; o.textContent=l.label; selectEl.appendChild(o);
+  });
+}
+
+function populateLangSelects(){
+  const course = currentCourse();
+  const srcSel = document.getElementById('srcLangSelect');
+  const tgtSel = document.getElementById('tgtLangSelect');
+  fillLangOptions(srcSel, course, true);
+  fillLangOptions(tgtSel, course, false);
+  srcSel.value = S.srcCode;
+  tgtSel.value = S.tgtCode;
+  srcSel.onchange = ()=>{ S.srcCode = srcSel.value; syncDrillLangSelects(); onLangChange(); };
+  tgtSel.onchange = ()=>{ S.tgtCode = tgtSel.value; syncDrillLangSelects(); onLangChange(); };
+
+  // drill-screen mirrors of the same two selects (own listeners are bound once, elsewhere)
+  const dSrcSel = document.getElementById('drillSrcLangSelect');
+  const dTgtSel = document.getElementById('drillTgtLangSelect');
+  fillLangOptions(dSrcSel, course, true);
+  fillLangOptions(dTgtSel, course, false);
+  dSrcSel.value = S.srcCode;
+  dTgtSel.value = S.tgtCode;
+}
+
+function syncDrillLangSelects(){
+  document.getElementById('drillSrcLangSelect').value = S.srcCode;
+  document.getElementById('drillTgtLangSelect').value = S.tgtCode;
+}
+function syncMainLangSelects(){
+  document.getElementById('srcLangSelect').value = S.srcCode;
+  document.getElementById('tgtLangSelect').value = S.tgtCode;
+}
+
+document.getElementById('swapBtn').addEventListener('click', ()=>{
+  const srcSel = document.getElementById('srcLangSelect');
+  const tgtSel = document.getElementById('tgtLangSelect');
+  if(!srcSel.value) return;
+  const s = srcSel.value, t = tgtSel.value;
+  srcSel.value = t; tgtSel.value = s;
+  S.srcCode = srcSel.value; S.tgtCode = tgtSel.value;
+  Object.keys(S.charVoices).forEach(code=>{
+    const cv = S.charVoices[code];
+    const tmpURI = cv.src; cv.src = cv.tgt; cv.tgt = tmpURI;
+    const tmpLang = cv.srcLang; cv.srcLang = cv.tgtLang; cv.tgtLang = tmpLang;
+    const tmpPicked = cv.srcUserPicked; cv.srcUserPicked = cv.tgtUserPicked; cv.tgtUserPicked = tmpPicked;
+  });
+  syncDrillLangSelects();
+  onLangChange();
+});
+function onLangChange(){
+  buildActiveLines();
+  renderCharacterCards();
+  updateSheetMeta();
+  populateVoicesForOSHelp();
+  updateListenNote();
+}
+
+/* ---- drill-screen language selects: change target/source language mid-session,
+   resuming at the current row instead of restarting the lesson ---- */
+document.getElementById('drillSrcLangSelect').addEventListener('change', e=>{
+  S.srcCode = e.target.value;
+  syncMainLangSelects();
+  onDrillLangChange();
+});
+document.getElementById('drillTgtLangSelect').addEventListener('change', e=>{
+  S.tgtCode = e.target.value;
+  syncMainLangSelects();
+  onDrillLangChange();
+});
+function onDrillLangChange(){
+  speechSynthesis.cancel(); stopRecognition();
+  S.token++;
+  const priorRow = S.order.length ? S.order[S.idx] : 0; // absolute row this session was on
+  buildActiveLines();
+  renderCharacterCards();
+  updateSheetMeta();
+  populateVoicesForOSHelp();
+  updateListenNote();
+  S.order = S.activeLines.map((_,i)=>i);
+  if(S.random) shuffleOrder();
+  document.getElementById('jumpInput').max = S.order.length;
+  if(S.order.length===0){
+    finishSession();
+    return;
+  }
+  // resume at the same row position if it still exists, else the nearest valid one
+  let resumeAt = S.order.indexOf(priorRow);
+  if(resumeAt===-1) resumeAt = Math.min(S.idx, S.order.length-1);
+  document.getElementById('yourTurn').classList.remove('show');
+  if(S.running && !S.paused){
+    runLine(Math.max(0, resumeAt));
+  } else {
+    S.idx = Math.max(0, resumeAt);
+    updateMilestone();
+  }
+}
+
+function populateSheetSelect(){
+  const course = currentCourse();
+  const grid = document.getElementById('lessonsGrid');
+  grid.innerHTML = '';
+  // Fill top-to-bottom within a column, then wrap to the next column, so the
+  // numbering reads 1,2,3... down the first column instead of across rows.
+  const numRows = Math.ceil(course.sheets.length / 2);
+  grid.style.gridTemplateRows = `repeat(${numRows}, auto)`;
+  course.sheets.forEach((sh,i)=>{
+    const tile = document.createElement('button');
+    tile.type = 'button';
+    tile.className = 'lesson-tile' + (i===S.sheetIdx ? ' active' : '');
+    tile.innerHTML = `<span class="num">${i+1}.</span><span class="lbl">${escapeHtml(sh.name)}</span>` +
+      (i===S.sheetIdx ? '<span class="check">✓</span>' : '');
+    tile.addEventListener('click', ()=>{
+      if(S.sheetIdx===i) return;
+      S.sheetIdx = i;
+      buildActiveLines();
+      renderCharacterCards();
+      updateSheetMeta();
+      populateVoicesForOSHelp();
+      updateListenNote();
+      populateSheetSelect();
+    });
+    grid.appendChild(tile);
+  });
+}
+function updateLessonNavButtons(){
+  const course = currentCourse();
+  document.getElementById('prevLessonBtn').disabled = S.sheetIdx<=0;
+  document.getElementById('nextLessonBtn').disabled = S.sheetIdx>=course.sheets.length-1;
+}
+
+function goToLesson(newIdx){
+  const course = currentCourse();
+  if(newIdx<0 || newIdx>=course.sheets.length) return;
+  speechSynthesis.cancel(); stopRecognition();
+  S.token++;
+  S.sheetIdx = newIdx;
+  buildActiveLines();
+  renderCharacterCards();
+  updateSheetMeta();
+  populateVoicesForOSHelp();
+  updateListenNote();
+  populateSheetSelect();
+  updateLessonNavButtons();
+  if(S.activeLines.length===0){ alert('No lines available for that language combination in this lesson.'); return; }
+  S.order = S.activeLines.map((_,i)=>i);
+  if(S.random) shuffleOrder();
+  S.idx = 0; S.attempt = 1;
+  S.running = true; S.paused = false;
+  S.linesCompleted = 0; S.sessionStart = Date.now();
+  document.getElementById('jumpInput').max = S.order.length;
+  document.getElementById('jumpInput').value = 1;
+  document.getElementById('yourTurn').classList.remove('show');
+  runLine(0);
+}
+document.getElementById('prevLessonBtn').addEventListener('click', ()=> goToLesson(S.sheetIdx-1));
+document.getElementById('nextLessonBtn').addEventListener('click', ()=> goToLesson(S.sheetIdx+1));
+document.getElementById('playerHomeBtn').addEventListener('click', ()=>{
+  speechSynthesis.cancel(); stopRecognition();
+  S.running = false; S.token++;
+  hide('drillScreen');
+  document.querySelectorAll('.setup-card').forEach(c=>c.classList.remove('hidden'));
+});
+
+function estimateSessionMinutes(){
+  const SEC_PER_LINE = 9; // matches the template's ~40-line / ~6-minute reference session
+  return Math.max(1, Math.round(S.activeLines.length * SEC_PER_LINE / 60));
+}
+function updateHero(){
+  const course = currentCourse();
+  const sh = course.sheets[S.sheetIdx];
+  document.getElementById('heroLessonTitle').textContent = `Lesson ${S.sheetIdx+1}: ${sh.name}`;
+  document.getElementById('heroStats').innerHTML =
+    `<span>${S.activeLines.length} lines</span><span class="sep">·</span>` +
+    `<span>~${estimateSessionMinutes()} minutes</span><span class="sep">·</span>` +
+    `<span>Listen, Repeat, Translate</span>`;
+}
+function updateSheetMeta(){
+  const course = currentCourse();
+  const sh = course.sheets[S.sheetIdx];
+  document.getElementById('sheetMeta').textContent = `${sh.desc}  ·  ${S.activeLines.length} lines`;
+  updateHero();
+}
+
+function buildActiveLines(){
+  const course = currentCourse();
+  const sh = course.sheets[S.sheetIdx];
+  const tgtColIdx = course.langs.findIndex(l=>l.code===S.tgtCode) + 1;
+  const srcColIdx = S.srcCode ? (course.langs.findIndex(l=>l.code===S.srcCode) + 1) : -1;
+  const list = [];
+  for(const row of sh.rows){
+    const rawTarget = row[tgtColIdx];
+    if(!rawTarget || !String(rawTarget).trim()) continue;
+    const t = stripTags(rawTarget);
+    const s = srcColIdx>=0 && srcColIdx!==tgtColIdx ? stripTags(row[srcColIdx]) : {clean:'', tags:[]};
+    list.push({
+      speaker: row[0] || '',
+      tone: t.tags[0] || s.tags[0] || '',
+      source: s.clean,
+      target: t.clean,
+    });
+  }
+  S.activeLines = list;
+  const tgtLang = langByCode(course, S.tgtCode);
+  S.targetLangGuess = tgtLang ? tgtLang.voiceLang : 'en-US';
+  const srcLang = S.srcCode ? langByCode(course, S.srcCode) : null;
+  S.sourceLangGuess = (srcLang && S.srcCode!==S.tgtCode) ? srcLang.voiceLang : null;
+  document.getElementById('jumpInput').max = S.activeLines.length;
+}
+
+document.getElementById('styleRow').addEventListener('click', e=>{
+  const p = e.target.closest('.toggle-pill'); if(!p) return;
+  S.style = p.dataset.val;
+  document.querySelectorAll('#styleRow .toggle-pill').forEach(pl=>pl.classList.toggle('on', pl===p));
+  updateListenNote();
+});
+
+document.getElementById('drillStyleRow').addEventListener('click', e=>{
+  const p = e.target.closest('.toggle-pill'); if(!p) return;
+  const newStyle = p.dataset.val;
+  if(newStyle === S.style) return;
+  S.style = newStyle;
+  document.querySelectorAll('#drillStyleRow .toggle-pill, #styleRow .toggle-pill').forEach(pl=>{
+    pl.classList.toggle('on', pl.dataset.val===S.style);
+  });
+  updateListenNote();
+  // apply immediately: if a session is live, cut the in-flight line short
+  // and restart the current line under the newly chosen style
+  if(S.running){
+    speechSynthesis.cancel();
+    stopRecognition();
+    S.token++;
+    document.getElementById('yourTurn').classList.remove('show');
+    if(!S.paused) runLine(S.idx);
+  }
+});
+document.getElementById('rateSlider').addEventListener('input', e=>{
+  S.rate = parseFloat(e.target.value);
+  document.getElementById('rateVal').textContent = S.rate.toFixed(2)+'×';
+});
+
+/* ============================================================
+   OS VOICE-INSTALL HELP — localized to whatever source language
+   is currently selected (falls back to English if none/unmatched)
+   ============================================================ */
+function detectOS(){
+  const ua = (navigator.userAgent || '') + ' ' + (navigator.platform || '');
+  if(/CrOS/i.test(ua)) return 'chromeos';
+  if(/iPhone|iPad|iPod/i.test(ua)) return 'ios';
+  if(/Android/i.test(ua)) return 'android';
+  if(/Win/i.test(ua)) return 'windows';
+  if(/Mac/i.test(ua)) return 'mac';
+  if(/Linux/i.test(ua)) return 'linux';
+  return 'unknown';
+}
+function uiLangKeyFor(code){
+  if(!code) return 'en';
+  if(code.startsWith('es')) return 'es';
+  if(code.startsWith('it')) return 'it';
+  if(code.startsWith('fr')) return 'fr';
+  if(code.startsWith('pt')) return 'pt';
+  if(code.startsWith('ro')) return 'ro';
+  return 'en';
+}
+
+const VOICE_HELP_I18N = {
+  en: {
+    title: 'Want a better ',
+    body: 'Your browser is currently using a generic or approximated voice for this language. You can install a proper one — free, one-time, and it stays available for every session:',
+    os: {
+      windows: 'Windows: Settings → Time & Language → Speech → "Manage voices" → Add voices, then pick the language.',
+      mac: 'Mac: System Settings → Accessibility → Spoken Content → System Voice → Manage Voices, then download one for this language.',
+      chromeos: 'ChromeOS: Settings → Accessibility → Text-to-Speech, then check which voices are installed for this language.',
+      ios: 'iPhone/iPad: Settings → Accessibility → Spoken Content → Voices, then download a voice for this language.',
+      android: 'Android: Settings → Accessibility → Text-to-speech output → install voice data for this language.',
+      linux: 'Linux: available voices depend on your distro\u2019s speech engine (e.g. espeak-ng or festival) — a natural-sounding voice for this language may not be available.',
+      unknown: 'Check your device\u2019s accessibility or speech settings for a way to add voices for this language.',
+    },
+    after: 'After installing, refresh this page — it will pick the new voice up automatically.',
+  },
+  es: {
+    title: '\u00bfQuieres una mejor voz en ',
+    body: 'Tu navegador est\u00e1 usando actualmente una voz gen\u00e9rica o aproximada para este idioma. Puedes instalar una voz adecuada \u2014 gratis, una sola vez, y quedar\u00e1 disponible en todas las sesiones:',
+    os: {
+      windows: 'Windows: Configuraci\u00f3n → Hora e idioma → Voz → "Administrar voces" → Agregar voces, y elige el idioma.',
+      mac: 'Mac: Ajustes del sistema → Accesibilidad → Contenido hablado → Voz del sistema → Gestionar voces, y descarga una para este idioma.',
+      chromeos: 'ChromeOS: Configuraci\u00f3n → Accesibilidad → Texto a voz, y verifica qu\u00e9 voces est\u00e1n instaladas para este idioma.',
+      ios: 'iPhone/iPad: Ajustes → Accesibilidad → Contenido hablado → Voces, y descarga una voz para este idioma.',
+      android: 'Android: Ajustes → Accesibilidad → Salida de texto a voz → instala los datos de voz para este idioma.',
+      linux: 'Linux: las voces disponibles dependen del motor de voz de tu distribuci\u00f3n \u2014 puede que no haya una voz natural para este idioma.',
+      unknown: 'Revisa la configuraci\u00f3n de accesibilidad o de voz de tu dispositivo para agregar voces de este idioma.',
+    },
+    after: 'Despu\u00e9s de instalarla, actualiza esta p\u00e1gina \u2014 tomar\u00e1 la nueva voz autom\u00e1ticamente.',
+  },
+  it: {
+    title: 'Vuoi una voce migliore in ',
+    body: 'Il tuo browser sta attualmente usando una voce generica o approssimata per questa lingua. Puoi installarne una vera \u2014 gratis, una tantum:',
+    os: {
+      windows: 'Windows: Impostazioni → Ora e lingua → Voce → "Gestisci voci" → Aggiungi voci, poi scegli la lingua.',
+      mac: 'Mac: Impostazioni di sistema → Accessibilit\u00e0 → Contenuto pronunciato → Voce di sistema → Gestisci voci.',
+      chromeos: 'ChromeOS: Impostazioni → Accessibilit\u00e0 → Sintesi vocale.',
+      ios: 'iPhone/iPad: Impostazioni → Accessibilit\u00e0 → Contenuto pronunciato → Voci.',
+      android: 'Android: Impostazioni → Accessibilit\u00e0 → Output sintesi vocale.',
+      linux: 'Linux: le voci disponibili dipendono dal motore vocale della tua distribuzione.',
+      unknown: 'Controlla le impostazioni di accessibilit\u00e0 o vocali del tuo dispositivo.',
+    },
+    after: 'Dopo l\u2019installazione, aggiorna questa pagina.',
+  },
+  fr: {
+    title: 'Vous voulez une meilleure voix en ',
+    body: 'Votre navigateur utilise actuellement une voix g\u00e9n\u00e9rique pour cette langue. Vous pouvez en installer une vraie \u2014 gratuite, une seule fois :',
+    os: {
+      windows: 'Windows : Param\u00e8tres → Heure et langue → Voix → « G\u00e9rer les voix » → Ajouter des voix.',
+      mac: 'Mac : R\u00e9glages Syst\u00e8me → Accessibilit\u00e9 → Contenu \u00e9nonc\u00e9 → Voix syst\u00e8me → G\u00e9rer les voix.',
+      chromeos: 'ChromeOS : Param\u00e8tres → Accessibilit\u00e9 → Synth\u00e8se vocale.',
+      ios: 'iPhone/iPad : R\u00e9glages → Accessibilit\u00e9 → Contenu \u00e9nonc\u00e9 → Voix.',
+      android: 'Android : Param\u00e8tres → Accessibilit\u00e9 → Synth\u00e8se vocale.',
+      linux: 'Linux : les voix disponibles d\u00e9pendent du moteur vocal de votre distribution.',
+      unknown: 'V\u00e9rifiez les param\u00e8tres d\u2019accessibilit\u00e9 ou vocaux de votre appareil.',
+    },
+    after: 'Apr\u00e8s l\u2019installation, actualisez cette page.',
+  },
+  pt: {
+    title: 'Quer uma voz melhor em ',
+    body: 'Seu navegador est\u00e1 usando atualmente uma voz gen\u00e9rica para este idioma. Voc\u00ea pode instalar uma adequada \u2014 gr\u00e1tis, uma \u00fanica vez:',
+    os: {
+      windows: 'Windows: Configura\u00e7\u00f5es → Hora e idioma → Voz → "Gerenciar vozes".',
+      mac: 'Mac: Ajustes do Sistema → Acessibilidade → Conte\u00fado Falado → Voz do Sistema.',
+      chromeos: 'ChromeOS: Configura\u00e7\u00f5es → Acessibilidade → Texto para fala.',
+      ios: 'iPhone/iPad: Ajustes → Acessibilidade → Conte\u00fado Falado → Vozes.',
+      android: 'Android: Configura\u00e7\u00f5es → Acessibilidade → Sa\u00edda de texto para fala.',
+      linux: 'Linux: as vozes dispon\u00edveis dependem do motor de fala da sua distribui\u00e7\u00e3o.',
+      unknown: 'Verifique as configura\u00e7\u00f5es de acessibilidade do seu dispositivo.',
+    },
+    after: 'Depois de instalar, atualize esta p\u00e1gina.',
+  },
+  ro: {
+    title: 'Vrei o voce mai bun\u0103 \u00een ',
+    body: 'Browserul t\u0103u folose\u0219te \u00een prezent o voce generic\u0103 pentru aceast\u0103 limb\u0103. Po\u021bi instala una potrivit\u0103 \u2014 gratuit, o singur\u0103 dat\u0103:',
+    os: {
+      windows: 'Windows: Set\u0103ri → Ora \u0219i limba → Voce → „Gestionare voci”.',
+      mac: 'Mac: Set\u0103ri de sistem → Accesibilitate → Con\u021binut rostit → Vocea sistemului.',
+      chromeos: 'ChromeOS: Set\u0103ri → Accesibilitate → Text-to-Speech.',
+      ios: 'iPhone/iPad: Set\u0103ri → Accesibilitate → Con\u021binut rostit → Voci.',
+      android: 'Android: Set\u0103ri → Accesibilitate → Ie\u0219ire text-to-speech.',
+      linux: 'Linux: vocile disponibile depind de motorul de voce al distribu\u021biei tale.',
+      unknown: 'Verific\u0103 set\u0103rile de accesibilitate ale dispozitivului t\u0103u.',
+    },
+    after: 'Dup\u0103 instalare, re\u00eencarc\u0103 aceast\u0103 pagin\u0103.',
+  },
+};
+
+// Shown when a voice for this language IS installed, but not in the region
+// we recommend by default (US for English; US/Latin America for Spanish).
+// The OS's own "install a voice" screen sorts alphabetically by locale code
+// and doesn't flag which accent to prefer, so we say so explicitly and name
+// the one to look for — while making clear the current pick still works and
+// other accents remain a click away afterward.
+const REGION_NUDGE_I18N = {
+  en: {
+    title: 'Using a non-default accent for ',
+    body: 'A voice for this language is already installed, but not the {region} one, so a different accent is being used by default. For consistency across testers, we recommend installing that one too:',
+    os: {
+      windows: 'Windows: Settings → Time & Language → Speech → "Manage voices" → Add voices, then pick this language\u2019s {region} option.',
+      mac: 'Mac: System Settings → Accessibility → Spoken Content → System Voice → Manage Voices, then download the {region} option for this language.',
+      chromeos: 'ChromeOS: Settings → Accessibility → Text-to-Speech, then look for the {region} voice for this language.',
+      ios: 'iPhone/iPad: Settings → Accessibility → Spoken Content → Voices, then download the {region} option for this language.',
+      android: 'Android: Settings → Accessibility → Text-to-speech output → install the {region} voice data for this language.',
+      linux: 'Linux: available voices depend on your distro\u2019s speech engine — a {region} option may not be available.',
+      unknown: 'Check your device\u2019s accessibility or speech settings for the {region} voice option.',
+    },
+    after: 'This is just the default — you can still pick a different accent per character afterward, if you\u2019d like.',
+  },
+  es: {
+    title: 'Usando un acento distinto al predeterminado en ',
+    body: 'Ya hay una voz instalada para este idioma, pero no la de {region}, as\u00ed que se est\u00e1 usando otro acento por defecto. Para que todos los evaluadores tengan lo mismo, te recomendamos instalar tambi\u00e9n esa:',
+    os: {
+      windows: 'Windows: Configuraci\u00f3n → Hora e idioma → Voz → "Administrar voces" → Agregar voces, y busca la opci\u00f3n de {region}.',
+      mac: 'Mac: Ajustes del sistema → Accesibilidad → Contenido hablado → Voz del sistema → Gestionar voces, y descarga la opci\u00f3n de {region}.',
+      chromeos: 'ChromeOS: Configuraci\u00f3n → Accesibilidad → Texto a voz, y busca la voz de {region} para este idioma.',
+      ios: 'iPhone/iPad: Ajustes → Accesibilidad → Contenido hablado → Voces, y descarga la opci\u00f3n de {region}.',
+      android: 'Android: Ajustes → Accesibilidad → Salida de texto a voz → instala los datos de voz de {region}.',
+      linux: 'Linux: las voces disponibles dependen del motor de voz de tu distribuci\u00f3n \u2014 puede que no haya una opci\u00f3n de {region}.',
+      unknown: 'Revisa la configuraci\u00f3n de accesibilidad o de voz de tu dispositivo para la opci\u00f3n de {region}.',
+    },
+    after: 'Esto es solo el valor predeterminado \u2014 despu\u00e9s puedes elegir otro acento para cada personaje si lo prefieres.',
+  },
+};
+
+function updateOSVoiceHelp(candidates, usingFallback, alwaysApproximate, regionMatched, profile){
+  const el = document.getElementById('osVoiceHelp');
+  const shaky = usingFallback || alwaysApproximate || candidates.length===0;
+  const uiKey = uiLangKeyFor(S.srcCode || S.tgtCode);
+  const course = currentCourse();
+  const targetName = (langByCode(course, S.tgtCode)||{}).label || S.tgtCode;
+  const os = detectOS();
+
+  if(!shaky && !regionMatched){
+    // A voice IS installed for this language, just not the region we'd
+    // recommend by default (e.g. Spain Spanish instead of US/Latin America,
+    // or Australian English instead of US) — nudge toward installing that
+    // one specifically, since the OS's own "download a voice" list sorts
+    // alphabetically and doesn't flag which accent is the sensible default.
+    const label = (profile && profile.label && profile.label[uiKey]) || (profile && profile.label && profile.label.en);
+    if(label){
+      const n = REGION_NUDGE_I18N[uiKey] || REGION_NUDGE_I18N.en;
+      const osLine = (n.os[os] || n.os.unknown).split('{region}').join(escapeHtml(label));
+      const bodyLine = n.body.split('{region}').join(escapeHtml(label));
+      el.innerHTML = `<b>${n.title}${escapeHtml(targetName)}</b><br>${bodyLine}<br>\u2022 ${osLine}<br><span class="small-muted">${n.after}</span>`;
+      el.classList.remove('hidden');
+      return;
+    }
+  }
+
+  if(!shaky){ el.classList.add('hidden'); el.innerHTML=''; return; }
+  const t = VOICE_HELP_I18N[uiKey] || VOICE_HELP_I18N.en;
+  const osLine = t.os[os] || t.os.unknown;
+  el.innerHTML = `<b>${t.title}${escapeHtml(targetName)}?</b><br>${t.body}<br>\u2022 ${osLine}<br><span class="small-muted">${t.after}</span>`;
+  el.classList.remove('hidden');
+}
+
+/* ============================================================
+   VOICES
+   ============================================================ */
+// Some languages have one regional variant that's the far-more-common default
+// for learners (e.g. US English, and US/Latin-American Spanish rather than
+// Spain) — so within a language's matches, float those regions to the top
+// and sink the less-expected default (Spain Spanish) to the bottom, rather
+// than leaving order to whatever the OS happened to report voices in.
+// Declared here, ahead of loadVoices()/its immediate call below, since that
+// call can synchronously reach these through getVoiceCandidates.
+// ------------------------------------------------------------------
+// REGION PROFILES
+// ------------------------------------------------------------------
+// A "region profile" is keyed by an abstract profile key, which is NOT
+// always the same thing as the BCP-47 prefix used to search for installed
+// voices. That split matters in two situations this template has to
+// handle:
+//   1. More than one selectable language `code` shares a voice prefix but
+//      needs a DIFFERENT default region — e.g. pt-BR and pt-PT both search
+//      "pt" voices, fr-FR and fr-AFR both search "fr", and la-CI/la-VA/
+//      la-HV all fall back to other languages entirely. A single
+//      boost/primary table keyed by the 2-letter prefix can't tell these
+//      apart, since selecting either one resolves to the same prefix.
+//   2. A language with no dedicated voice falls back to a DIFFERENT
+//      language whose own direct-selection default doesn't apply — e.g.
+//      Lingala/Swahili fall back to English, but must default to Nigerian
+//      English, not the US English that plain "English" defaults to.
+//      Ranking by the matched prefix ("en") would wrongly reuse English's
+//      own US-boost table for that fallback.
+// So every selectable `code` maps (via CODE_TO_REGION_KEY below) to a
+// profile, and profiles carry their OWN matchPrefixes (search order) and
+// their OWN boost/primary/demote/preferredNames — never shared by prefix.
+//
+//   matchPrefixes    — BCP-47 prefixes to search for installed voices, in
+//                       priority order. First prefix with any match wins;
+//                       later entries are same-family-or-approximate
+//                       fallbacks (e.g. Ecclesiastical Latin -> Italian).
+//   boost/primary/demote — region tags (the part after the first '-' in
+//                       the matched voice's lang, e.g. "US" in "en-US"),
+//                       ranked within whichever prefix actually matched.
+//   preferredNames   — exact on-screen voice names pinned to the top,
+//                       above the region ranking (see preferExactNamesFirst
+//                       below). Edit to match whatever names your Chrome
+//                       dropdown actually shows — check the ✓-marked ones.
+//   label            — human-readable name of the boosted region, for the
+//                       "install a voice" nudge, per UI language.
+//   alwaysApproximate — true when even a same-prefix match is never the
+//                       "real" language (Latin, Lao-as-Thai, an African
+//                       language with no dedicated voice), so the OS
+//                       voice-install help should always show — not only
+//                       when the fallback chain had to skip past the
+//                       first prefix.
+const AFRICAN_FR_REGIONS = ['CI','SN','CD','CM','ML','BF','NE','TG','BJ','GN','GA','CG'];
+const ES_LATAM_REGIONS = ['US','MX','AR','CO','CL','PE','UY','VE','EC','GT','BO','PY','CR','PA','DO','HN','SV','NI','419'];
+
+const REGION_PROFILES = {
+  en: {
+    matchPrefixes:['en'], boost:['US'], primary:'US',
+    preferredNames:['English United States'],
+    label:{ en:'United States', es:'Estados Unidos' },
+  },
+  es: {
+    matchPrefixes:['es'], boost:ES_LATAM_REGIONS, primary:'US', demote:['ES'],
+    preferredNames:['Spanish United States'],
+    label:{ en:'United States or Latin America', es:'Estados Unidos o Latinoam\u00e9rica' },
+  },
+  de: {
+    matchPrefixes:['de'], boost:['DE'], primary:'DE',
+    label:{ en:'Germany', es:'Alemania' },
+  },
+  ru: {
+    matchPrefixes:['ru'], boost:['RU'], primary:'RU',
+    label:{ en:'Russia', es:'Rusia' },
+  },
+  'pt-BR': {
+    matchPrefixes:['pt'], boost:['BR'], primary:'BR', demote:['PT'],
+    label:{ en:'Brazil', es:'Brasil' },
+  },
+  'pt-PT': {
+    matchPrefixes:['pt'], boost:['PT'], primary:'PT', demote:['BR'],
+    label:{ en:'Portugal', es:'Portugal' },
+  },
+  'fr-FR': {
+    matchPrefixes:['fr'], boost:['FR'], primary:'FR', demote:AFRICAN_FR_REGIONS,
+    label:{ en:'France', es:'Francia' },
+  },
+  'fr-AFR': {
+    matchPrefixes:['fr'], boost:AFRICAN_FR_REGIONS, demote:['FR'],
+    label:{ en:'a Sub-Saharan African French accent', es:'un acento franc\u00e9s subsahariano' },
+  },
+  // Ecclesiastical Latin -> Italian by default. Tries an actual "la" voice
+  // first in case a browser ever ships one, but that's not expected.
+  'la-ecc': {
+    matchPrefixes:['la','it','es'], alwaysApproximate:true,
+    label:{ en:'Italian (standing in for Ecclesiastical Latin)', es:'italiano (para el lat\u00edn eclesi\u00e1stico)' },
+  },
+  // Classical Latin and Hispania Vulgaris -> Spanish (US/Latin America) by
+  // default. Reuses the same boost/primary/demote shape as the "es"
+  // profile above, kept as its own entry since it's a different `code`
+  // family with its own matchPrefixes/fallback order.
+  'la-hisp': {
+    matchPrefixes:['la','es','it'], alwaysApproximate:true,
+    boost:ES_LATAM_REGIONS, primary:'US', demote:['ES'],
+    preferredNames:['Spanish United States'],
+    label:{ en:'United States or Latin America Spanish (standing in for this Latin register)', es:'espa\u00f1ol de Estados Unidos o Latinoam\u00e9rica (para este registro de lat\u00edn)' },
+  },
+  // Lao has no dedicated voice on most platforms -> Thai by default.
+  'lo-th': {
+    matchPrefixes:['lo','th'], alwaysApproximate:true, boost:['TH'], primary:'TH',
+    label:{ en:'Thai (standing in for Lao, which has no dedicated voice)', es:'tailand\u00e9s (para el lao)' },
+  },
+  // Any language with no dedicated voice and no better regional match
+  // (currently Lingala, Swahili) -> Nigerian English by default. This is
+  // its OWN profile — separate from the plain "en" profile above — so
+  // that falling back to English here never inherits English's own US
+  // default; the two are ranked independently even though both eventually
+  // match "en" voices.
+  'afr-en-ng': {
+    matchPrefixes:['en'], alwaysApproximate:true, boost:['NG'], primary:'NG', demote:['US'],
+    label:{ en:'Nigerian English (standing in for a language with no dedicated voice)', es:'ingl\u00e9s nigeriano' },
+  },
+};
+
+// Maps a selectable language `code` (as used in a course's langs array) to
+// the region-profile key that governs its voice defaults. Unlisted codes
+// fall back to their own 2-letter prefix as the profile key (and, failing
+// that, to no profile at all — meaning no region preference is applied).
+// When adding a new language/register to a course, add its `code` here if
+// it needs a specific default region, shares a prefix with another
+// register, or has no dedicated voice.
+const CODE_TO_REGION_KEY = {
+  'pt-BR':'pt-BR', 'pt-PT':'pt-PT', 'pt':'pt-BR',
+  'fr-FR':'fr-FR', 'fr-AFR':'fr-AFR', 'fr':'fr-FR',
+  'la-CI':'la-hisp', 'la-HV':'la-hisp', 'la-VA':'la-ecc', 'la':'la-ecc',
+  'lo':'lo-th',
+  'ln':'afr-en-ng', 'sw':'afr-en-ng',
+};
+function resolveRegionProfile(code){
+  const prefix = code ? String(code).split('-')[0] : 'en';
+  const key = CODE_TO_REGION_KEY[code] || CODE_TO_REGION_KEY[prefix] || prefix;
+  return REGION_PROFILES[key] || REGION_PROFILES[prefix] || null;
+}
+function preferExactNamesFirst(list, profile){
+  const preferred = profile && profile.preferredNames;
+  if(!preferred || !preferred.length) return list;
+  const wanted = preferred.map(n=>n.toLowerCase());
+  const hits = list.filter(v=>wanted.includes((v.name||'').toLowerCase()));
+  if(!hits.length) return list;
+  hits.sort((a,b)=> wanted.indexOf(a.name.toLowerCase()) - wanted.indexOf(b.name.toLowerCase()));
+  const hitSet = new Set(hits);
+  return [...hits, ...list.filter(v=>!hitSet.has(v))];
+}
+function loadVoices(){
+  const prevCount = S.voices.length;
+  S.voices = window.speechSynthesis ? speechSynthesis.getVoices() : [];
+  if(S.voices.length !== prevCount && document.getElementById('setup') && !document.getElementById('setup').classList.contains('hidden')){
+    renderCharacterCards();
+    populateVoicesForOSHelp();
+  }
+}
+if(window.speechSynthesis){
+  loadVoices();
+  speechSynthesis.onvoiceschanged = loadVoices;
+  // onvoiceschanged doesn't fire reliably in every context (especially local
+  // files), and the list can come back partial on the first tick. Keep polling
+  // until the voice count stops changing so late-arriving voices (e.g. a
+  // proper en-US voice that loads after a placeholder) still get picked up —
+  // combined with the "only sticky once the user actually picks" rule in
+  // renderCharacterCards, this keeps defaults from getting stuck on whatever
+  // loaded first, the same fix used in the Luna player.
+  let voiceCheckAttempts = 0;
+  let lastVoiceCount = S.voices.length;
+  const voiceCheckInterval = setInterval(()=>{
+    voiceCheckAttempts++;
+    const found = speechSynthesis.getVoices();
+    if(found.length !== lastVoiceCount){
+      lastVoiceCount = found.length;
+      loadVoices();
+      return;
+    }
+    if(found.length>0 || voiceCheckAttempts>=20){ clearInterval(voiceCheckInterval); }
+  }, 250);
+}
+function voicesReady(timeoutMs=1500){
+  return new Promise(resolve=>{
+    if(!window.speechSynthesis){ resolve(false); return; }
+    if(speechSynthesis.getVoices().length){ resolve(true); return; }
+    const start = Date.now();
+    const iv = setInterval(()=>{
+      loadVoices();
+      if(S.voices.length || Date.now()-start>timeoutMs){ clearInterval(iv); resolve(S.voices.length>0); }
+    }, 150);
+  });
+}
+
+// Voices with localService===false are served over the network rather than
+// bundled on-device. On platforms with sparse local voice installs (notably
+// iOS Safari), network-backed voices tend to be more consistently present
+// across devices, so we float them to the front of an already-language-matched
+// list. This is a soft preference, not a guarantee — some platforms (iOS
+// again) only ever expose local voices, in which case this is a no-op.
+function preferNetworkVoicesFirst(list){
+  return [...list].sort((a,b)=>{
+    const aNet = a.localService===false ? 0 : 1;
+    const bNet = b.localService===false ? 0 : 1;
+    return aNet - bNet;
+  });
+}
+
+// Some languages have one regional variant that's the far-more-common default
+// for learners than others — see REGION_PROFILES declared above, near
+// loadVoices(), since it must be initialized before this runs.
+function regionRank(voice, profile){
+  if(!profile) return 2;
+  const region = (voice.lang || '').split(/[-_]/)[1];
+  const r = region ? region.toUpperCase() : '';
+  if(profile.primary && r===profile.primary) return 0;
+  if(profile.boost && profile.boost.includes(r)) return 1;
+  if(profile.demote && profile.demote.includes(r)) return 3;
+  return 2;
+}
+function preferRegionFirst(list, profile){
+  return [...list].sort((a,b)=> regionRank(a, profile) - regionRank(b, profile));
+}
+
+// `code` is the selected language's own code (e.g. 'pt-BR', 'la-VA',
+// 'ln') — NOT a resolved voiceLang — so it can be looked up in
+// CODE_TO_REGION_KEY to find the right region profile even when several
+// codes share a voice-search prefix or fall back to a different language.
+function getVoiceCandidates(code, gender){
+  const voices = S.voices;
+  const profile = resolveRegionProfile(code);
+  const prefix = code ? String(code).split('-')[0] : 'en';
+  const matchPrefixes = (profile && profile.matchPrefixes && profile.matchPrefixes.length) ? profile.matchPrefixes : [prefix];
+  let matches = [];
+  let usingFallback = false;
+  for(let i=0;i<matchPrefixes.length;i++){
+    matches = voices.filter(v=>v.lang && v.lang.toLowerCase().startsWith(matchPrefixes[i]));
+    if(matches.length){ usingFallback = i>0; break; }
+  }
+  matches = preferNetworkVoicesFirst(matches);
+  matches = preferRegionFirst(matches, profile);
+  // When a character's gender is known, float voices whose name reads as that
+  // gender to the front of the match list — but only within the top-ranked
+  // region tier (e.g. US), so a gender-matched voice from a non-preferred
+  // region (e.g. en-GB) can never bump ahead of a preferred-region voice
+  // that simply doesn't happen to match the gender guess. Only when the
+  // preferred tier has no voices at all do we fall back to a global,
+  // region-agnostic gender match.
+  let genderMatched = false;
+  if(gender==='male' || gender==='female'){
+    const topRank = matches.length ? regionRank(matches[0], profile) : null;
+    const topTier = topRank===null ? [] : matches.filter(v=>regionRank(v, profile)===topRank);
+    const rest = topRank===null ? [] : matches.filter(v=>regionRank(v, profile)!==topRank);
+    const tierHits = topTier.filter(v=>guessVoiceGender(v)===gender);
+    if(tierHits.length){
+      const hitSet = new Set(tierHits);
+      matches = [...tierHits, ...topTier.filter(v=>!hitSet.has(v)), ...rest];
+      genderMatched = true;
+    } else if(topTier.length===0){
+      const hits = matches.filter(v=>guessVoiceGender(v)===gender);
+      if(hits.length){
+        const hitSet = new Set(hits);
+        matches = [...hits, ...matches.filter(v=>!hitSet.has(v))];
+        genderMatched = true;
+      }
+    }
+  }
+  // Exact-name pin always wins last, regardless of region/gender ranking above.
+  matches = preferExactNamesFirst(matches, profile);
+  // Whether the top-ranked match is one of the regions we boost (e.g. US
+  // English) — false means a language match exists but isn't the preferred
+  // regional default (e.g. only Spain Spanish, or only Australian English,
+  // is installed), which is worth a gentle nudge rather than the full
+  // "no voice at all" warning. Only profiles with a defined boost list have
+  // a "preferred" region at all — others are always considered matched.
+  const hasPreference = !!(profile && profile.boost && profile.boost.length);
+  const regionMatched = !hasPreference || matches.length===0 ? true : regionRank(matches[0], profile)===0;
+  const alwaysApproximate = !!(profile && profile.alwaysApproximate);
+  return {matches, usingFallback, voices, genderMatched, regionMatched, profile, alwaysApproximate};
+}
+
+/* Populates a <select> with every installed voice — matches for `code`
+   (the selected language's own code, e.g. 'pt-BR', not a resolved
+   voiceLang) float to the top and are marked, but nothing is ever hidden.
+   When a gender is given, the best gender-matching voice for `code` (if
+   any) becomes the top recommendation instead of just the first language
+   match. */
+function populateVoiceSelect(selectId, code, previousURI, gender){
+  const sel = document.getElementById(selectId);
+  if(!sel) return {chosenURI:'', matches:[], usingFallback:false, genderMatched:false};
+  sel.innerHTML = '';
+  const {matches, usingFallback, voices, genderMatched} = getVoiceCandidates(code, gender);
+  const matchSet = new Set(matches);
+  const ordered = [...matches, ...voices.filter(v=>!matchSet.has(v))];
+
+  ordered.forEach(v=>{
+    const o = document.createElement('option');
+    const isMatch = matchSet.has(v);
+    o.value = v.voiceURI;
+    o.textContent = `${isMatch ? '\u2713 ' : ''}${v.name} (${v.lang})`;
+    sel.appendChild(o);
+  });
+
+  let chosenURI = '';
+  if(previousURI && voices.some(v=>v.voiceURI===previousURI)){
+    chosenURI = previousURI;
+  } else if(matches.length){
+    chosenURI = matches[0].voiceURI;
+  } else if(voices.length){
+    chosenURI = voices[0].voiceURI;
+  }
+  if(chosenURI) sel.value = chosenURI;
+  return {chosenURI, matches, usingFallback, genderMatched};
+}
+
+function updateDotAndNote(id, uri, matches, genderMatched, usingFallback, gender, langLabel){
+  const isSrc = id.indexOf('srcVoice__')===0;
+  const dot = document.getElementById('dot_'+id);
+  const note = document.getElementById('note_'+id);
+  const isRecommended = matches.length>0 && matches[0].voiceURI===uri;
+  const noLangMatch = matches.length===0;
+  if(dot) dot.className = 'dot' + (!uri ? '' : noLangMatch ? ' danger' : (isRecommended ? (isSrc?' amber':' teal') : ' white'));
+  let text = '';
+  if(!uri){
+    text = 'no voice available on this device';
+  } else if(noLangMatch){
+    text = `no ${langLabel || 'matching'} voice installed on this device`;
+  } else if(usingFallback){
+    text = `no ${langLabel || 'this'} voice found — using a related language instead`;
+  } else if(isRecommended){
+    if(gender==='male' || gender==='female'){
+      text = genderMatched ? 'recommended pick · gender matched' : `recommended pick · no ${gender} voice found for this language`;
+    } else {
+      text = 'recommended pick';
+    }
+  } else {
+    text = 'custom pick';
+  }
+  if(note) note.textContent = text;
+}
+
+/* One character card = a name/role header + a source-voice select and a
+   target-voice select, each scoped to that character alone. */
+function renderCharacterCards(){
+  const course = currentCourse();
+  const wrap = document.getElementById('charactersList');
+  wrap.innerHTML = '';
+  const noSrc = !S.srcCode || S.srcCode===S.tgtCode;
+  const srcLang = noSrc ? null : langByCode(course, S.srcCode);
+  const tgtLang = langByCode(course, S.tgtCode);
+
+  const srcVoiceLangCode = srcLang ? srcLang.voiceLang : 'en-US';
+  const tgtVoiceLangCode = tgtLang ? tgtLang.voiceLang : 'en-US';
+  // The *language* `code` (e.g. 'pt-BR', 'la-VA') drives voice defaults —
+  // NOT srcVoiceLangCode/tgtVoiceLangCode above, which are only used for
+  // the actual utterance's lang tag. Several codes share a voiceLang
+  // (all three Latin registers resolve to 'la'; fr-FR/fr-AFR both resolve
+  // to 'fr-FR'), so keying defaults off voiceLang can't tell them apart —
+  // keying off `code` instead is also what lets switching between two
+  // codes that share a voiceLang correctly count as a language change.
+  const srcLangCode = srcLang ? srcLang.code : 'en';
+  const tgtLangCode = tgtLang ? tgtLang.code : 'en';
+
+  course.characters.forEach(ch=>{
+    if(!S.charVoices[ch.code]) S.charVoices[ch.code] = {src:'', tgt:'', srcLang:'', tgtLang:'', srcUserPicked:false, tgtUserPicked:false};
+    const cv = S.charVoices[ch.code];
+    const charGender = guessCharGender(ch);
+    const srcId = 'srcVoice__'+sanitizeId(ch.code);
+    const tgtId = 'tgtVoice__'+sanitizeId(ch.code);
+
+    const card = document.createElement('div');
+    card.className = 'char-card';
+    card.innerHTML = `
+      <div class="char-head">
+        <span class="char-name">${escapeHtml(ch.name)}</span>
+        <span class="char-role-tag">${escapeHtml(ch.code)}</span>
+        ${ch.role ? `<span class="char-role">— ${escapeHtml(ch.role)}</span>` : ''}
+      </div>
+      <div class="char-divider"></div>
+      <div class="char-voice-row">
+        <div class="voice-col">
+          <div class="voice-label src"><span class="dot" id="dot_${srcId}"></span>Source voice</div>
+          <select id="${srcId}"></select>
+          <div class="voice-note-row">
+            <div class="voice-note" id="note_${srcId}"></div>
+            <button type="button" class="voice-test-btn src" id="test_${srcId}" title="Preview this voice">Test ▶</button>
+          </div>
+        </div>
+        <div class="voice-col">
+          <div class="voice-label tgt"><span class="dot" id="dot_${tgtId}"></span>Target voice</div>
+          <select id="${tgtId}"></select>
+          <div class="voice-note-row">
+            <div class="voice-note" id="note_${tgtId}"></div>
+            <button type="button" class="voice-test-btn tgt" id="test_${tgtId}" title="Preview this voice">Test ▶</button>
+          </div>
+        </div>
+      </div>`;
+    wrap.appendChild(card);
+
+    if(noSrc){
+      const sel = document.getElementById(srcId);
+      sel.innerHTML = '<option value="">— no separate source voice needed —</option>';
+      sel.disabled = true;
+      cv.src = '';
+      cv.srcLang = '';
+      cv.srcUserPicked = false;
+      const srcTestBtn = document.getElementById('test_'+srcId);
+      if(srcTestBtn) srcTestBtn.disabled = true;
+    } else {
+      // Only trust the saved URI as a "keep my manual override" signal if the
+      // user actually chose it themselves for this exact language — an
+      // auto-picked default is never sticky, so as more voices finish loading
+      // (e.g. a proper regional voice arriving after a placeholder), the pick
+      // keeps improving instead of freezing on whatever loaded first.
+      const prevSrcURI = (cv.srcUserPicked && cv.srcLang===srcLangCode) ? cv.src : '';
+      const {chosenURI, matches, usingFallback:srcUsingFallback, genderMatched} = populateVoiceSelect(srcId, srcLangCode, prevSrcURI, charGender);
+      cv.src = chosenURI;
+      cv.srcLang = srcLangCode;
+      updateDotAndNote(srcId, chosenURI, matches, genderMatched, srcUsingFallback, charGender, srcLang && srcLang.label);
+      document.getElementById(srcId).onchange = e=>{
+        cv.src = e.target.value;
+        cv.srcLang = srcLangCode;
+        cv.srcUserPicked = true;
+        updateDotAndNote(srcId, e.target.value, matches, false, srcUsingFallback, charGender, srcLang && srcLang.label);
+      };
+      const srcTestBtn = document.getElementById('test_'+srcId);
+      if(srcTestBtn) srcTestBtn.onclick = ()=> previewVoice(cv.src, srcVoiceLangCode, srcTestBtn);
+    }
+
+    const prevTgtURI = (cv.tgtUserPicked && cv.tgtLang===tgtLangCode) ? cv.tgt : '';
+    const {chosenURI:tURI, matches:tMatches, usingFallback, genderMatched:tGenderMatched} = populateVoiceSelect(tgtId, tgtLangCode, prevTgtURI, charGender);
+    cv.tgt = tURI;
+    cv.tgtLang = tgtLangCode;
+    updateDotAndNote(tgtId, tURI, tMatches, tGenderMatched, usingFallback, charGender, tgtLang && tgtLang.label);
+    document.getElementById(tgtId).onchange = e=>{
+      cv.tgt = e.target.value;
+      cv.tgtLang = tgtLangCode;
+      cv.tgtUserPicked = true;
+      updateDotAndNote(tgtId, e.target.value, tMatches, false, usingFallback, charGender, tgtLang && tgtLang.label);
+    };
+    const tgtTestBtn = document.getElementById('test_'+tgtId);
+    if(tgtTestBtn) tgtTestBtn.onclick = ()=> previewVoice(cv.tgt, tgtVoiceLangCode, tgtTestBtn);
+  });
+}
+
+function populateVoicesForOSHelp(){
+  const course = currentCourse();
+  const tgtLang = langByCode(course, S.tgtCode);
+  const code = tgtLang ? tgtLang.code : 'en';
+  const {matches, usingFallback, regionMatched, profile, alwaysApproximate} = getVoiceCandidates(code);
+  updateOSVoiceHelp(matches, usingFallback, alwaysApproximate, regionMatched, profile);
+}
+
+function updateListenNote(){
+  const txt = S.style==='exposure'
+    ? 'Hands-free: each line plays twice with a pause after each, then moves on automatically — no input needed.'
+    : '';
+  document.getElementById('listenNote').textContent = txt;
+  const drillNote = document.getElementById('drillListenNote');
+  if(drillNote) drillNote.textContent = txt;
+}
+
+document.getElementById('testAudioBtn').addEventListener('click', async ()=>{
+  const resultEl = document.getElementById('audioTestResult');
+  if(!window.speechSynthesis){
+    resultEl.textContent = '⚠ This browser has no speech synthesis API at all.';
+    resultEl.style.color = 'var(--danger)';
+    return;
+  }
+  resultEl.textContent = 'Playing…';
+  resultEl.style.color = 'var(--ink-soft)';
+  await voicesReady();
+  const u = new SpeechSynthesisUtterance('One, two, three.');
+  let heard = false;
+  u.onstart = ()=>{ heard = true; };
+  u.onend = ()=>{
+    resultEl.textContent = heard ? '✓ If you heard "one two three," audio works.' : '⚠ No sound started — try opening this file directly in a browser tab instead of a preview, or switch browsers.';
+    resultEl.style.color = heard ? 'var(--ok)' : 'var(--danger)';
+  };
+  u.onerror = ()=>{
+    resultEl.textContent = '⚠ Speech synthesis errored — try opening this file directly in a browser tab, or switch to Chrome.';
+    resultEl.style.color = 'var(--danger)';
+  };
+  speechSynthesis.speak(u);
+  setTimeout(()=>{ if(!heard && resultEl.textContent==='Playing…'){
+    resultEl.textContent = '⚠ Nothing played after 3s — likely blocked by this view. Download the file and open it directly in a browser tab.';
+    resultEl.style.color = 'var(--danger)';
+  } }, 3000);
+});
+
+/* ============================================================
+   COURSE LOADING FROM .XLSX
+   Expected layout (matches the studio's Preview Track sheets):
+     row  0: title (optionally "PREVIEW TRACK — <title>")
+     row  1: setting / description
+     row  2: character legend, e.g. "MAN — friendly, local.   WOMAN — warm, from far away."
+     ...
+     header row: col A = SPEAKER, col B = base/English line, col C.. = "Label (code)"
+     data rows follow until the sheet ends
+   ============================================================ */
+const KNOWN_VOICE_LANG = {
+  en:'en-US', ro:'ro-RO', it:'it-IT', es:'es-ES', 'es-ES':'es-ES',
+  'pt-BR':'pt-BR', 'pt-PT':'pt-PT', pt:'pt-PT',
+  'fr-FR':'fr-FR', 'fr-AFR':'fr-FR', fr:'fr-FR',
+  'la-CI':'la', 'la-VA':'la', 'la-HV':'la', la:'la',
+  de:'de-DE', ru:'ru-RU', sw:'sw-KE', el:'el-GR', ja:'ja-JP', zh:'zh-CN',
+  ko:'ko-KR', ar:'ar-SA', hi:'hi-IN', nl:'nl-NL', pl:'pl-PL', tr:'tr-TR',
+};
+function guessVoiceLang(code){
+  if(KNOWN_VOICE_LANG[code]) return KNOWN_VOICE_LANG[code];
+  if(code.toLowerCase().startsWith('la')) return 'la';
+  if(code.includes('-')) return code;
+  return code+'-'+code.toUpperCase();
+}
+
+/* Production notes (scene-break dividers, seed notes for future episodes,
+   freeform production commentary, etc.) live in the same speaker column as
+   real dialogue but aren't lines anyone speaks — they must never become a
+   "character" or a drill line. */
+function isProductionNoteRow(row){
+  if(!row) return true;
+  const s = String(row[0]||'').trim();
+  if(!s) return true;
+  if(/^[—–\-\s]+$/.test(s)) return true;           // a row that's just dashes
+  if(/scene break/i.test(s)) return true;
+  if(/seed note/i.test(s)) return true;
+  if(/production note/i.test(s)) return true;
+  // A "speaker" cell with nothing in the other columns has no line to
+  // speak — it's a structural marker (section divider like "DIALOGUE" or
+  // "FRAME DRILLS — ..."), not a character, regardless of how short it is.
+  const restEmpty = row.slice(1).every(c=>!String(c||'').trim());
+  if(restEmpty) return true;
+  const norm = s.replace(/:\s*$/,'').trim();
+  // Drill-frame label rows (e.g. "DRILL 1 FRAME:") hold a pattern template,
+  // not a character's line — never a real speaker.
+  if(/frame$/i.test(norm)) return true;
+  // A speaker cell combining multiple names ("ROSA: / LEO:") or a
+  // placeholder ("n/a", "tbd") isn't a single real character either.
+  if(s.includes('/')) return true;
+  if(/^(n\/?a|tbd|none)$/i.test(norm)) return true;
+  return false;
+}
+/* Normalizes a raw speaker-column value into a stable character code —
+   trims stray whitespace and a trailing colon (e.g. "COWORKER:" -> "COWORKER")
+   so the same code is used consistently for the character list, the voice
+   picker, and every line's speaker lookup. */
+function normalizeSpeakerCode(raw){
+  return String(raw||'').trim().replace(/:\s*$/,'');
+}
+
+/* ---- column-header detection (no guessing which column means "speaker" —
+   we find the header ROW, list its column labels, and let the person tell
+   us which one is the characters) ---- */
+function trimTrailingEmpty(arr){
+  let end = arr.length;
+  while(end>0 && !String(arr[end-1]||'').trim()) end--;
+  return arr.slice(0, end);
+}
+/* Finds the most likely "column header" row near the top of a sheet: a row
+   with at least 2 short, non-empty cells that don't look like "Label:
+   value" metadata (those end in a colon, e.g. "Lesson #:", "Scenario(s)
+   Covered:" — real column headers like "SPEAKER" or "Speaker" don't). */
+function findHeaderRow(rows){
+  for(let i=0;i<Math.min(rows.length,15);i++){
+    const row = rows[i]||[];
+    const cells = row.map(c=>String(c||'').trim());
+    const nonEmpty = cells.filter(c=>c);
+    if(nonEmpty.length<2) continue;
+    if(nonEmpty.some(c=>c.length>90)) continue;
+    if(nonEmpty.some(c=>/:\s*$/.test(c))) continue;
+    return {rowIdx:i, cells:trimTrailingEmpty(cells)};
+  }
+  return null;
+}
+/* Scans every sheet, finds each one's header row, and groups sheets that
+   share the exact same set of column labels — that's a "layout". A file's
+   real episodes almost always share one layout; other sheets (a QA log, a
+   schedule, notes) tend to have their own different column labels and end
+   up in their own smaller group instead of getting mixed in. */
+function analyzeWorkbookLayouts(workbook){
+  const groups = [];
+  for(const sheetName of workbook.SheetNames){
+    if(/template/i.test(sheetName)) continue;
+    const ws = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+    const hdr = findHeaderRow(rows);
+    if(!hdr || hdr.cells.length<1) continue;
+    const key = JSON.stringify(hdr.cells);
+    let g = groups.find(g=>g.headerKey===key);
+    if(!g){ g = {headerKey:key, headers:hdr.cells, sheets:[]}; groups.push(g); }
+    g.sheets.push({name:sheetName, rowIdx:hdr.rowIdx});
+  }
+  groups.sort((a,b)=>b.sheets.length-a.sheets.length);
+  return groups;
+}
+
+/* Builds a course from one layout group, once the person has said which
+   column (by position within that layout's header row) holds the
+   character/speaker names. Only sheets in this exact layout are used. */
+function buildCourseFromLayout(workbook, filename, layout, speakerColIdx){
+  const sheetsOut = [];
+  const langsMap = {};
+  const charRoleByCode = {};
+  const charOrder = [];
+  let courseTitle = null;
+
+  for(const {name:sheetName, rowIdx:headerRowIdx} of layout.sheets){
+    const ws = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+    const headerRow = (rows[headerRowIdx]||[]).slice(speakerColIdx);
+    let sheetHasLangs = false;
+    for(let c=1;c<headerRow.length;c++){
+      const raw = String(headerRow[c]||'').trim();
+      if(!raw) continue;
+      sheetHasLangs = true;
+      const m = raw.match(/^(.*)\(([a-zA-Z-]+)\)\s*$/);
+      let lang;
+      if(m){
+        const code = m[2].trim();
+        lang = {code, label:m[1].trim(), voiceLang:guessVoiceLang(code)};
+      } else if(c===1){
+        lang = {code:'en', label: raw.replace(/\+.*$/,'').trim()||'English', voiceLang:'en-US'};
+      } else {
+        lang = {code:'col'+c, label:raw, voiceLang:'en-US'};
+      }
+      if(!langsMap[lang.code]) langsMap[lang.code] = lang;
+    }
+    if(!sheetHasLangs) continue;
+
+    const dataRows = [];
+    for(let i=headerRowIdx+1;i<rows.length;i++){
+      const rawRow = rows[i];
+      const r = rawRow ? rawRow.slice(speakerColIdx) : null;
+      if(isProductionNoteRow(r)) continue;
+      dataRows.push(r.map(x=>x===undefined?'':x));
+    }
+    if(!dataRows.length) continue;
+
+    const sheetCharMap = {};
+    for(let i=0;i<headerRowIdx;i++){
+      const line = (rows[i]||[]).map(x=>String(x||'')).join(' ');
+      line.split(/\s{2,}/).forEach(p=>{
+        const mm = p.match(/^([A-Za-z][A-Za-z0-9_' -]*?)\s*[—–-]\s*(.+?)\.?\s*$/);
+        if(mm && mm[1].length<24) sheetCharMap[mm[1].trim().toUpperCase()] = mm[2].trim();
+      });
+    }
+    dataRows.forEach(r=>{
+      const sp = normalizeSpeakerCode(r[0]);
+      if(!sp) return;
+      r[0] = sp;
+      const key = sp.toUpperCase();
+      if(charOrder.indexOf(sp)===-1) charOrder.push(sp);
+      if(!charRoleByCode[key] && sheetCharMap[key]) charRoleByCode[key] = sheetCharMap[key];
+    });
+
+    if(courseTitle===null){
+      courseTitle = String((rows[0]||[])[0] || filename).replace(/^PREVIEW TRACK\s*[—–-]\s*/i,'').trim() || filename;
+    }
+    const desc = String((rows[1]||[])[0] || '').trim();
+    sheetsOut.push({ name: sheetName, desc, rows: dataRows });
+  }
+
+  if(!sheetsOut.length) return null;
+
+  const characters = charOrder.map(code=>({
+    code,
+    name: titleCase(code),
+    role: charRoleByCode[code.toUpperCase()] || '',
+  }));
+
+  return {
+    id: 'loaded_'+Date.now(),
+    title: courseTitle || filename,
+    langs: Object.values(langsMap),
+    characters,
+    sheets: sheetsOut,
+  };
+}
+
+document.getElementById('loadCourseBtn').addEventListener('click', ()=>{
+  document.getElementById('courseFileInput').click();
+});
+
+let pendingWorkbook=null, pendingFilename=null, pendingLayouts=null;
+
+document.getElementById('courseFileInput').addEventListener('change', async e=>{
+  const file = e.target.files[0];
+  const noteEl = document.getElementById('courseLoadNote');
+  if(!file) return;
+  noteEl.style.color = 'var(--ink-soft)';
+  noteEl.textContent = 'Reading '+file.name+'…';
+  try{
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, {type:'array'});
+    const layouts = analyzeWorkbookLayouts(wb);
+    if(!layouts.length){
+      noteEl.style.color = 'var(--danger)';
+      noteEl.textContent = 'Couldn\u2019t find any sheet with a clear column-header row in that file.';
+      return;
+    }
+    pendingWorkbook = wb;
+    pendingFilename = file.name.replace(/\.[^.]+$/,'');
+    pendingLayouts = layouts;
+    openColumnPickerModal(layouts);
+    noteEl.textContent = '';
+  }catch(err){
+    noteEl.style.color = 'var(--danger)';
+    noteEl.textContent = 'Could not read that file: '+(err.message||err);
+  }
+  e.target.value = '';
+});
+
+function openModal(id){ document.getElementById(id).classList.add('show'); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+
+function openColumnPickerModal(layouts){
+  const top = layouts[0];
+  const otherCount = layouts.slice(1).reduce((n,g)=>n+g.sheets.length,0);
+  const listEl = document.getElementById('columnPickerOptions');
+  listEl.innerHTML = '';
+  top.headers.forEach((h,i)=>{
+    if(!h) return;
+    const optId = 'colopt_'+i;
+    const row = document.createElement('label');
+    row.className = 'colopt-row';
+    row.setAttribute('for', optId);
+    const input = document.createElement('input');
+    input.type = 'radio'; input.name = 'colopt'; input.value = String(i); input.id = optId;
+    const span = document.createElement('span');
+    span.textContent = h;
+    row.appendChild(input); row.appendChild(span);
+    listEl.appendChild(row);
+  });
+  document.getElementById('columnPickerSheetInfo').textContent =
+    `${top.sheets.length} sheet${top.sheets.length===1?'':'s'} use this column layout`+
+    (otherCount ? ` — ${otherCount} other sheet${otherCount===1?'':'s'} with different columns will be skipped.` : '.');
+  document.getElementById('columnPickerConfirm').disabled = true;
+  document.getElementById('columnPickerConfirmTop').disabled = true;
+  openModal('columnPickerModal');
+}
+document.getElementById('columnPickerOptions').addEventListener('change', ()=>{
+  document.getElementById('columnPickerConfirm').disabled = false;
+  document.getElementById('columnPickerConfirmTop').disabled = false;
+});
+document.getElementById('columnPickerCancel').addEventListener('click', ()=>{
+  closeModal('columnPickerModal');
+  pendingWorkbook=null; pendingFilename=null; pendingLayouts=null;
+});
+function confirmColumnPick(){
+  const sel = document.querySelector('input[name=colopt]:checked');
+  const noteEl = document.getElementById('courseLoadNote');
+  if(!sel || !pendingWorkbook) return;
+  const colIdx = parseInt(sel.value, 10);
+  const layout = pendingLayouts[0];
+  const course = buildCourseFromLayout(pendingWorkbook, pendingFilename, layout, colIdx);
+  closeModal('columnPickerModal');
+  if(!course){
+    noteEl.style.color = 'var(--danger)';
+    noteEl.textContent = 'That column didn\u2019t have any usable dialogue rows under it.';
+  } else {
+    COURSES.push(course);
+    populateCourseSelect();
+    document.getElementById('courseSelect').value = COURSES.length-1;
+    switchCourse(COURSES.length-1);
+    noteEl.style.color = 'var(--ok)';
+    noteEl.textContent = `Loaded "${course.title}" — ${course.characters.length} character${course.characters.length===1?'':'s'}, ${course.langs.length} language${course.langs.length===1?'':'s'}, ${course.sheets[0].rows.length} lines.`;
+  }
+  pendingWorkbook=null; pendingFilename=null; pendingLayouts=null;
+}
+document.getElementById('columnPickerConfirm').addEventListener('click', confirmColumnPick);
+document.getElementById('columnPickerConfirmTop').addEventListener('click', confirmColumnPick);
+
+/* ============================================================
+   SPEECH HELPERS
+   ============================================================ */
+function pickVoiceByURI(uri){
+  return S.voices.find(v=>v.voiceURI===uri) || null;
+}
+// Plays a short sample through one specific voice, independent of the main
+// practice-playback state (token/S.running), so a preview never gets caught
+// up in — or interrupted by — the drill loop's own cancellation logic.
+function previewVoice(uri, langCode, btn){
+  if(!window.speechSynthesis || !uri) return;
+  speechSynthesis.cancel();
+  const v = pickVoiceByURI(uri);
+  const u = new SpeechSynthesisUtterance('One, two, three.');
+  u.rate = S.rate;
+  if(v){ u.voice = v; u.lang = v.lang; } else if(langCode){ u.lang = langCode; }
+  if(btn) btn.disabled = true;
+  const reset = ()=>{ if(btn) btn.disabled = false; };
+  u.onend = reset;
+  u.onerror = reset;
+  speechSynthesis.speak(u);
+}
+function speak(text, langCode, token, voiceURI){
+  return new Promise(resolve=>{
+    if(!text || !window.speechSynthesis){ resolve(); return; }
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = S.rate;
+    const v = pickVoiceByURI(voiceURI);
+    if(v){ u.voice = v; u.lang = v.lang; } else { u.lang = langCode; }
+    u.onend = ()=>resolve();
+    u.onerror = ()=>resolve();
+    speechSynthesis.speak(u);
+    const check = setInterval(()=>{
+      if(token!==S.token){ speechSynthesis.cancel(); clearInterval(check); resolve(); }
+      if(!speechSynthesis.speaking){ clearInterval(check); }
+    }, 120);
+  });
+}
+function estimateMs(text){
+  const words = (text||'').trim().split(/\s+/).filter(Boolean).length || 1;
+  const secs = words / (2.3 * S.rate);
+  return Math.max(500, Math.min(4200, secs*1000));
+}
+function sleep(ms, token){
+  return new Promise(resolve=>{
+    const start = Date.now();
+    const iv = setInterval(()=>{
+      if(token!==S.token || Date.now()-start>=ms){ clearInterval(iv); resolve(); }
+    }, 80);
+  });
+}
+
+let recognizer = null;
+function tryStartRecognition(langCode){
+  const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!Ctor || !S.listenEnabled) return;
+  try{
+    recognizer = new Ctor();
+    recognizer.lang = langCode;
+    recognizer.interimResults = false;
+    recognizer.maxAlternatives = 1;
+    recognizer.onresult = (e)=>{
+      const heard = e.results[0][0].transcript;
+      document.getElementById('heardText').textContent = 'Heard: "'+heard+'"';
+    };
+    recognizer.onerror = ()=>{};
+    recognizer.start();
+  }catch(err){ /* silently ignore */ }
+}
+function stopRecognition(){
+  if(recognizer){ try{ recognizer.stop(); }catch(e){} recognizer=null; }
+}
+
+/* Voice for a given line: falls back gracefully if a character has no
+   dedicated source voice chosen. */
+function voicesForEntry(entry){
+  const cv = S.charVoices[entry.speaker] || {};
+  return { srcURI: cv.src || cv.tgt || '', tgtURI: cv.tgt || cv.src || '' };
+}
+
+/* ============================================================
+   DRILL ENGINE
+   ============================================================ */
+function romanize(n){
+  if(n<=0) return '';
+  const map = [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
+  let out=''; for(const [v,s] of map){ while(n>=v){ out+=s; n-=v; } } return out;
+}
+
+document.getElementById('startBtn').addEventListener('click', async ()=>{
+  if(S.activeLines.length===0){ alert('No lines available for that language combination.'); return; }
+  await voicesReady();
+  document.querySelectorAll('.setup-card').forEach(c=>c.classList.add('hidden'));
+  show('drillScreen');
+  updateLessonNavButtons();
+  S.order = S.activeLines.map((_,i)=>i);
+  if(S.random) shuffleOrder();
+  S.idx = 0;
+  S.attempt = 1;
+  S.running = true;
+  S.paused = false;
+  S.linesCompleted = 0;
+  S.sessionStart = Date.now();
+  document.getElementById('jumpInput').max = S.order.length;
+  document.getElementById('jumpInput').value = 1;
+  document.getElementById('drillRateSlider').value = S.rate;
+  document.getElementById('drillRateVal').textContent = S.rate.toFixed(2)+'×';
+  document.querySelectorAll('#drillStyleRow .toggle-pill').forEach(pl=>pl.classList.toggle('on', pl.dataset.val===S.style));
+  updateListenNote();
+  const supported = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  const wrap = document.getElementById('listenToggleWrap');
+  wrap.innerHTML='';
+  if(supported && S.style==='judge'){
+    const b = document.createElement('button');
+    b.className='btn ghost'; b.textContent='🎤 Try live listen-along: off';
+    b.onclick = ()=>{ S.listenEnabled = !S.listenEnabled; b.textContent = '🎤 Try live listen-along: '+(S.listenEnabled?'on':'off'); };
+    wrap.appendChild(b);
+  }
+  runLine(0);
+});
+
+function updateMilestone(){
+  const total = S.activeLines.length;
+  const cur = S.idx+1;
+  document.getElementById('milestoneStone').innerHTML = `${romanize(cur)}<br>/<br>${romanize(total)}`;
+  document.getElementById('roadFill').style.width = Math.round((cur/total)*100)+'%';
+  document.getElementById('capLeft').textContent = `Line ${cur} of ${total}`;
+  document.getElementById('capRight').textContent = S.style==='judge' ? (S.attempt===2 ? 'attempt 2 of 2' : '') : '';
+}
+
+async function runLine(i){
+  if(i<0 || i>=S.order.length){
+    if(S.loop){
+      if(S.random) shuffleOrder();
+      i = 0;
+    } else {
+      finishSession();
+      return;
+    }
+  }
+  S.idx = i; S.attempt = 1;
+  const myToken = ++S.token;
+  const entry = S.activeLines[S.order[i]];
+  updateMilestone();
+  document.getElementById('jumpInput').value = i+1;
+
+  document.getElementById('speakerTag').textContent = entry.speaker || '\u00A0';
+  document.getElementById('toneTag').textContent = entry.tone || '\u00A0';
+  document.getElementById('sourceLineEl').textContent = entry.source || '';
+  document.getElementById('targetLineEl').textContent = '';
+  document.getElementById('yourTurn').classList.remove('show');
+  document.getElementById('heardText').textContent = '';
+
+  if(S.style==='exposure'){
+    await runExposureLine(entry, myToken);
+  } else {
+    await runJudgedLine(entry, myToken, 1);
+  }
+}
+
+async function runExposureLine(entry, token){
+  const {srcURI, tgtURI} = voicesForEntry(entry);
+  setPhase('Listen');
+  if(entry.source && S.sourceLangGuess){
+    await speak(entry.source, S.sourceLangGuess, token, srcURI);
+    if(token!==S.token) return;
+    await sleep(Math.min(estimateMs(entry.target), 2000), token);
+    if(token!==S.token) return;
+  }
+  document.getElementById('targetLineEl').textContent = entry.target;
+  await speak(entry.target, S.targetLangGuess, token, tgtURI);
+  if(token!==S.token) return;
+  await sleep(estimateMs(entry.target)*1.2, token);
+  if(token!==S.token) return;
+  setPhase('Once more');
+  await speak(entry.target, S.targetLangGuess, token, tgtURI);
+  if(token!==S.token) return;
+  await sleep(estimateMs(entry.target)*1.2, token);
+  if(token!==S.token) return;
+  S.linesCompleted++;
+  advance();
+}
+
+async function runJudgedLine(entry, token, attempt){
+  S.attempt = attempt;
+  updateMilestone();
+  const {srcURI, tgtURI} = voicesForEntry(entry);
+  if(attempt===1){
+    setPhase('Listen');
+    if(entry.source && S.sourceLangGuess){
+      await speak(entry.source, S.sourceLangGuess, token, srcURI);
+      if(token!==S.token) return;
+      await sleep(Math.min(estimateMs(entry.target), 2000), token);
+      if(token!==S.token) return;
+    }
+  } else {
+    setPhase('One more time');
+  }
+  document.getElementById('targetLineEl').textContent = entry.target;
+  await speak(entry.target, S.targetLangGuess, token, tgtURI);
+  if(token!==S.token) return;
+
+  setPhase(attempt===1 ? 'Your turn' : 'Your turn — last try');
+  document.getElementById('yourTurn').classList.add('show');
+  document.getElementById('retryBtn').style.visibility = attempt===1 ? 'visible' : 'hidden';
+  document.getElementById('heardText').textContent = '';
+  tryStartRecognition(S.targetLangGuess==='la' ? 'it-IT' : S.targetLangGuess);
+
+  const repeatPauseMs = estimateMs(entry.target)*1.5;
+
+  if(attempt===1){
+    await new Promise(resolve=>{
+      let settled=false;
+      const done = (verdict)=>{
+        if(settled) return; settled=true;
+        stopRecognition();
+        document.getElementById('yourTurn').classList.remove('show');
+        cleanup();
+        resolve(verdict);
+      };
+      const passH = ()=>done('pass');
+      const retryH = ()=>done('retry');
+      const cleanup = ()=>{
+        document.getElementById('passBtn').removeEventListener('click', passH);
+        document.getElementById('retryBtn').removeEventListener('click', retryH);
+      };
+      document.getElementById('passBtn').addEventListener('click', passH);
+      document.getElementById('retryBtn').addEventListener('click', retryH);
+    }).then(verdict=>{
+      if(token!==S.token) return;
+      if(verdict==='pass'){ flashOK(); S.linesCompleted++; advance(); }
+      else { runJudgedLine(entry, token, 2); }
+    });
+  } else {
+    await new Promise(resolve=>{
+      let settled=false;
+      const done = ()=>{ if(settled) return; settled=true; stopRecognition(); cleanup(); resolve(); };
+      const passH = ()=>done();
+      document.getElementById('passBtn').addEventListener('click', passH);
+      const cleanup = ()=>document.getElementById('passBtn').removeEventListener('click', passH);
+      sleep(repeatPauseMs, token).then(done);
+    });
+    if(token!==S.token) return;
+    document.getElementById('yourTurn').classList.remove('show');
+    S.linesCompleted++;
+    advance();
+  }
+}
+
+function flashOK(){
+  const stage = document.querySelector('.stage');
+  stage.style.transition='background .15s';
+  stage.style.background='#1C2A20';
+  setTimeout(()=>{ stage.style.background=''; }, 300);
+}
+function setPhase(txt){ document.getElementById('phaseLabel').textContent = txt; }
+
+function advance(){
+  if(!S.running) return;
+  runLine(S.idx+1);
+}
+function finishSession(){
+  hide('drillScreen'); show('doneScreen');
+  const mins = Math.max(1, Math.round((Date.now()-S.sessionStart)/60000));
+  document.getElementById('doneStats').textContent =
+    `${S.linesCompleted} line${S.linesCompleted===1?'':'s'} drilled in about ${mins} minute${mins===1?'':'s'}.`;
+}
+
+/* ---- transport controls ---- */
+document.getElementById('playPauseBtn').addEventListener('click', ()=>{
+  S.paused = !S.paused;
+  document.getElementById('playPauseBtn').textContent = S.paused ? '▶' : '⏸';
+  if(S.paused){
+    speechSynthesis.cancel();
+    S.token++;
+    setPhase('Paused');
+  } else {
+    runLine(S.idx);
+  }
+});
+document.getElementById('prevBtn').addEventListener('click', ()=>{
+  speechSynthesis.cancel(); stopRecognition();
+  S.token++;
+  runLine(Math.max(0, S.idx-1));
+});
+document.getElementById('nextBtn').addEventListener('click', ()=>{
+  speechSynthesis.cancel(); stopRecognition();
+  S.token++;
+  runLine(Math.min(S.order.length-1, S.idx+1));
+});
+document.getElementById('repeatBtn').addEventListener('click', ()=>{
+  speechSynthesis.cancel(); stopRecognition();
+  S.token++;
+  runLine(S.idx);
+});
+document.getElementById('loopBtn').addEventListener('click', ()=>{
+  S.loop = !S.loop;
+  document.getElementById('loopBtn').classList.toggle('active', S.loop);
+});
+document.getElementById('randomBtn').addEventListener('click', ()=>{
+  S.random = !S.random;
+  document.getElementById('randomBtn').classList.toggle('active', S.random);
+  if(S.random) shuffleOrder();
+});
+document.getElementById('drillRateSlider').addEventListener('input', e=>{
+  S.rate = parseFloat(e.target.value);
+  document.getElementById('drillRateVal').textContent = S.rate.toFixed(2)+'×';
+});
+document.getElementById('stopBtn').addEventListener('click', ()=>{
+  speechSynthesis.cancel(); stopRecognition();
+  S.running = false; S.token++;
+  finishSession();
+});
+document.getElementById('jumpBtn').addEventListener('click', ()=>{
+  const v = parseInt(document.getElementById('jumpInput').value,10);
+  if(!v || v<1 || v>S.order.length) return;
+  speechSynthesis.cancel(); stopRecognition();
+  S.token++;
+  runLine(v-1);
+});
+
+document.getElementById('restartSameBtn').addEventListener('click', ()=>{
+  hide('doneScreen'); show('drillScreen');
+  if(S.random) shuffleOrder();
+  S.idx = 0; S.running = true; S.paused=false; S.linesCompleted=0; S.sessionStart=Date.now();
+  runLine(0);
+});
+document.getElementById('newSetupBtn').addEventListener('click', ()=>{
+  hide('doneScreen');
+  document.querySelectorAll('.setup-card').forEach(c=>c.classList.remove('hidden'));
+});
+
+/* keyboard shortcuts during judged 'your turn' */
+document.addEventListener('keydown', e=>{
+  if(!document.getElementById('yourTurn').classList.contains('show')) return;
+  if(e.code==='Enter'){ document.getElementById('passBtn').click(); }
+  if(e.code==='Space'){ e.preventDefault(); const r=document.getElementById('retryBtn'); if(r.style.visibility!=='hidden') r.click(); }
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+populateCourseSelect();
+chooseDefaultLangsForCourse(currentCourse());
+populateLangSelects();
+populateSheetSelect();
+S.rate = 0.92;
+buildActiveLines();
+renderCharacterCards();
+updateSheetMeta();
+populateVoicesForOSHelp();
+updateListenNote();
+</script>
+</body>
+</html>

@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gratitude</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700&family=Source+Code+Pro:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#06080a;
+    --bg-hi: radial-gradient(1200px 700px at 15% -10%, #101a1c 0%, transparent 55%), radial-gradient(900px 620px at 108% 8%, #14100c 0%, transparent 55%), #06080a;
+    --card:#0b0d10;
+    --card-hi:#12161b;
+    --border:#2a2f38;
+    --border-soft:#1c2128;
+    --ink:#F4F1E6;
+    --ink-soft:#A9B0AE;
+    --ink-dim:#6E7579;
+    --amber:#F0A93E;
+    --amber-bright:#FFCE7A;
+    --amber-dim:#8a6a34;
+    --amber-glow: rgba(240,169,62,.5);
+    --amber-glow-soft: rgba(240,169,62,.22);
+    --teal:#2FD9C4;
+    --teal-bright:#8BFCEC;
+    --teal-dim:#1f8f80;
+    --teal-glow: rgba(47,217,196,.5);
+    --teal-glow-soft: rgba(47,217,196,.22);
+    --ok:#4FB86B;
+    --danger:#D9614F;
+    --shadow: 0 1px 0 rgba(0,0,0,.5), 0 14px 34px -16px rgba(0,0,0,.85);
+    --radius-lg:18px;
+    --radius-md:13px;
+    /* Reserved clearance for a host-injected sticky/anchor ad bar at the
+       bottom of the viewport. Bump this if the ad unit is taller. */
+    --ad-safe-space:90px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0; height:100%;}
+  html{ -webkit-text-size-adjust:100%; }
+  body{
+    background:var(--bg-hi);
+    color:var(--ink);
+    font-family:'Inter', system-ui, sans-serif;
+    min-height:100%;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:16px 12px 24px;
+  }
+  .wrap{width:100%; max-width:520px;}
+  /* Explicit spacer element (not padding) — trailing padding on a scrolling
+     container like body is unreliably included in the scroll area on some
+     browsers/OSes. A real element guarantees the space is always there and
+     always scrollable-to, regardless of which screen (main/drill) is showing. */
+  .ad-safe-spacer{ height: calc(80px + var(--ad-safe-space, 90px)); width:100%; flex:none; }
+  header.top{text-align:center; margin-bottom:14px; position:relative;}
+  header.top h1{
+    font-family:'Cormorant Garamond', serif;
+    font-weight:700;
+    font-style:italic;
+    font-size:24px;
+    margin:0;
+    color:var(--ink);
+    letter-spacing:.02em;
+    text-shadow:0 0 18px rgba(240,169,62,.35);
+  }
+  header.top p.sub{ font-size:11.5px; color:var(--ink-dim); margin:3px 0 0; }
+
+  .card{
+    background:var(--card);
+    border:1.5px solid var(--amber-dim);
+    border-radius:var(--radius-lg);
+    box-shadow:0 0 0 1px var(--amber-glow-soft), 0 0 30px -10px var(--amber-glow), var(--shadow);
+    padding:14px 16px 13px;
+    margin-bottom:14px;
+    position:relative;
+  }
+  h2.section-title{
+    font-family:'Cormorant Garamond', serif;
+    font-size:17px; font-weight:700; font-style:italic;
+    margin:0 0 8px; color:var(--ink);
+  }
+  .eyebrow-label{
+    font-family:'Source Code Pro', monospace;
+    font-size:11px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--ink-dim); margin:0 0 6px;
+  }
+  label.field-label{
+    display:block; font-size:10px; font-weight:600; color:var(--ink-soft);
+    text-transform:uppercase; letter-spacing:.1em; margin:8px 0 4px;
+    font-family:'Source Code Pro', monospace;
+  }
+  label.field-label:first-child{margin-top:0;}
+  select, input[type=text], input[type=number]{
+    width:100%; font-family:'Inter', inherit; font-size:13.5px;
+    padding:8px 10px; border-radius:9px;
+    border:1.5px solid var(--border); background:#0d0f12;
+    color:var(--ink);
+  }
+  select:focus, input:focus{ outline:2px solid var(--amber-dim); outline-offset:1px; }
+  select option{ background:#12161b; color:var(--ink); }
+  select:disabled{ opacity:.4; }
+
+  /* ---- language + voice split card (this card keeps its own shape:      ---- */
+  /* ---- numbered 1-10 down the left for language, 1-10 down the right    ---- */
+  /* ---- for voice — two parallel numbered columns, not paired rows.      ---- */
+  .split-card{ display:flex; gap:14px; margin-top:2px; }
+  .split-col{ flex:1 1 50%; min-width:0; }
+  .split-col-head{
+    font-family:'Source Code Pro', monospace; font-size:10px; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--ink-dim); margin:0 0 6px; padding-left:22px;
+  }
+  .split-col.tgt .split-col-head{ color:var(--teal-bright); }
+  .split-col.src .split-col-head{ color:var(--amber-bright); }
+  .split-list{ display:flex; flex-direction:column; gap:6px; }
+  .split-row{ display:flex; align-items:center; gap:6px; }
+  .split-row .slot-num{
+    font-family:'Source Code Pro', monospace; font-size:10px; color:var(--ink-dim);
+    width:16px; flex:none; text-align:right;
+  }
+  .split-row select{ flex:1; min-width:0; font-size:12.5px; padding:7px 8px; }
+  .split-row.active .slot-num{ color:var(--amber-bright); }
+  .split-row.active select{ border-color:var(--border-soft); }
+
+  .course-row{ display:flex; gap:8px; align-items:flex-end; }
+  .btn{
+    font-family:'Inter', inherit; font-weight:700; font-size:13px;
+    padding:9px 13px; border-radius:10px; border:1.5px solid transparent;
+    background:var(--amber); color:#1A1206; cursor:pointer;
+    box-shadow:0 0 18px -8px var(--amber-glow);
+  }
+  .btn:hover{ filter:brightness(1.08); }
+  .btn.secondary{ background:var(--teal); color:#062824; box-shadow:0 0 18px -8px var(--teal-glow); }
+  .btn.ghost{ background:transparent; border-color:var(--border); color:var(--ink-soft); box-shadow:none; }
+  .btn.ghost:hover{ color:var(--ink); border-color:var(--ink-dim); }
+  .btn.block{ width:100%; padding:11px; font-size:14px; margin-top:2px; }
+  .btn:disabled{ opacity:.45; cursor:not-allowed; filter:none; box-shadow:none; }
+
+  /* ---- hero "start practice" panel — the big play button, above everything else ---- */
+  .hero-card{
+    background:linear-gradient(160deg, #0e2d2a 0%, #0a201f 55%, #071615 100%);
+    border:1.5px solid var(--teal);
+    border-radius:var(--radius-lg);
+    box-shadow:0 0 0 1px var(--teal-glow-soft), 0 0 44px -10px var(--teal-glow), var(--shadow);
+    padding:16px 18px;
+    margin-bottom:14px;
+    position:relative;
+  }
+  .hero-start-btn{
+    display:flex; align-items:center; gap:16px; width:100%;
+    background:transparent; border:none; margin:0; padding:0;
+    cursor:pointer; text-align:left;
+  }
+  .hero-start-btn:disabled{ opacity:.5; cursor:not-allowed; }
+  .hero-play{
+    flex:none; width:64px; height:64px; border-radius:50%;
+    background:#05100f; border:1.5px solid var(--amber);
+    color:var(--amber-bright); font-size:20px;
+    display:flex; align-items:center; justify-content:center; padding-left:4px;
+    box-shadow:0 0 20px -3px var(--amber-glow), inset 0 0 12px -4px var(--amber-glow);
+  }
+  .hero-text{ display:flex; flex-direction:column; gap:3px; min-width:0; flex:1 1 auto; }
+  .hero-eyebrow{
+    font-family:'Inter', inherit; font-size:15px; font-weight:800;
+    letter-spacing:.03em; text-transform:uppercase; color:var(--amber-bright);
+    line-height:1.2;
+  }
+  .hero-title{
+    font-family:'Inter', inherit; font-size:15px; font-weight:600;
+    color:var(--ink); line-height:1.3;
+  }
+  .hero-stats{
+    display:flex; align-items:center; flex-wrap:wrap; gap:5px;
+    font-size:11px; color:var(--ink-soft); margin-top:2px;
+  }
+  .hero-start-btn:hover .hero-play{ filter:brightness(1.1); }
+
+  .toggle-row{ display:flex; gap:6px; }
+  .toggle-pill{
+    flex:1; padding:8px 10px; border-radius:9px; border:1.5px solid var(--border);
+    background:#0d0f12; color:var(--ink-soft); font-size:12.5px; font-weight:600; cursor:pointer;
+  }
+  .toggle-pill.on{ background:var(--amber); border-color:var(--amber); color:#1A1206; box-shadow:0 0 16px -7px var(--amber-glow); }
+
+  .rate-row{ display:flex; align-items:center; gap:10px; }
+  .rate-row input[type=range]{ flex:1; accent-color:var(--amber); }
+  .rate-row span{ font-family:'Source Code Pro', monospace; font-size:12px; color:var(--ink-soft); width:40px; text-align:right; }
+
+  .note{ font-size:11.5px; color:var(--ink-soft); margin-top:6px; line-height:1.45; }
+  .note.warn{ background:#1E1712; border:1px solid #4A3A1E; color:#E3C68A; border-radius:10px; padding:10px 12px; }
+  .hidden{ display:none !important; }
+
+  /* ---- drill screen ---- */
+  .drill-wrap{ width:100%; max-width:520px; }
+
+  .player-nav{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:14px; }
+  .nav-btn{
+    display:flex; align-items:center; gap:6px;
+    height:36px; padding:0 14px; border-radius:18px;
+    border:1.5px solid var(--amber-dim); background:var(--card); color:var(--ink-soft);
+    font-family:'Source Code Pro', monospace; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
+    cursor:pointer; box-shadow:0 0 12px -7px var(--amber-glow); white-space:nowrap;
+  }
+  .nav-btn:hover{ color:var(--ink); border-color:var(--amber); }
+  .nav-btn.active{ border-color:var(--amber); color:var(--ink); box-shadow:0 0 16px -6px var(--amber-glow); }
+  .nav-btn.nav-home{
+    flex:none; width:36px; height:36px; padding:0; border-radius:50%; justify-content:center;
+    border-color:var(--border); font-size:15px;
+  }
+  .nav-btn.nav-home:hover{ border-color:var(--ink-dim); }
+
+  .milestone{ display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  .road{ flex:1; }
+  .track{ height:6px; border-radius:5px; background:var(--border-soft); overflow:hidden; }
+  .fill{ height:100%; background:linear-gradient(90deg, var(--amber), var(--teal)); border-radius:5px; transition:width .3s; }
+  .cap{ display:flex; justify-content:space-between; font-size:10.5px; color:var(--ink-dim); margin-top:5px; font-family:'Source Code Pro', monospace; }
+
+  .stage{
+    background:var(--card); border:1.5px solid var(--amber-dim); border-radius:var(--radius-lg);
+    box-shadow:0 0 0 1px var(--amber-glow-soft), 0 0 30px -10px var(--amber-glow), var(--shadow);
+    padding:22px 18px; text-align:center; min-height:170px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+  }
+  .lang-tag{ font-family:'Source Code Pro', monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--amber-bright); }
+  .voice-tag{ font-size:11.5px; color:var(--ink-dim); }
+  .phase-label{ font-size:12px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.1em; font-family:'Source Code Pro', monospace; }
+  .target-line{ font-family:'Cormorant Garamond', serif; font-size:27px; font-weight:600; color:var(--ink); margin-top:6px; min-height:36px; line-height:1.25; }
+  .en-line{ font-size:13px; color:var(--ink-dim); margin-top:4px; font-style:italic; }
+
+  .transport{ display:flex; justify-content:center; gap:7px; margin-top:14px; flex-wrap:wrap; }
+  .icon-btn{
+    width:40px; height:40px; border-radius:50%; border:1.5px solid var(--amber-dim);
+    background:var(--card); color:var(--ink-soft); font-size:14px; cursor:pointer;
+    box-shadow:0 0 12px -7px var(--amber-glow);
+  }
+  .icon-btn.primary{ background:var(--amber); border-color:var(--amber); color:#1A1206; box-shadow:0 0 18px -6px var(--amber-glow); }
+  .icon-btn.active{ background:var(--teal); border-color:var(--teal); color:#062824; box-shadow:0 0 18px -6px var(--teal-glow); }
+  .icon-btn:hover{ color:var(--ink); }
+  .icon-btn.active:hover{ color:#062824; }
+
+  .settings-panel{ background:var(--card-hi); border:1px solid var(--border-soft); border-radius:12px; padding:10px 12px; margin-top:10px; }
+
+  .drill-foot{ display:flex; justify-content:space-between; align-items:center; margin-top:16px; flex-wrap:wrap; gap:10px; }
+  .jump{ display:flex; align-items:center; gap:8px; }
+  .jump input{ width:64px; padding:8px 10px; }
+
+  .done{ text-align:center; }
+  .done h2{ font-family:'Cormorant Garamond', serif; font-style:italic; font-size:28px; margin:0 0 8px; color:var(--ink); text-shadow:0 0 18px rgba(47,217,196,.35); }
+  .small-muted{ font-size:12px; color:var(--ink-dim); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <h1>Gratitude</h1>
+    <p class="sub">Gratitude &amp; Abundance — affirmations in the languages you choose</p>
+  </header>
+
+  <!-- ===================== START PRACTICE (hero) ===================== -->
+  <section class="hero-card setup-card">
+    <button class="hero-start-btn" id="startBtn">
+      <span class="hero-play">▶</span>
+      <span class="hero-text">
+        <span class="hero-eyebrow">Begin Practice</span>
+        <span class="hero-title">Gratitude &amp; Abundance</span>
+        <span class="hero-stats" id="startNote"></span>
+      </span>
+    </button>
+  </section>
+
+  <!-- ===================== SETUP ===================== -->
+  <section id="setup" class="card setup-card">
+    <h2 class="section-title">Sheet</h2>
+    <label class="field-label">Pronunciation set</label>
+    <select id="sheetSelect">
+      <option value="male" selected>Male Grammar</option>
+      <option value="female">Female Grammar</option>
+    </select>
+  </section>
+
+  <section class="card setup-card">
+    <h2 class="section-title">Languages &amp; accents</h2>
+    <div class="eyebrow-label">Up to 10 slots · plays in slot order, each line spoken twice per language</div>
+    <div class="split-card">
+      <div class="split-col src">
+        <div class="split-col-head">Language</div>
+        <div class="split-list" id="langList"></div>
+      </div>
+      <div class="split-col tgt">
+        <div class="split-col-head">Voice</div>
+        <div class="split-list" id="voiceList"></div>
+      </div>
+    </div>
+    <div class="note" id="voiceLoadNote"></div>
+  </section>
+
+  <!-- ===================== DRILL SCREEN ===================== -->
+  <section id="drillScreen" class="drill-wrap hidden">
+    <div class="player-nav">
+      <button class="nav-btn" id="sheetMaleBtn">Male Grammar</button>
+      <button class="nav-btn nav-home" id="playerHomeBtn" title="Back to setup">⌂</button>
+      <button class="nav-btn" id="sheetFemaleBtn">Female Grammar</button>
+    </div>
+    <div class="milestone">
+      <div class="road">
+        <div class="track"><div class="fill" id="roadFill" style="width:0%"></div></div>
+        <div class="cap"><span id="capLeft">Line 1 of 1</span><span id="capRight" class="small-muted"></span></div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="lang-tag" id="langTag">&nbsp;</div>
+      <div class="voice-tag" id="voiceTag">&nbsp;</div>
+      <div class="phase-label" id="phaseLabel">Getting ready…</div>
+      <div class="target-line" id="targetLineEl"></div>
+      <div class="en-line" id="enLineEl"></div>
+    </div>
+
+    <div class="transport">
+      <button class="icon-btn" id="prevBtn" title="Previous line">⏮</button>
+      <button class="icon-btn" id="repeatBtn" title="Repeat this line">↺</button>
+      <button class="icon-btn primary" id="playPauseBtn" title="Play / Pause">⏸</button>
+      <button class="icon-btn" id="nextBtn" title="Skip to next line">⏭</button>
+      <button class="icon-btn active" id="loopBtn" title="Loop (on by default — repeats from the start when finished)">🔁</button>
+      <button class="icon-btn" id="stopBtn" title="End session">⏹</button>
+    </div>
+
+    <div class="settings-panel" id="settingsPanel">
+      <label class="field-label" style="margin-top:0;">Speaking rate</label>
+      <div class="rate-row">
+        <input type="range" id="drillRateSlider" min="0.6" max="1.4" step="0.05" value="0.92">
+        <span id="drillRateVal">0.92×</span>
+      </div>
+      <div class="small-muted" style="margin-top:8px;">Each line plays once, then again, in the first selected language — then moves to the next selected language for the same line — before advancing to the next line. Toggle 🔁 off to stop after one full pass.</div>
+    </div>
+
+    <div class="drill-foot">
+      <div class="jump">
+        <label for="jumpInput" class="small-muted">Jump to line</label>
+        <input type="number" id="jumpInput" min="1" value="1">
+        <button class="btn ghost" id="jumpBtn">Go</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== DONE SCREEN ===================== -->
+  <footer class="done card hidden" id="doneScreen">
+    <h2>Session complete</h2>
+    <p class="section-title" id="doneStats" style="font-family:inherit; font-style:normal; font-size:14px; font-weight:400; color:var(--ink-soft);"></p>
+    <div class="drill-foot" style="justify-content:center; gap:10px;">
+      <button class="btn secondary" id="restartSameBtn">Run it again</button>
+      <button class="btn" id="newSetupBtn">New setup</button>
+    </div>
+  </footer>
+
+  <div class="ad-safe-spacer"></div>
+
+</div>
+
+<script>
+/* ============================================================
+   EMBEDDED DATA — Gratitude & Abundance
+   Self-contained: no file upload, no column picker, single narrator.
+   LANGS: selectable languages. LINES: each affirmation line with
+   male- and female-sheet text per language code (identical for
+   languages with no first-person gender agreement).
+   ============================================================ */
+const LANGS = [{"code": "es", "label": "Spanish", "voiceLang": "es-ES"}, {"code": "fr-FR", "label": "French (Parisian)", "voiceLang": "fr-FR"}, {"code": "pt-BR", "label": "Portuguese (Brazilian)", "voiceLang": "pt-BR"}, {"code": "it", "label": "Italian", "voiceLang": "it-IT"}, {"code": "ro", "label": "Romanian", "voiceLang": "ro-RO"}, {"code": "la-VA", "label": "Latin (Modern Ecclesiastical)", "voiceLang": "la"}, {"code": "la-CI", "label": "Latin (Classical)", "voiceLang": "la"}, {"code": "la-HV", "label": "Latin (Hispania Vulgaris)", "voiceLang": "la"}, {"code": "el", "label": "Greek", "voiceLang": "el-GR"}, {"code": "grc", "label": "Ancient Greek", "voiceLang": "el-GR"}, {"code": "de", "label": "German", "voiceLang": "de-DE"}, {"code": "ru", "label": "Russian", "voiceLang": "ru-RU"}, {"code": "sw", "label": "Swahili", "voiceLang": "sw-KE"}, {"code": "zu", "label": "isiZulu", "voiceLang": "zu-ZA"}, {"code": "xh", "label": "isiXhosa", "voiceLang": "xh-ZA"}, {"code": "ja-casual", "label": "Japanese (Informal)", "voiceLang": "ja-JP"}, {"code": "sm", "label": "Samoan", "voiceLang": "sm-WS"}, {"code": "to", "label": "Tongan", "voiceLang": "to-TO"}, {"code": "en", "label": "English", "voiceLang": "en-US"}];
+const LINES = [{"en": "Thank you.", "male": {"es": "Gracias.", "fr-FR": "Merci.", "pt-BR": "Obrigado.", "it": "Grazie.", "ro": "Mulțumesc.", "la-VA": "Gratias ago.", "la-CI": "Gratias ago.", "la-HV": "Gratias ago.", "de": "Danke.", "ru": "Спасибо.", "sw": "Asante.", "zu": "Ngiyabonga.", "xh": "Enkosi.", "ja-casual": "ありがとう。", "sm": "Fa'afetai.", "to": "Mālō.", "en": "Thank you.", "el": "Ευχαριστώ.", "grc": "Εὐχαριστῶ."}, "female": {"es": "Gracias.", "fr-FR": "Merci.", "pt-BR": "Obrigada.", "it": "Grazie.", "ro": "Mulțumesc.", "la-VA": "Gratias ago.", "la-CI": "Gratias ago.", "la-HV": "Gratias ago.", "de": "Danke.", "ru": "Спасибо.", "sw": "Asante.", "zu": "Ngiyabonga.", "xh": "Enkosi.", "ja-casual": "ありがとう。", "sm": "Fa'afetai.", "to": "Mālō.", "en": "Thank you.", "el": "Ευχαριστώ.", "grc": "Εὐχαριστῶ."}}, {"en": "I am grateful.", "male": {"es": "Estoy agradecido.", "fr-FR": "Je suis reconnaissant.", "pt-BR": "Sou grato.", "it": "Sono grato.", "ro": "Sunt recunoscător.", "la-VA": "Gratus sum.", "la-CI": "Gratus sum.", "la-HV": "Gratus sum.", "de": "Ich bin dankbar.", "ru": "Я благодарен.", "sw": "Nashukuru.", "zu": "Nginokubonga.", "xh": "Ndiyabulela.", "ja-casual": "感謝してる。", "sm": "Ua ou fa'afetai.", "to": "'Oku ou fakafeta'i.", "en": "I am grateful.", "el": "Είμαι ευγνώμων.", "grc": "Χάριν ἔχω."}, "female": {"es": "Estoy agradecida.", "fr-FR": "Je suis reconnaissante.", "pt-BR": "Sou grata.", "it": "Sono grata.", "ro": "Sunt recunoscătoare.", "la-VA": "Grata sum.", "la-CI": "Grata sum.", "la-HV": "Grata sum.", "de": "Ich bin dankbar.", "ru": "Я благодарна.", "sw": "Nashukuru.", "zu": "Nginokubonga.", "xh": "Ndiyabulela.", "ja-casual": "感謝してる。", "sm": "Ua ou fa'afetai.", "to": "'Oku ou fakafeta'i.", "en": "I am grateful.", "el": "Είμαι ευγνώμων.", "grc": "Χάριν ἔχω."}}, {"en": "I am grateful for life.", "male": {"es": "Estoy agradecido por la vida.", "fr-FR": "Je suis reconnaissant pour la vie.", "pt-BR": "Sou grato pela vida.", "it": "Sono grato per la vita.", "ro": "Sunt recunoscător pentru viață.", "la-VA": "Gratus sum pro vita.", "la-CI": "Gratus sum pro vita.", "la-HV": "Gratus sum pro vita.", "de": "Ich bin dankbar für das Leben.", "ru": "Я благодарен за жизнь.", "sw": "Nashukuru kwa uhai.", "zu": "Ngiyabonga ngempilo.", "xh": "Ndiyabulela ngobomi.", "ja-casual": "命に感謝してる。", "sm": "Ua ou fa'afetai mo le ola.", "to": "'Oku ou fakafeta'i ki he mo'ui.", "en": "I am grateful for life.", "el": "Είμαι ευγνώμων για τη ζωή.", "grc": "Χάριν ἔχω τῆς ζωῆς."}, "female": {"es": "Estoy agradecida por la vida.", "fr-FR": "Je suis reconnaissante pour la vie.", "pt-BR": "Sou grata pela vida.", "it": "Sono grata per la vita.", "ro": "Sunt recunoscătoare pentru viață.", "la-VA": "Grata sum pro vita.", "la-CI": "Grata sum pro vita.", "la-HV": "Grata sum pro vita.", "de": "Ich bin dankbar für das Leben.", "ru": "Я благодарна за жизнь.", "sw": "Nashukuru kwa uhai.", "zu": "Ngiyabonga ngempilo.", "xh": "Ndiyabulela ngobomi.", "ja-casual": "命に感謝してる。", "sm": "Ua ou fa'afetai mo le ola.", "to": "'Oku ou fakafeta'i ki he mo'ui.", "en": "I am grateful for life.", "el": "Είμαι ευγνώμων για τη ζωή.", "grc": "Χάριν ἔχω τῆς ζωῆς."}}, {"en": "I thank you for this life.", "male": {"es": "Te doy gracias por esta vida.", "fr-FR": "Je te remercie pour cette vie.", "pt-BR": "Agradeço por esta vida.", "it": "Ti ringrazio per questa vita.", "ro": "Îți mulțumesc pentru această viață.", "la-VA": "Tibi gratias ago pro hac vita.", "la-CI": "Tibi gratias ago pro hac vita.", "la-HV": "Tibi gratias do pro hac vita.", "de": "Ich danke dir für dieses Leben.", "ru": "Я благодарю тебя за эту жизнь.", "sw": "Nakushukuru kwa maisha haya.", "zu": "Ngiyakubonga ngalempilo.", "xh": "Ndiyakubulela ngobu bomi.", "ja-casual": "この命、ありがとう。", "sm": "Ou te fa'afetai atu i lenei olaga.", "to": "'Oku ou fakafeta'i atu ki he mo'ui ni.", "en": "I thank you for this life.", "el": "Σε ευχαριστώ για αυτή τη ζωή.", "grc": "Εὐχαριστῶ σοι ταύτης τῆς ζωῆς."}, "female": {"es": "Te doy gracias por esta vida.", "fr-FR": "Je te remercie pour cette vie.", "pt-BR": "Agradeço por esta vida.", "it": "Ti ringrazio per questa vita.", "ro": "Îți mulțumesc pentru această viață.", "la-VA": "Tibi gratias ago pro hac vita.", "la-CI": "Tibi gratias ago pro hac vita.", "la-HV": "Tibi gratias do pro hac vita.", "de": "Ich danke dir für dieses Leben.", "ru": "Я благодарю тебя за эту жизнь.", "sw": "Nakushukuru kwa maisha haya.", "zu": "Ngiyakubonga ngalempilo.", "xh": "Ndiyakubulela ngobu bomi.", "ja-casual": "この命、ありがとう。", "sm": "Ou te fa'afetai atu i lenei olaga.", "to": "'Oku ou fakafeta'i atu ki he mo'ui ni.", "en": "I thank you for this life.", "el": "Σε ευχαριστώ για αυτή τη ζωή.", "grc": "Εὐχαριστῶ σοι ταύτης τῆς ζωῆς."}}, {"en": "I am love.", "male": {"es": "Soy amor.", "fr-FR": "Je suis amour.", "pt-BR": "Sou amor.", "it": "Sono amore.", "ro": "Sunt iubire.", "la-VA": "Amor sum.", "la-CI": "Amor sum.", "la-HV": "Amor sum.", "de": "Ich bin Liebe.", "ru": "Я — любовь.", "sw": "Mimi ni upendo.", "zu": "Ngiluthando.", "xh": "Ndiluthando.", "ja-casual": "愛だ。", "sm": "O a'u o le alofa.", "to": "Ko au ko e 'ofa.", "en": "I am love.", "el": "Είμαι αγάπη.", "grc": "Ἀγάπη εἰμί."}, "female": {"es": "Soy amor.", "fr-FR": "Je suis amour.", "pt-BR": "Sou amor.", "it": "Sono amore.", "ro": "Sunt iubire.", "la-VA": "Amor sum.", "la-CI": "Amor sum.", "la-HV": "Amor sum.", "de": "Ich bin Liebe.", "ru": "Я — любовь.", "sw": "Mimi ni upendo.", "zu": "Ngiluthando.", "xh": "Ndiluthando.", "ja-casual": "愛だ。", "sm": "O a'u o le alofa.", "to": "Ko au ko e 'ofa.", "en": "I am love.", "el": "Είμαι αγάπη.", "grc": "Ἀγάπη εἰμί."}}, {"en": "I am loved.", "male": {"es": "Soy amado.", "fr-FR": "Je suis aimé.", "pt-BR": "Sou amado.", "it": "Sono amato.", "ro": "Sunt iubit.", "la-VA": "Amatus sum.", "la-CI": "Amatus sum.", "la-HV": "Amatus sum.", "de": "Ich bin geliebt.", "ru": "Я любим.", "sw": "Nimependwa.", "zu": "Ngiyathandwa.", "xh": "Ndiyathandwa.", "ja-casual": "愛されてる。", "sm": "Ua alofa mai ia te a'u.", "to": "'Oku 'ofa'i au.", "en": "I am loved.", "el": "Είμαι αγαπημένος.", "grc": "Ἀγαπητός εἰμι."}, "female": {"es": "Soy amada.", "fr-FR": "Je suis aimée.", "pt-BR": "Sou amada.", "it": "Sono amata.", "ro": "Sunt iubită.", "la-VA": "Amata sum.", "la-CI": "Amata sum.", "la-HV": "Amata sum.", "de": "Ich bin geliebt.", "ru": "Я любима.", "sw": "Nimependwa.", "zu": "Ngiyathandwa.", "xh": "Ndiyathandwa.", "ja-casual": "愛されてる。", "sm": "Ua alofa mai ia te a'u.", "to": "'Oku 'ofa'i au.", "en": "I am loved.", "el": "Είμαι αγαπημένη.", "grc": "Ἀγαπητή εἰμι."}}, {"en": "I am light.", "male": {"es": "Soy luz.", "fr-FR": "Je suis lumière.", "pt-BR": "Sou luz.", "it": "Sono luce.", "ro": "Sunt lumină.", "la-VA": "Lux sum.", "la-CI": "Lux sum.", "la-HV": "Lux sum.", "de": "Ich bin Licht.", "ru": "Я — свет.", "sw": "Mimi ni nuru.", "zu": "Ngiyikhanyi.", "xh": "Ndiyukukhanya.", "ja-casual": "光だ。", "sm": "O a'u o le malamalama.", "to": "Ko au ko e maama.", "en": "I am light.", "el": "Είμαι φως.", "grc": "Φῶς εἰμί."}, "female": {"es": "Soy luz.", "fr-FR": "Je suis lumière.", "pt-BR": "Sou luz.", "it": "Sono luce.", "ro": "Sunt lumină.", "la-VA": "Lux sum.", "la-CI": "Lux sum.", "la-HV": "Lux sum.", "de": "Ich bin Licht.", "ru": "Я — свет.", "sw": "Mimi ni nuru.", "zu": "Ngiyikhanyi.", "xh": "Ndiyukukhanya.", "ja-casual": "光だ。", "sm": "O a'u o le malamalama.", "to": "Ko au ko e maama.", "en": "I am light.", "el": "Είμαι φως.", "grc": "Φῶς εἰμί."}}, {"en": "I am peace.", "male": {"es": "Soy paz.", "fr-FR": "Je suis paix.", "pt-BR": "Sou paz.", "it": "Sono pace.", "ro": "Sunt pace.", "la-VA": "Pax sum.", "la-CI": "Pax sum.", "la-HV": "Pax sum.", "de": "Ich bin Frieden.", "ru": "Я — покой.", "sw": "Mimi ni amani.", "zu": "Ngiyukuthula.", "xh": "Ndiluxolo.", "ja-casual": "平和だ。", "sm": "O a'u o le filemu.", "to": "Ko au ko e melino.", "en": "I am peace.", "el": "Είμαι ειρήνη.", "grc": "Εἰρήνη εἰμί."}, "female": {"es": "Soy paz.", "fr-FR": "Je suis paix.", "pt-BR": "Sou paz.", "it": "Sono pace.", "ro": "Sunt pace.", "la-VA": "Pax sum.", "la-CI": "Pax sum.", "la-HV": "Pax sum.", "de": "Ich bin Frieden.", "ru": "Я — покой.", "sw": "Mimi ni amani.", "zu": "Ngiyukuthula.", "xh": "Ndiluxolo.", "ja-casual": "平和だ。", "sm": "O a'u o le filemu.", "to": "Ko au ko e melino.", "en": "I am peace.", "el": "Είμαι ειρήνη.", "grc": "Εἰρήνη εἰμί."}}, {"en": "I am at peace.", "male": {"es": "Estoy en paz.", "fr-FR": "Je suis en paix.", "pt-BR": "Estou em paz.", "it": "Sono in pace.", "ro": "Sunt în pace.", "la-VA": "In pace sum.", "la-CI": "In pace sum.", "la-HV": "In pace sum.", "de": "Ich bin in Frieden.", "ru": "Я в покое.", "sw": "Nina amani.", "zu": "Nginokuthula.", "xh": "Ndinoxolo.", "ja-casual": "心が穏やか。", "sm": "Ua ou nofo i le filemu.", "to": "'Oku ou nofo melino.", "en": "I am at peace.", "el": "Είμαι εν ειρήνη.", "grc": "Ἐν εἰρήνῃ εἰμί."}, "female": {"es": "Estoy en paz.", "fr-FR": "Je suis en paix.", "pt-BR": "Estou em paz.", "it": "Sono in pace.", "ro": "Sunt în pace.", "la-VA": "In pace sum.", "la-CI": "In pace sum.", "la-HV": "In pace sum.", "de": "Ich bin in Frieden.", "ru": "Я в покое.", "sw": "Nina amani.", "zu": "Nginokuthula.", "xh": "Ndinoxolo.", "ja-casual": "心が穏やか。", "sm": "Ua ou nofo i le filemu.", "to": "'Oku ou nofo melino.", "en": "I am at peace.", "el": "Είμαι εν ειρήνη.", "grc": "Ἐν εἰρήνῃ εἰμί."}}, {"en": "I feel grateful.", "male": {"es": "Me siento agradecido.", "fr-FR": "Je me sens reconnaissant.", "pt-BR": "Me sinto grato.", "it": "Mi sento grato.", "ro": "Mă simt recunoscător.", "la-VA": "Gratum me sentio.", "la-CI": "Sentio me gratum esse.", "la-HV": "Me sentio gratum.", "de": "Ich fühle mich dankbar.", "ru": "Я чувствую благодарность.", "sw": "Nahisi shukrani.", "zu": "Ngizizwa nginokubonga.", "xh": "Ndiziva ndinombulelo.", "ja-casual": "感謝を感じる。", "sm": "Ua ou lagona le fa'afetai.", "to": "'Oku ou ongo'i fakafeta'i.", "en": "I feel grateful.", "el": "Νιώθω ευγνώμων.", "grc": "Χάριν αἰσθάνομαι."}, "female": {"es": "Me siento agradecida.", "fr-FR": "Je me sens reconnaissante.", "pt-BR": "Me sinto grata.", "it": "Mi sento grata.", "ro": "Mă simt recunoscătoare.", "la-VA": "Gratam me sentio.", "la-CI": "Sentio me gratam esse.", "la-HV": "Me sentio gratam.", "de": "Ich fühle mich dankbar.", "ru": "Я чувствую благодарность.", "sw": "Nahisi shukrani.", "zu": "Ngizizwa nginokubonga.", "xh": "Ndiziva ndinombulelo.", "ja-casual": "感謝を感じる。", "sm": "Ua ou lagona le fa'afetai.", "to": "'Oku ou ongo'i fakafeta'i.", "en": "I feel grateful.", "el": "Νιώθω ευγνώμων.", "grc": "Χάριν αἰσθάνομαι."}}, {"en": "I choose peace.", "male": {"es": "Elijo la paz.", "fr-FR": "Je choisis la paix.", "pt-BR": "Escolho a paz.", "it": "Scelgo la pace.", "ro": "Aleg pacea.", "la-VA": "Pacem eligo.", "la-CI": "Pacem eligo.", "la-HV": "Eligo pacem.", "de": "Ich wähle den Frieden.", "ru": "Я выбираю покой.", "sw": "Nachagua amani.", "zu": "Ngikhetha ukuthula.", "xh": "Ndikhetha uxolo.", "ja-casual": "平和を選ぶ。", "sm": "Ua ou filifilia le filemu.", "to": "'Oku ou fili 'a e melino.", "en": "I choose peace.", "el": "Επιλέγω την ειρήνη.", "grc": "Εἰρήνην αἱροῦμαι."}, "female": {"es": "Elijo la paz.", "fr-FR": "Je choisis la paix.", "pt-BR": "Escolho a paz.", "it": "Scelgo la pace.", "ro": "Aleg pacea.", "la-VA": "Pacem eligo.", "la-CI": "Pacem eligo.", "la-HV": "Eligo pacem.", "de": "Ich wähle den Frieden.", "ru": "Я выбираю покой.", "sw": "Nachagua amani.", "zu": "Ngikhetha ukuthula.", "xh": "Ndikhetha uxolo.", "ja-casual": "平和を選ぶ。", "sm": "Ua ou filifilia le filemu.", "to": "'Oku ou fili 'a e melino.", "en": "I choose peace.", "el": "Επιλέγω την ειρήνη.", "grc": "Εἰρήνην αἱροῦμαι."}}, {"en": "I welcome abundance.", "male": {"es": "Recibo la abundancia.", "fr-FR": "J'accueille l'abondance.", "pt-BR": "Acolho a abundância.", "it": "Accolgo l'abbondanza.", "ro": "Întâmpin abundența.", "la-VA": "Abundantiam excipio.", "la-CI": "Copiam excipio.", "la-HV": "Recipio abundantiam.", "de": "Ich empfange den Überfluss.", "ru": "Я принимаю изобилие.", "sw": "Ninakaribisha wingi.", "zu": "Ngamukela ukwanda.", "xh": "Ndamkela ubuninzi.", "ja-casual": "豊かさを受け入れる。", "sm": "Ua ou talia le tamaoaiga.", "to": "'Oku ou talitali lelei 'a e koloa lahi.", "en": "I welcome abundance.", "el": "Καλωσορίζω την αφθονία.", "grc": "Ἀφθονίαν δέχομαι."}, "female": {"es": "Recibo la abundancia.", "fr-FR": "J'accueille l'abondance.", "pt-BR": "Acolho a abundância.", "it": "Accolgo l'abbondanza.", "ro": "Întâmpin abundența.", "la-VA": "Abundantiam excipio.", "la-CI": "Copiam excipio.", "la-HV": "Recipio abundantiam.", "de": "Ich empfange den Überfluss.", "ru": "Я принимаю изобилие.", "sw": "Ninakaribisha wingi.", "zu": "Ngamukela ukwanda.", "xh": "Ndamkela ubuninzi.", "ja-casual": "豊かさを受け入れる。", "sm": "Ua ou talia le tamaoaiga.", "to": "'Oku ou talitali lelei 'a e koloa lahi.", "en": "I welcome abundance.", "el": "Καλωσορίζω την αφθονία.", "grc": "Ἀφθονίαν δέχομαι."}}, {"en": "I release fear.", "male": {"es": "Suelto el miedo.", "fr-FR": "Je lâche la peur.", "pt-BR": "Solto o medo.", "it": "Lascio andare la paura.", "ro": "Eliberez frica.", "la-VA": "Timorem dimitto.", "la-CI": "Timorem abicio.", "la-HV": "Solvo metum.", "de": "Ich lasse die Angst los.", "ru": "Я отпускаю страх.", "sw": "Ninaachilia hofu.", "zu": "Ngiyakudedela ukwesaba.", "xh": "Ndiyakuyeka ukoyika.", "ja-casual": "恐れを手放す。", "sm": "Ua ou tu'ua le fefe.", "to": "'Oku ou tukuange 'a e manavahē.", "en": "I release fear.", "el": "Αφήνω τον φόβο.", "grc": "Φόβον ἀφίημι."}, "female": {"es": "Suelto el miedo.", "fr-FR": "Je lâche la peur.", "pt-BR": "Solto o medo.", "it": "Lascio andare la paura.", "ro": "Eliberez frica.", "la-VA": "Timorem dimitto.", "la-CI": "Timorem abicio.", "la-HV": "Solvo metum.", "de": "Ich lasse die Angst los.", "ru": "Я отпускаю страх.", "sw": "Ninaachilia hofu.", "zu": "Ngiyakudedela ukwesaba.", "xh": "Ndiyakuyeka ukoyika.", "ja-casual": "恐れを手放す。", "sm": "Ua ou tu'ua le fefe.", "to": "'Oku ou tukuange 'a e manavahē.", "en": "I release fear.", "el": "Αφήνω τον φόβο.", "grc": "Φόβον ἀφίημι."}}, {"en": "I allow forgiveness.", "male": {"es": "Permito el perdón.", "fr-FR": "Je permets le pardon.", "pt-BR": "Permito o perdão.", "it": "Permetto il perdono.", "ro": "Permit iertarea.", "la-VA": "Veniam permitto.", "la-CI": "Veniam do.", "la-HV": "Permito veniam.", "de": "Ich erlaube Vergebung.", "ru": "Я позволяю себе прощение.", "sw": "Naruhusu msamaha.", "zu": "Ngivumela ukuthethelela.", "xh": "Ndivumela uxolelo.", "ja-casual": "許しを受け入れる。", "sm": "Ua ou fa'atagaina le fa'amagaloga.", "to": "'Oku ou fakangofua 'a e fakamolemole.", "en": "I allow forgiveness.", "el": "Επιτρέπω τη συγχώρεση.", "grc": "Συγγνώμην ἐπιτρέπω."}, "female": {"es": "Permito el perdón.", "fr-FR": "Je permets le pardon.", "pt-BR": "Permito o perdão.", "it": "Permetto il perdono.", "ro": "Permit iertarea.", "la-VA": "Veniam permitto.", "la-CI": "Veniam do.", "la-HV": "Permito veniam.", "de": "Ich erlaube Vergebung.", "ru": "Я позволяю себе прощение.", "sw": "Naruhusu msamaha.", "zu": "Ngivumela ukuthethelela.", "xh": "Ndivumela uxolelo.", "ja-casual": "許しを受け入れる。", "sm": "Ua ou fa'atagaina le fa'amagaloga.", "to": "'Oku ou fakangofua 'a e fakamolemole.", "en": "I allow forgiveness.", "el": "Επιτρέπω τη συγχώρεση.", "grc": "Συγγνώμην ἐπιτρέπω."}}, {"en": "I am calm.", "male": {"es": "Estoy tranquilo.", "fr-FR": "Je suis calme.", "pt-BR": "Estou calmo.", "it": "Sono calmo.", "ro": "Sunt calm.", "la-VA": "Tranquillus sum.", "la-CI": "Tranquillus sum.", "la-HV": "Tranquillus sum.", "de": "Ich bin ruhig.", "ru": "Я спокоен.", "sw": "Nimetulia.", "zu": "Ngizolile.", "xh": "Ndizolile.", "ja-casual": "落ち着いてる。", "sm": "Ua filemu lo'u loto.", "to": "'Oku ou fiemālie.", "en": "I am calm.", "el": "Είμαι ήρεμος.", "grc": "Ἥσυχός εἰμι."}, "female": {"es": "Estoy tranquila.", "fr-FR": "Je suis calme.", "pt-BR": "Estou calma.", "it": "Sono calma.", "ro": "Sunt calmă.", "la-VA": "Tranquilla sum.", "la-CI": "Tranquilla sum.", "la-HV": "Tranquilla sum.", "de": "Ich bin ruhig.", "ru": "Я спокойна.", "sw": "Nimetulia.", "zu": "Ngizolile.", "xh": "Ndizolile.", "ja-casual": "落ち着いてる。", "sm": "Ua filemu lo'u loto.", "to": "'Oku ou fiemālie.", "en": "I am calm.", "el": "Είμαι ήρεμη.", "grc": "Ἡσύχη εἰμί."}}, {"en": "Good things come to me.", "male": {"es": "Las cosas buenas vienen a mí.", "fr-FR": "De bonnes choses viennent à moi.", "pt-BR": "Coisas boas vêm até mim.", "it": "Le cose buone vengono a me.", "ro": "Lucruri bune vin la mine.", "la-VA": "Bona ad me veniunt.", "la-CI": "Bona ad me veniunt.", "la-HV": "Bonae causae ad me veniunt.", "de": "Gute Dinge kommen zu mir.", "ru": "Хорошее приходит ко мне.", "sw": "Mambo mazuri yananijia.", "zu": "Izinto ezinhle ziza kimi.", "xh": "Izinto ezintle ziza kum.", "ja-casual": "いいことが来る。", "sm": "E o mai mea lelei ia te a'u.", "to": "'Oku ha'u 'a e ngaahi me'a lelei kiate au.", "en": "Good things come to me.", "el": "Τα καλά πράγματα έρχονται σε μένα.", "grc": "Τὰ ἀγαθὰ πρός με ἔρχεται."}, "female": {"es": "Las cosas buenas vienen a mí.", "fr-FR": "De bonnes choses viennent à moi.", "pt-BR": "Coisas boas vêm até mim.", "it": "Le cose buone vengono a me.", "ro": "Lucruri bune vin la mine.", "la-VA": "Bona ad me veniunt.", "la-CI": "Bona ad me veniunt.", "la-HV": "Bonae causae ad me veniunt.", "de": "Gute Dinge kommen zu mir.", "ru": "Хорошее приходит ко мне.", "sw": "Mambo mazuri yananijia.", "zu": "Izinto ezinhle ziza kimi.", "xh": "Izinto ezintle ziza kum.", "ja-casual": "いいことが来る。", "sm": "E o mai mea lelei ia te a'u.", "to": "'Oku ha'u 'a e ngaahi me'a lelei kiate au.", "en": "Good things come to me.", "el": "Τα καλά πράγματα έρχονται σε μένα.", "grc": "Τὰ ἀγαθὰ πρός με ἔρχεται."}}, {"en": "I trust, and I receive.", "male": {"es": "Confío, y recibo.", "fr-FR": "Je fais confiance, et je reçois.", "pt-BR": "Confio, e recebo.", "it": "Mi fido, e ricevo.", "ro": "Am încredere, și primesc.", "la-VA": "Confido, et accipio.", "la-CI": "Confido, et accipio.", "la-HV": "Confido, et recipio.", "de": "Ich vertraue, und ich empfange.", "ru": "Я доверяю, и я принимаю.", "sw": "Naamini, na napokea.", "zu": "Ngiyethemba, futhi ngiyamukela.", "xh": "Ndiyathemba, kwaye ndiyamkela.", "ja-casual": "信じて、受け取る。", "sm": "Ou te fa'atuatua, ma ou te talia.", "to": "'Oku ou falala, pea u ma'u.", "en": "I trust, and I receive.", "el": "Εμπιστεύομαι, και δέχομαι.", "grc": "Πιστεύω, καὶ δέχομαι."}, "female": {"es": "Confío, y recibo.", "fr-FR": "Je fais confiance, et je reçois.", "pt-BR": "Confio, e recebo.", "it": "Mi fido, e ricevo.", "ro": "Am încredere, și primesc.", "la-VA": "Confido, et accipio.", "la-CI": "Confido, et accipio.", "la-HV": "Confido, et recipio.", "de": "Ich vertraue, und ich empfange.", "ru": "Я доверяю, и я принимаю.", "sw": "Naamini, na napokea.", "zu": "Ngiyethemba, futhi ngiyamukela.", "xh": "Ndiyathemba, kwaye ndiyamkela.", "ja-casual": "信じて、受け取る。", "sm": "Ou te fa'atuatua, ma ou te talia.", "to": "'Oku ou falala, pea u ma'u.", "en": "I trust, and I receive.", "el": "Εμπιστεύομαι, και δέχομαι.", "grc": "Πιστεύω, καὶ δέχομαι."}}, {"en": "I am open.", "male": {"es": "Estoy abierto.", "fr-FR": "Je suis ouvert.", "pt-BR": "Estou aberto.", "it": "Sono aperto.", "ro": "Sunt deschis.", "la-VA": "Apertus sum.", "la-CI": "Apertus sum.", "la-HV": "Apertus sum.", "de": "Ich bin offen.", "ru": "Я открыт.", "sw": "Niko wazi.", "zu": "Ngivulekile.", "xh": "Ndivulekile.", "ja-casual": "心を開いてる。", "sm": "Ua tatala lo'u loto.", "to": "'Oku ou ava.", "en": "I am open.", "el": "Είμαι ανοιχτός.", "grc": "Ἀνεῳγμένος εἰμί."}, "female": {"es": "Estoy abierta.", "fr-FR": "Je suis ouverte.", "pt-BR": "Estou aberta.", "it": "Sono aperta.", "ro": "Sunt deschisă.", "la-VA": "Aperta sum.", "la-CI": "Aperta sum.", "la-HV": "Aperta sum.", "de": "Ich bin offen.", "ru": "Я открыта.", "sw": "Niko wazi.", "zu": "Ngivulekile.", "xh": "Ndivulekile.", "ja-casual": "心を開いてる。", "sm": "Ua tatala lo'u loto.", "to": "'Oku ou ava.", "en": "I am open.", "el": "Είμαι ανοιχτή.", "grc": "Ἀνεῳγμένη εἰμί."}}, {"en": "I am worthy.", "male": {"es": "Soy digno.", "fr-FR": "Je suis digne.", "pt-BR": "Sou digno.", "it": "Sono degno.", "ro": "Sunt demn.", "la-VA": "Dignus sum.", "la-CI": "Dignus sum.", "la-HV": "Dignus sum.", "de": "Ich bin es wert.", "ru": "Я достоин.", "sw": "Nastahili.", "zu": "Ngiyafaneleka.", "xh": "Ndifanelekile.", "ja-casual": "価値がある。", "sm": "Ua ou agavaa.", "to": "'Oku ou taau.", "en": "I am worthy.", "el": "Είμαι άξιος.", "grc": "Ἄξιός εἰμι."}, "female": {"es": "Soy digna.", "fr-FR": "Je suis digne.", "pt-BR": "Sou digna.", "it": "Sono degna.", "ro": "Sunt demnă.", "la-VA": "Digna sum.", "la-CI": "Digna sum.", "la-HV": "Digna sum.", "de": "Ich bin es wert.", "ru": "Я достойна.", "sw": "Nastahili.", "zu": "Ngiyafaneleka.", "xh": "Ndifanelekile.", "ja-casual": "価値がある。", "sm": "Ua ou agavaa.", "to": "'Oku ou taau.", "en": "I am worthy.", "el": "Είμαι άξια.", "grc": "Ἀξία εἰμί."}}, {"en": "I am worthy of love.", "male": {"es": "Soy digno de amor.", "fr-FR": "Je suis digne d'amour.", "pt-BR": "Sou digno de amor.", "it": "Sono degno d'amore.", "ro": "Sunt demn de iubire.", "la-VA": "Dignus amore sum.", "la-CI": "Dignus amore sum.", "la-HV": "Dignus amore sum.", "de": "Ich bin der Liebe würdig.", "ru": "Я достоин любви.", "sw": "Nastahili upendo.", "zu": "Ngifanele uthando.", "xh": "Ndifanelwe luthando.", "ja-casual": "愛される価値がある。", "sm": "Ua ou agavaa mo le alofa.", "to": "'Oku ou taau ki he 'ofa.", "en": "I am worthy of love.", "el": "Είμαι άξιος αγάπης.", "grc": "Ἄξιός εἰμι ἀγάπης."}, "female": {"es": "Soy digna de amor.", "fr-FR": "Je suis digne d'amour.", "pt-BR": "Sou digna de amor.", "it": "Sono degna d'amore.", "ro": "Sunt demnă de iubire.", "la-VA": "Digna amore sum.", "la-CI": "Digna amore sum.", "la-HV": "Digna amore sum.", "de": "Ich bin der Liebe würdig.", "ru": "Я достойна любви.", "sw": "Nastahili upendo.", "zu": "Ngifanele uthando.", "xh": "Ndifanelwe luthando.", "ja-casual": "愛される価値がある。", "sm": "Ua ou agavaa mo le alofa.", "to": "'Oku ou taau ki he 'ofa.", "en": "I am worthy of love.", "el": "Είμαι άξια αγάπης.", "grc": "Ἀξία εἰμί ἀγάπης."}}, {"en": "I am worthy of good things.", "male": {"es": "Soy digno de cosas buenas.", "fr-FR": "Je suis digne de bonnes choses.", "pt-BR": "Sou digno de coisas boas.", "it": "Sono degno di cose buone.", "ro": "Sunt demn de lucruri bune.", "la-VA": "Dignus bonis sum.", "la-CI": "Dignus bonis sum.", "la-HV": "Dignus bonis causis sum.", "de": "Ich bin würdig, Gutes zu empfangen.", "ru": "Я достоин хорошего.", "sw": "Nastahili mambo mazuri.", "zu": "Ngifanele izinto ezinhle.", "xh": "Ndifanelwe zizinto ezintle.", "ja-casual": "いいことが起こる価値がある。", "sm": "Ua ou agavaa mo mea lelei.", "to": "'Oku ou taau ki he ngaahi me'a lelei.", "en": "I am worthy of good things.", "el": "Είμαι άξιος καλών πραγμάτων.", "grc": "Ἄξιός εἰμι τῶν ἀγαθῶν."}, "female": {"es": "Soy digna de cosas buenas.", "fr-FR": "Je suis digne de bonnes choses.", "pt-BR": "Sou digna de coisas boas.", "it": "Sono degna di cose buone.", "ro": "Sunt demnă de lucruri bune.", "la-VA": "Digna bonis sum.", "la-CI": "Digna bonis sum.", "la-HV": "Digna bonis causis sum.", "de": "Ich bin würdig, Gutes zu empfangen.", "ru": "Я достойна хорошего.", "sw": "Nastahili mambo mazuri.", "zu": "Ngifanele izinto ezinhle.", "xh": "Ndifanelwe zizinto ezintle.", "ja-casual": "いいことが起こる価値がある。", "sm": "Ua ou agavaa mo mea lelei.", "to": "'Oku ou taau ki he ngaahi me'a lelei.", "en": "I am worthy of good things.", "el": "Είμαι άξια καλών πραγμάτων.", "grc": "Ἀξία εἰμί τῶν ἀγαθῶν."}}, {"en": "I deserve happiness.", "male": {"es": "Merezco la felicidad.", "fr-FR": "Je mérite le bonheur.", "pt-BR": "Mereço felicidade.", "it": "Merito la felicità.", "ro": "Merit fericirea.", "la-VA": "Felicitatem mereor.", "la-CI": "Felicitatem mereor.", "la-HV": "Mereo felicitatem.", "de": "Ich verdiene Glück.", "ru": "Я заслуживаю счастья.", "sw": "Nastahili furaha.", "zu": "Ngifanelwe injabulo.", "xh": "Ndifanelwe lulonwabo.", "ja-casual": "幸せに値する。", "sm": "Ou te agavaa mo le fiafia.", "to": "'Oku taau mo au 'a e fiefia.", "en": "I deserve happiness.", "el": "Αξίζω την ευτυχία.", "grc": "Εὐδαιμονίας ἄξιός εἰμι."}, "female": {"es": "Merezco la felicidad.", "fr-FR": "Je mérite le bonheur.", "pt-BR": "Mereço felicidade.", "it": "Merito la felicità.", "ro": "Merit fericirea.", "la-VA": "Felicitatem mereor.", "la-CI": "Felicitatem mereor.", "la-HV": "Mereo felicitatem.", "de": "Ich verdiene Glück.", "ru": "Я заслуживаю счастья.", "sw": "Nastahili furaha.", "zu": "Ngifanelwe injabulo.", "xh": "Ndifanelwe lulonwabo.", "ja-casual": "幸せに値する。", "sm": "Ou te agavaa mo le fiafia.", "to": "'Oku taau mo au 'a e fiefia.", "en": "I deserve happiness.", "el": "Αξίζω την ευτυχία.", "grc": "Εὐδαιμονίας ἀξία εἰμί."}}, {"en": "Money flows to me.", "male": {"es": "El dinero fluye hacia mí.", "fr-FR": "L'argent coule vers moi.", "pt-BR": "O dinheiro flui até mim.", "it": "I soldi fluiscono verso di me.", "ro": "Banii curg spre mine.", "la-VA": "Pecunia ad me fluit.", "la-CI": "Pecunia ad me fluit.", "la-HV": "Denarius fluit ad me.", "de": "Geld fließt zu mir.", "ru": "Деньги текут ко мне.", "sw": "Pesa zinanijia.", "zu": "Imali igeleza kimi.", "xh": "Imali iyagaleleka kum.", "ja-casual": "お金が流れてくる。", "sm": "E tafe mai tupe ia te a'u.", "to": "'Oku tafe mai 'a e pa'anga kiate au.", "en": "Money flows to me.", "el": "Τα χρήματα ρέουν προς εμένα.", "grc": "Χρήματα πρός με ῥεῖ."}, "female": {"es": "El dinero fluye hacia mí.", "fr-FR": "L'argent coule vers moi.", "pt-BR": "O dinheiro flui até mim.", "it": "I soldi fluiscono verso di me.", "ro": "Banii curg spre mine.", "la-VA": "Pecunia ad me fluit.", "la-CI": "Pecunia ad me fluit.", "la-HV": "Denarius fluit ad me.", "de": "Geld fließt zu mir.", "ru": "Деньги текут ко мне.", "sw": "Pesa zinanijia.", "zu": "Imali igeleza kimi.", "xh": "Imali iyagaleleka kum.", "ja-casual": "お金が流れてくる。", "sm": "E tafe mai tupe ia te a'u.", "to": "'Oku tafe mai 'a e pa'anga kiate au.", "en": "Money flows to me.", "el": "Τα χρήματα ρέουν προς εμένα.", "grc": "Χρήματα πρός με ῥεῖ."}}, {"en": "Abundance flows to me.", "male": {"es": "La abundancia fluye hacia mí.", "fr-FR": "L'abondance coule vers moi.", "pt-BR": "A abundância flui até mim.", "it": "L'abbondanza fluisce verso di me.", "ro": "Abundența curge spre mine.", "la-VA": "Abundantia ad me fluit.", "la-CI": "Copia ad me fluit.", "la-HV": "Abundantia fluit ad me.", "de": "Überfluss fließt zu mir.", "ru": "Изобилие течёт ко мне.", "sw": "Wingi unanijia.", "zu": "Ukwanda kugeleza kimi.", "xh": "Ubuninzi buyagaleleka kum.", "ja-casual": "豊かさが流れてくる。", "sm": "E tafe mai le tamaoaiga ia te a'u.", "to": "'Oku tafe mai 'a e koloa lahi kiate au.", "en": "Abundance flows to me.", "el": "Η αφθονία ρέει προς εμένα.", "grc": "Ἀφθονία πρός με ῥεῖ."}, "female": {"es": "La abundancia fluye hacia mí.", "fr-FR": "L'abondance coule vers moi.", "pt-BR": "A abundância flui até mim.", "it": "L'abbondanza fluisce verso di me.", "ro": "Abundența curge spre mine.", "la-VA": "Abundantia ad me fluit.", "la-CI": "Copia ad me fluit.", "la-HV": "Abundantia fluit ad me.", "de": "Überfluss fließt zu mir.", "ru": "Изобилие течёт ко мне.", "sw": "Wingi unanijia.", "zu": "Ukwanda kugeleza kimi.", "xh": "Ubuninzi buyagaleleka kum.", "ja-casual": "豊かさが流れてくる。", "sm": "E tafe mai le tamaoaiga ia te a'u.", "to": "'Oku tafe mai 'a e koloa lahi kiate au.", "en": "Abundance flows to me.", "el": "Η αφθονία ρέει προς εμένα.", "grc": "Ἀφθονία πρός με ῥεῖ."}}, {"en": "I welcome good things.", "male": {"es": "Acojo las cosas buenas.", "fr-FR": "J'accueille les bonnes choses.", "pt-BR": "Acolho as coisas boas.", "it": "Accolgo le cose buone.", "ro": "Întâmpin lucrurile bune.", "la-VA": "Bona excipio.", "la-CI": "Bona excipio.", "la-HV": "Recipio bonas causas.", "de": "Ich empfange Gutes.", "ru": "Я принимаю хорошее.", "sw": "Ninakaribisha mambo mazuri.", "zu": "Ngamukela izinto ezinhle.", "xh": "Ndamkela izinto ezintle.", "ja-casual": "いいことを受け入れる。", "sm": "Ua ou talia mea lelei.", "to": "'Oku ou talitali lelei 'a e ngaahi me'a lelei.", "en": "I welcome good things.", "el": "Καλωσορίζω τα καλά πράγματα.", "grc": "Τὰ ἀγαθὰ δέχομαι."}, "female": {"es": "Acojo las cosas buenas.", "fr-FR": "J'accueille les bonnes choses.", "pt-BR": "Acolho as coisas boas.", "it": "Accolgo le cose buone.", "ro": "Întâmpin lucrurile bune.", "la-VA": "Bona excipio.", "la-CI": "Bona excipio.", "la-HV": "Recipio bonas causas.", "de": "Ich empfange Gutes.", "ru": "Я принимаю хорошее.", "sw": "Ninakaribisha mambo mazuri.", "zu": "Ngamukela izinto ezinhle.", "xh": "Ndamkela izinto ezintle.", "ja-casual": "いいことを受け入れる。", "sm": "Ua ou talia mea lelei.", "to": "'Oku ou talitali lelei 'a e ngaahi me'a lelei.", "en": "I welcome good things.", "el": "Καλωσορίζω τα καλά πράγματα.", "grc": "Τὰ ἀγαθὰ δέχομαι."}}, {"en": "I receive with an open heart.", "male": {"es": "Recibo con el corazón abierto.", "fr-FR": "Je reçois avec un cœur ouvert.", "pt-BR": "Recebo de coração aberto.", "it": "Ricevo con il cuore aperto.", "ro": "Primesc cu inima deschisă.", "la-VA": "Corde aperto accipio.", "la-CI": "Corde aperto accipio.", "la-HV": "Recipio corde aperto.", "de": "Ich empfange mit offenem Herzen.", "ru": "Я принимаю открытым сердцем.", "sw": "Napokea kwa moyo wazi.", "zu": "Ngamukela ngenhliziyo evulekile.", "xh": "Ndamkela ngentliziyo evulekileyo.", "ja-casual": "開いた心で受け取る。", "sm": "Ou te talia i se loto tatala.", "to": "'Oku ou ma'u 'aki ha lotoava.", "en": "I receive with an open heart.", "el": "Δέχομαι με ανοιχτή καρδιά.", "grc": "Ἀνεῳγμένῃ καρδίᾳ δέχομαι."}, "female": {"es": "Recibo con el corazón abierto.", "fr-FR": "Je reçois avec un cœur ouvert.", "pt-BR": "Recebo de coração aberto.", "it": "Ricevo con il cuore aperto.", "ro": "Primesc cu inima deschisă.", "la-VA": "Corde aperto accipio.", "la-CI": "Corde aperto accipio.", "la-HV": "Recipio corde aperto.", "de": "Ich empfange mit offenem Herzen.", "ru": "Я принимаю открытым сердцем.", "sw": "Napokea kwa moyo wazi.", "zu": "Ngamukela ngenhliziyo evulekile.", "xh": "Ndamkela ngentliziyo evulekileyo.", "ja-casual": "開いた心で受け取る。", "sm": "Ou te talia i se loto tatala.", "to": "'Oku ou ma'u 'aki ha lotoava.", "en": "I receive with an open heart.", "el": "Δέχομαι με ανοιχτή καρδιά.", "grc": "Ἀνεῳγμένῃ καρδίᾳ δέχομαι."}}, {"en": "I value myself.", "male": {"es": "Me valoro.", "fr-FR": "Je me valorise.", "pt-BR": "Eu me valorizo.", "it": "Mi valorizzo.", "ro": "Mă prețuiesc.", "la-VA": "Me ipsum aestimo.", "la-CI": "Me ipsum aestimo.", "la-HV": "Me aestimo.", "de": "Ich schätze mich selbst.", "ru": "Я ценю себя.", "sw": "Najithamini.", "zu": "Ngiyazazisa.", "xh": "Ndiyazixabisa.", "ja-casual": "自分を大切にしてる。", "sm": "Ou te fa'atauaina a'u lava.", "to": "'Oku ou fakamahu'inga'i au.", "en": "I value myself.", "el": "Εκτιμώ τον εαυτό μου.", "grc": "Ἐμαυτὸν τιμῶ."}, "female": {"es": "Me valoro.", "fr-FR": "Je me valorise.", "pt-BR": "Eu me valorizo.", "it": "Mi valorizzo.", "ro": "Mă prețuiesc.", "la-VA": "Me ipsam aestimo.", "la-CI": "Me ipsam aestimo.", "la-HV": "Me aestimo.", "de": "Ich schätze mich selbst.", "ru": "Я ценю себя.", "sw": "Najithamini.", "zu": "Ngiyazazisa.", "xh": "Ndiyazixabisa.", "ja-casual": "自分を大切にしてる。", "sm": "Ou te fa'atauaina a'u lava.", "to": "'Oku ou fakamahu'inga'i au.", "en": "I value myself.", "el": "Εκτιμώ τον εαυτό μου.", "grc": "Ἐμαυτὴν τιμῶ."}}, {"en": "I value others.", "male": {"es": "Valoro a los demás.", "fr-FR": "Je valorise les autres.", "pt-BR": "Valorizo os outros.", "it": "Valorizzo gli altri.", "ro": "Îi prețuiesc pe ceilalți.", "la-VA": "Alios aestimo.", "la-CI": "Alios aestimo.", "la-HV": "Ceteros aestimo.", "de": "Ich schätze andere.", "ru": "Я ценю других.", "sw": "Nawathamini wengine.", "zu": "Ngiyabazisa abanye.", "xh": "Ndiyabaxabisa abanye.", "ja-casual": "他人を大切にしてる。", "sm": "Ou te fa'atauaina isi tagata.", "to": "'Oku ou fakamahu'inga'i kakai kehe.", "en": "I value others.", "el": "Εκτιμώ τους άλλους.", "grc": "Τοὺς ἄλλους τιμῶ."}, "female": {"es": "Valoro a los demás.", "fr-FR": "Je valorise les autres.", "pt-BR": "Valorizo os outros.", "it": "Valorizzo gli altri.", "ro": "Îi prețuiesc pe ceilalți.", "la-VA": "Alios aestimo.", "la-CI": "Alios aestimo.", "la-HV": "Ceteros aestimo.", "de": "Ich schätze andere.", "ru": "Я ценю других.", "sw": "Nawathamini wengine.", "zu": "Ngiyabazisa abanye.", "xh": "Ndiyabaxabisa abanye.", "ja-casual": "他人を大切にしてる。", "sm": "Ou te fa'atauaina isi tagata.", "to": "'Oku ou fakamahu'inga'i kakai kehe.", "en": "I value others.", "el": "Εκτιμώ τους άλλους.", "grc": "Τοὺς ἄλλους τιμῶ."}}, {"en": "I am safe.", "male": {"es": "Estoy a salvo.", "fr-FR": "Je suis en sécurité.", "pt-BR": "Estou seguro.", "it": "Sono al sicuro.", "ro": "Sunt în siguranță.", "la-VA": "Tutus sum.", "la-CI": "Tutus sum.", "la-HV": "Salvus sum.", "de": "Ich bin sicher.", "ru": "Я в безопасности.", "sw": "Niko salama.", "zu": "Ngiphephile.", "xh": "Ndikhuselekile.", "ja-casual": "安全だ。", "sm": "Ua ou saogalemu.", "to": "'Oku ou malu.", "en": "I am safe.", "el": "Είμαι ασφαλής.", "grc": "Ἀσφαλής εἰμι."}, "female": {"es": "Estoy a salvo.", "fr-FR": "Je suis en sécurité.", "pt-BR": "Estou segura.", "it": "Sono al sicuro.", "ro": "Sunt în siguranță.", "la-VA": "Tuta sum.", "la-CI": "Tuta sum.", "la-HV": "Salva sum.", "de": "Ich bin sicher.", "ru": "Я в безопасности.", "sw": "Niko salama.", "zu": "Ngiphephile.", "xh": "Ndikhuselekile.", "ja-casual": "安全だ。", "sm": "Ua ou saogalemu.", "to": "'Oku ou malu.", "en": "I am safe.", "el": "Είμαι ασφαλής.", "grc": "Ἀσφαλής εἰμι."}}, {"en": "I am at peace.", "male": {"es": "Estoy en paz.", "fr-FR": "Je suis en paix.", "pt-BR": "Estou em paz.", "it": "Sono in pace.", "ro": "Sunt în pace.", "la-VA": "In pace sum.", "la-CI": "In pace sum.", "la-HV": "In pace sum.", "de": "Ich bin in Frieden.", "ru": "Я в покое.", "sw": "Nina amani.", "zu": "Nginokuthula.", "xh": "Ndinoxolo.", "ja-casual": "心が穏やか。", "sm": "Ua ou nofo i le filemu.", "to": "'Oku ou nofo melino.", "en": "I am at peace.", "el": "Είμαι εν ειρήνη.", "grc": "Ἐν εἰρήνῃ εἰμί."}, "female": {"es": "Estoy en paz.", "fr-FR": "Je suis en paix.", "pt-BR": "Estou em paz.", "it": "Sono in pace.", "ro": "Sunt în pace.", "la-VA": "In pace sum.", "la-CI": "In pace sum.", "la-HV": "In pace sum.", "de": "Ich bin in Frieden.", "ru": "Я в покое.", "sw": "Nina amani.", "zu": "Nginokuthula.", "xh": "Ndinoxolo.", "ja-casual": "心が穏やか。", "sm": "Ua ou nofo i le filemu.", "to": "'Oku ou nofo melino.", "en": "I am at peace.", "el": "Είμαι εν ειρήνη.", "grc": "Ἐν εἰρήνῃ εἰμί."}}, {"en": "My heart is open.", "male": {"es": "Mi corazón está abierto.", "fr-FR": "Mon cœur est ouvert.", "pt-BR": "Meu coração está aberto.", "it": "Il mio cuore è aperto.", "ro": "Inima mea este deschisă.", "la-VA": "Cor meum apertum est.", "la-CI": "Cor meum apertum est.", "la-HV": "Cor meum apertum est.", "de": "Mein Herz ist offen.", "ru": "Моё сердце открыто.", "sw": "Moyo wangu uko wazi.", "zu": "Inhliziyo yami ivulekile.", "xh": "Intliziyo yam ivulekile.", "ja-casual": "心が開いてる。", "sm": "Ua tatala lo'u loto.", "to": "'Oku ava hoku loto.", "en": "My heart is open.", "el": "Η καρδιά μου είναι ανοιχτή.", "grc": "Ἡ καρδία μου ἀνεῳγμένη ἐστίν."}, "female": {"es": "Mi corazón está abierto.", "fr-FR": "Mon cœur est ouvert.", "pt-BR": "Meu coração está aberto.", "it": "Il mio cuore è aperto.", "ro": "Inima mea este deschisă.", "la-VA": "Cor meum apertum est.", "la-CI": "Cor meum apertum est.", "la-HV": "Cor meum apertum est.", "de": "Mein Herz ist offen.", "ru": "Моё сердце открыто.", "sw": "Moyo wangu uko wazi.", "zu": "Inhliziyo yami ivulekile.", "xh": "Intliziyo yam ivulekile.", "ja-casual": "心が開いてる。", "sm": "Ua tatala lo'u loto.", "to": "'Oku ava hoku loto.", "en": "My heart is open.", "el": "Η καρδιά μου είναι ανοιχτή.", "grc": "Ἡ καρδία μου ἀνεῳγμένη ἐστίν."}}, {"en": "I am connected to everything.", "male": {"es": "Estoy conectado a todo.", "fr-FR": "Je suis connecté à tout.", "pt-BR": "Estou conectado a tudo.", "it": "Sono connesso a tutto.", "ro": "Sunt conectat la tot.", "la-VA": "Cum omnibus conjunctus sum.", "la-CI": "Cum omnibus conjunctus sum.", "la-HV": "Cum omnibus connexus sum.", "de": "Ich bin mit allem verbunden.", "ru": "Я связан со всем.", "sw": "Nimeunganika na kila kitu.", "zu": "Ngixhumene nakho konke.", "xh": "Ndidibene nayo yonke into.", "ja-casual": "すべてとつながってる。", "sm": "Ua feso'ota'i a'u i mea uma.", "to": "'Oku ou fehokotaki mo e me'a kotoa.", "en": "I am connected to everything.", "el": "Είμαι συνδεδεμένος με τα πάντα.", "grc": "Πᾶσι συνδεδεμένος εἰμί."}, "female": {"es": "Estoy conectada a todo.", "fr-FR": "Je suis connectée à tout.", "pt-BR": "Estou conectada a tudo.", "it": "Sono connessa a tutto.", "ro": "Sunt conectată la tot.", "la-VA": "Cum omnibus conjuncta sum.", "la-CI": "Cum omnibus conjuncta sum.", "la-HV": "Cum omnibus connexa sum.", "de": "Ich bin mit allem verbunden.", "ru": "Я связана со всем.", "sw": "Nimeunganika na kila kitu.", "zu": "Ngixhumene nakho konke.", "xh": "Ndidibene nayo yonke into.", "ja-casual": "すべてとつながってる。", "sm": "Ua feso'ota'i a'u i mea uma.", "to": "'Oku ou fehokotaki mo e me'a kotoa.", "en": "I am connected to everything.", "el": "Είμαι συνδεδεμένη με τα πάντα.", "grc": "Πᾶσι συνδεδεμένη εἰμί."}}, {"en": "I am one.", "male": {"es": "Soy uno.", "fr-FR": "Je suis un.", "pt-BR": "Sou um.", "it": "Sono uno.", "ro": "Sunt unul.", "la-VA": "Unus sum.", "la-CI": "Unus sum.", "la-HV": "Unus sum.", "de": "Ich bin eins.", "ru": "Я — одно.", "sw": "Mimi ni mmoja.", "zu": "Ngiyinye.", "xh": "Ndinye.", "ja-casual": "私はひとつ。", "sm": "O a'u ma mea uma e tasi.", "to": "Ko au mo e me'a kotoa ko e taha.", "en": "I am one.", "el": "Είμαι ένα.", "grc": "Ἕν εἰμι."}, "female": {"es": "Soy una.", "fr-FR": "Je suis une.", "pt-BR": "Sou uma.", "it": "Sono una.", "ro": "Sunt una.", "la-VA": "Una sum.", "la-CI": "Una sum.", "la-HV": "Una sum.", "de": "Ich bin eins.", "ru": "Я — одно.", "sw": "Mimi ni mmoja.", "zu": "Ngiyinye.", "xh": "Ndinye.", "ja-casual": "私はひとつ。", "sm": "O a'u ma mea uma e tasi.", "to": "Ko au mo e me'a kotoa ko e taha.", "en": "I am one.", "el": "Είμαι ένα.", "grc": "Ἕν εἰμι."}}, {"en": "I am all.", "male": {"es": "Soy todo.", "fr-FR": "Je suis tout.", "pt-BR": "Sou tudo.", "it": "Sono tutto.", "ro": "Sunt tot.", "la-VA": "Omnia sum.", "la-CI": "Omnia sum.", "la-HV": "Totus sum.", "de": "Ich bin alles.", "ru": "Я — всё.", "sw": "Mimi ni vyote.", "zu": "Ngiyikho konke.", "xh": "Ndiyiyo yonke into.", "ja-casual": "私はすべて。", "sm": "O a'u o mea uma.", "to": "Ko au ko e me'a kotoa.", "en": "I am all.", "el": "Είμαι το παν.", "grc": "Τὸ πᾶν εἰμί."}, "female": {"es": "Soy toda.", "fr-FR": "Je suis tout.", "pt-BR": "Sou tudo.", "it": "Sono tutto.", "ro": "Sunt tot.", "la-VA": "Omnia sum.", "la-CI": "Omnia sum.", "la-HV": "Tota sum.", "de": "Ich bin alles.", "ru": "Я — всё.", "sw": "Mimi ni vyote.", "zu": "Ngiyikho konke.", "xh": "Ndiyiyo yonke into.", "ja-casual": "私はすべて。", "sm": "O a'u o mea uma.", "to": "Ko au ko e me'a kotoa.", "en": "I am all.", "el": "Είμαι το παν.", "grc": "Τὸ πᾶν εἰμί."}}, {"en": "I am ready.", "male": {"es": "Estoy listo.", "fr-FR": "Je suis prêt.", "pt-BR": "Estou pronto.", "it": "Sono pronto.", "ro": "Sunt pregătit.", "la-VA": "Paratus sum.", "la-CI": "Paratus sum.", "la-HV": "Paratus sum.", "de": "Ich bin bereit.", "ru": "Я готов.", "sw": "Niko tayari.", "zu": "Ngilungile.", "xh": "Ndikulungele.", "ja-casual": "準備できてる。", "sm": "Ua ou sauni.", "to": "'Oku ou mateuteu.", "en": "I am ready.", "el": "Είμαι έτοιμος.", "grc": "Ἕτοιμός εἰμι."}, "female": {"es": "Estoy lista.", "fr-FR": "Je suis prête.", "pt-BR": "Estou pronta.", "it": "Sono pronta.", "ro": "Sunt pregătită.", "la-VA": "Parata sum.", "la-CI": "Parata sum.", "la-HV": "Parata sum.", "de": "Ich bin bereit.", "ru": "Я готова.", "sw": "Niko tayari.", "zu": "Ngilungile.", "xh": "Ndikulungele.", "ja-casual": "準備できてる。", "sm": "Ua ou sauni.", "to": "'Oku ou mateuteu.", "en": "I am ready.", "el": "Είμαι έτοιμη.", "grc": "Ἑτοίμη εἰμί."}}, {"en": "I am ready to be the real me.", "male": {"es": "Estoy listo para ser mi verdadero yo.", "fr-FR": "Je suis prêt à être mon vrai moi.", "pt-BR": "Estou pronto para ser o meu verdadeiro eu.", "it": "Sono pronto a essere il mio vero io.", "ro": "Sunt pregătit să fiu eu însumi.", "la-VA": "Paratus sum verus esse.", "la-CI": "Paratus sum verus esse.", "la-HV": "Paratus sum verus esse.", "de": "Ich bin bereit, mein wahres Ich zu sein.", "ru": "Я готов быть настоящим собой.", "sw": "Niko tayari kuwa mimi halisi.", "zu": "Ngilungele ukuba mina wangempela.", "xh": "Ndikulungele ukuba ndim ngokwenene.", "ja-casual": "本当の自分になる準備ができてる。", "sm": "Ua ou sauni e avea ma a'u moni.", "to": "'Oku ou mateuteu ke hoko ko au mo'oni.", "en": "I am ready to be the real me.", "el": "Είμαι έτοιμος να είμαι ο αληθινός μου εαυτός.", "grc": "Ἕτοιμός εἰμι τὸν ἀληθῆ ἐμαυτὸν εἶναι."}, "female": {"es": "Estoy lista para ser mi verdadero yo.", "fr-FR": "Je suis prête à être mon vrai moi.", "pt-BR": "Estou pronta para ser o meu verdadeiro eu.", "it": "Sono pronta a essere il mio vero io.", "ro": "Sunt pregătită să fiu eu însămi.", "la-VA": "Parata sum vera esse.", "la-CI": "Parata sum vera esse.", "la-HV": "Parata sum vera esse.", "de": "Ich bin bereit, mein wahres Ich zu sein.", "ru": "Я готова быть настоящей собой.", "sw": "Niko tayari kuwa mimi halisi.", "zu": "Ngilungele ukuba mina wangempela.", "xh": "Ndikulungele ukuba ndim ngokwenene.", "ja-casual": "本当の自分になる準備ができてる。", "sm": "Ua ou sauni e avea ma a'u moni.", "to": "'Oku ou mateuteu ke hoko ko au mo'oni.", "en": "I am ready to be the real me.", "el": "Είμαι έτοιμη να είμαι ο αληθινός μου εαυτός.", "grc": "Ἑτοίμη εἰμί τὴν ἀληθῆ ἐμαυτὴν εἶναι."}}, {"en": "I am ready to fulfill my life's goal.", "male": {"es": "Estoy listo para cumplir mi propósito de vida.", "fr-FR": "Je suis prêt à accomplir le but de ma vie.", "pt-BR": "Estou pronto para cumprir o propósito da minha vida.", "it": "Sono pronto a realizzare lo scopo della mia vita.", "ro": "Sunt pregătit să îmi împlinesc scopul vieții.", "la-VA": "Paratus sum vitae meae propositum implere.", "la-CI": "Paratus sum vitae meae propositum implere.", "la-HV": "Paratus sum propositum vitae meae complere.", "de": "Ich bin bereit, mein Lebensziel zu erfüllen.", "ru": "Я готов исполнить цель своей жизни.", "sw": "Niko tayari kutimiza lengo la maisha yangu.", "zu": "Ngilungele ukufeza inhloso yempilo yami.", "xh": "Ndikulungele ukuzalisekisa injongo yobomi bam.", "ja-casual": "人生の目標を果たす準備ができてる。", "sm": "Ua ou sauni e fa'ataunu'u lo'u sini o le olaga.", "to": "'Oku ou mateuteu ke fakahoko 'a hoku taumu'a mo'ui.", "en": "I am ready to fulfill my life's goal.", "el": "Είμαι έτοιμος να εκπληρώσω τον σκοπό της ζωής μου.", "grc": "Ἕτοιμός εἰμι τὸν τῆς ζωῆς μου σκοπὸν πληρῶσαι."}, "female": {"es": "Estoy lista para cumplir mi propósito de vida.", "fr-FR": "Je suis prête à accomplir le but de ma vie.", "pt-BR": "Estou pronta para cumprir o propósito da minha vida.", "it": "Sono pronta a realizzare lo scopo della mia vita.", "ro": "Sunt pregătită să îmi împlinesc scopul vieții.", "la-VA": "Parata sum vitae meae propositum implere.", "la-CI": "Parata sum vitae meae propositum implere.", "la-HV": "Parata sum propositum vitae meae complere.", "de": "Ich bin bereit, mein Lebensziel zu erfüllen.", "ru": "Я готова исполнить цель своей жизни.", "sw": "Niko tayari kutimiza lengo la maisha yangu.", "zu": "Ngilungele ukufeza inhloso yempilo yami.", "xh": "Ndikulungele ukuzalisekisa injongo yobomi bam.", "ja-casual": "人生の目標を果たす準備ができてる。", "sm": "Ua ou sauni e fa'ataunu'u lo'u sini o le olaga.", "to": "'Oku ou mateuteu ke fakahoko 'a hoku taumu'a mo'ui.", "en": "I am ready to fulfill my life's goal.", "el": "Είμαι έτοιμη να εκπληρώσω τον σκοπό της ζωής μου.", "grc": "Ἑτοίμη εἰμί τὸν τῆς ζωῆς μου σκοπὸν πληρῶσαι."}}, {"en": "I am grateful.", "male": {"es": "Estoy agradecido.", "fr-FR": "Je suis reconnaissant.", "pt-BR": "Sou grato.", "it": "Sono grato.", "ro": "Sunt recunoscător.", "la-VA": "Gratus sum.", "la-CI": "Gratus sum.", "la-HV": "Gratus sum.", "de": "Ich bin dankbar.", "ru": "Я благодарен.", "sw": "Nashukuru.", "zu": "Nginokubonga.", "xh": "Ndiyabulela.", "ja-casual": "感謝してる。", "sm": "Ua ou fa'afetai.", "to": "'Oku ou fakafeta'i.", "en": "I am grateful.", "el": "Είμαι ευγνώμων.", "grc": "Χάριν ἔχω."}, "female": {"es": "Estoy agradecida.", "fr-FR": "Je suis reconnaissante.", "pt-BR": "Sou grata.", "it": "Sono grata.", "ro": "Sunt recunoscătoare.", "la-VA": "Grata sum.", "la-CI": "Grata sum.", "la-HV": "Grata sum.", "de": "Ich bin dankbar.", "ru": "Я благодарна.", "sw": "Nashukuru.", "zu": "Nginokubonga.", "xh": "Ndiyabulela.", "ja-casual": "感謝してる。", "sm": "Ua ou fa'afetai.", "to": "'Oku ou fakafeta'i.", "en": "I am grateful.", "el": "Είμαι ευγνώμων.", "grc": "Χάριν ἔχω."}}, {"en": "I am love.", "male": {"es": "Soy amor.", "fr-FR": "Je suis amour.", "pt-BR": "Sou amor.", "it": "Sono amore.", "ro": "Sunt iubire.", "la-VA": "Amor sum.", "la-CI": "Amor sum.", "la-HV": "Amor sum.", "de": "Ich bin Liebe.", "ru": "Я — любовь.", "sw": "Mimi ni upendo.", "zu": "Ngiluthando.", "xh": "Ndiluthando.", "ja-casual": "愛だ。", "sm": "O a'u o le alofa.", "to": "Ko au ko e 'ofa.", "en": "I am love.", "el": "Είμαι αγάπη.", "grc": "Ἀγάπη εἰμί."}, "female": {"es": "Soy amor.", "fr-FR": "Je suis amour.", "pt-BR": "Sou amor.", "it": "Sono amore.", "ro": "Sunt iubire.", "la-VA": "Amor sum.", "la-CI": "Amor sum.", "la-HV": "Amor sum.", "de": "Ich bin Liebe.", "ru": "Я — любовь.", "sw": "Mimi ni upendo.", "zu": "Ngiluthando.", "xh": "Ndiluthando.", "ja-casual": "愛だ。", "sm": "O a'u o le alofa.", "to": "Ko au ko e 'ofa.", "en": "I am love.", "el": "Είμαι αγάπη.", "grc": "Ἀγάπη εἰμί."}}, {"en": "I am light.", "male": {"es": "Soy luz.", "fr-FR": "Je suis lumière.", "pt-BR": "Sou luz.", "it": "Sono luce.", "ro": "Sunt lumină.", "la-VA": "Lux sum.", "la-CI": "Lux sum.", "la-HV": "Lux sum.", "de": "Ich bin Licht.", "ru": "Я — свет.", "sw": "Mimi ni nuru.", "zu": "Ngiyikhanyi.", "xh": "Ndiyukukhanya.", "ja-casual": "光だ。", "sm": "O a'u o le malamalama.", "to": "Ko au ko e maama.", "en": "I am light.", "el": "Είμαι φως.", "grc": "Φῶς εἰμί."}, "female": {"es": "Soy luz.", "fr-FR": "Je suis lumière.", "pt-BR": "Sou luz.", "it": "Sono luce.", "ro": "Sunt lumină.", "la-VA": "Lux sum.", "la-CI": "Lux sum.", "la-HV": "Lux sum.", "de": "Ich bin Licht.", "ru": "Я — свет.", "sw": "Mimi ni nuru.", "zu": "Ngiyikhanyi.", "xh": "Ndiyukukhanya.", "ja-casual": "光だ。", "sm": "O a'u o le malamalama.", "to": "Ko au ko e maama.", "en": "I am light.", "el": "Είμαι φως.", "grc": "Φῶς εἰμί."}}, {"en": "Thank you.", "male": {"es": "Gracias.", "fr-FR": "Merci.", "pt-BR": "Obrigado.", "it": "Grazie.", "ro": "Mulțumesc.", "la-VA": "Gratias ago.", "la-CI": "Gratias ago.", "la-HV": "Gratias ago.", "de": "Danke.", "ru": "Спасибо.", "sw": "Asante.", "zu": "Ngiyabonga.", "xh": "Enkosi.", "ja-casual": "ありがとう。", "sm": "Fa'afetai.", "to": "Mālō.", "en": "Thank you.", "el": "Ευχαριστώ.", "grc": "Εὐχαριστῶ."}, "female": {"es": "Gracias.", "fr-FR": "Merci.", "pt-BR": "Obrigada.", "it": "Grazie.", "ro": "Mulțumesc.", "la-VA": "Gratias ago.", "la-CI": "Gratias ago.", "la-HV": "Gratias ago.", "de": "Danke.", "ru": "Спасибо.", "sw": "Asante.", "zu": "Ngiyabonga.", "xh": "Enkosi.", "ja-casual": "ありがとう。", "sm": "Fa'afetai.", "to": "Mālō.", "en": "Thank you.", "el": "Ευχαριστώ.", "grc": "Εὐχαριστῶ."}}];
+const DEFAULT_SLOTS = ["pt-BR", "it", "la-VA", "la-HV", "", "", "", "", "", ""];
+const NUM_SLOTS = 10;
+const REPEATS_PER_LANG = 2;   // once, then again, per selected language
+const GAP_MS = 550;           // pause between repeats / between languages
+
+function langByCode(code){ return LANGS.find(l=>l.code===code); }
+
+/* ---- state ---- */
+const S = {
+  sheet: 'male',                            // which pronunciation set to speak — 'male' or 'female'
+  slotLang: DEFAULT_SLOTS.slice(),          // 10 entries, '' = none
+  slotVoiceURI: new Array(NUM_SLOTS).fill(''),
+  voices: [],
+  rate: 0.92,
+  lineIdx: 0,
+  activeOrder: [],     // slot indices with a language chosen, in slot order
+  subIdx: 0,           // position within activeOrder for the current line
+  pass: 1,             // 1 or 2 (first/second time this language says the line)
+  token: 0,
+  running: false,
+  paused: false,
+  loop: true,
+  sessionStart: null,
+  linesCompleted: 0,
+};
+
+document.getElementById('sheetSelect').addEventListener('change', e=>{
+  S.sheet = e.target.value;
+  updateSheetNavButtons();
+});
+
+function updateSheetNavButtons(){
+  document.getElementById('sheetMaleBtn').classList.toggle('active', S.sheet==='male');
+  document.getElementById('sheetFemaleBtn').classList.toggle('active', S.sheet==='female');
+}
+document.getElementById('sheetMaleBtn').addEventListener('click', ()=>{
+  S.sheet = 'male';
+  document.getElementById('sheetSelect').value = 'male';
+  updateSheetNavButtons();
+});
+document.getElementById('sheetFemaleBtn').addEventListener('click', ()=>{
+  S.sheet = 'female';
+  document.getElementById('sheetSelect').value = 'female';
+  updateSheetNavButtons();
+});
+
+function sleep(ms, token){
+  return new Promise(resolve=>{
+    const id = setTimeout(()=>resolve(), ms);
+    // stored so a cancel can clear it — handled via token check on resume
+  });
+}
+
+const SPEECH_SUPPORTED = (typeof window !== 'undefined') && ('speechSynthesis' in window);
+
+function loadVoices(){
+  if(!SPEECH_SUPPORTED) return;
+  S.voices = speechSynthesis.getVoices();
+  populateAllSlotRows();
+}
+if(SPEECH_SUPPORTED){
+  speechSynthesis.onvoiceschanged = loadVoices;
+  // Some browsers report voices in stages rather than all at once — Android
+  // Chrome in particular can return a small placeholder list immediately
+  // (sometimes just one or two novelty voices) and then quietly grow it a
+  // moment later without firing onvoiceschanged again. Stopping the moment
+  // the list becomes non-empty can lock the UI onto that incomplete list,
+  // so keep polling until the count holds steady for a few checks in a row.
+  let voicePollTries = 0;
+  let stableTicks = 0;
+  const voicePoll = setInterval(()=>{
+    voicePollTries++;
+    const before = S.voices.length;
+    loadVoices();
+    stableTicks = (S.voices.length === before) ? stableTicks + 1 : 0;
+    if(stableTicks >= 4 || voicePollTries > 40){ clearInterval(voicePoll); }
+  }, 250);
+
+  // iOS/mobile Safari has a known bug where getVoices() stays empty until a
+  // speech utterance has actually been triggered by a real user gesture.
+  // "Prime" the voice list the first time the person taps/clicks anywhere.
+  function primeVoicesOnce(){
+    if(S.voices.length > 0) return; // already loaded, nothing to prime
+    try{
+      const warm = new SpeechSynthesisUtterance(' ');
+      warm.volume = 0;
+      speechSynthesis.speak(warm);
+      speechSynthesis.cancel();
+    }catch(e){ /* ignore */ }
+    setTimeout(loadVoices, 200);
+    setTimeout(loadVoices, 800);
+  }
+  document.addEventListener('click', primeVoicesOnce);
+  document.addEventListener('touchend', primeVoicesOnce);
+}
+
+// ------------------------------------------------------------------
+// REGION PROFILES — ported from the practice-player template's engine.
+// A "region profile" is keyed by an abstract profile key (not always the
+// same as the BCP-47 prefix used to search installed voices), so codes
+// that share a search prefix but need different defaults — here, la-VA
+// (Italian stand-in) vs la-CI/la-HV (Spanish stand-in) — don't collide.
+//   matchPrefixes — BCP-47 prefixes to search, in priority order. First
+//                   prefix with any installed match wins.
+//   boost/primary/demote — region tags (the part after the first '-' in
+//                   the matched voice's lang) ranked within whichever
+//                   prefix matched.
+//   preferredNames — exact on-screen voice names pinned above the region
+//                   ranking.
+//   alwaysApproximate — true when even a same-prefix match is never the
+//                   "real" language (Latin has no native voice on any
+//                   mainstream platform).
+// ------------------------------------------------------------------
+const ES_LATAM_REGIONS = ['US','MX','AR','CO','CL','PE','UY','VE','EC','GT','BO','PY','CR','PA','DO','HN','SV','NI','419'];
+
+const REGION_PROFILES = {
+  en: {
+    matchPrefixes:['en'], boost:['US'], primary:'US',
+    preferredNames:['English United States'],
+  },
+  es: {
+    matchPrefixes:['es'], boost:ES_LATAM_REGIONS, primary:'US', demote:['ES'],
+    preferredNames:['Spanish United States'],
+  },
+  de: { matchPrefixes:['de'], boost:['DE'], primary:'DE' },
+  ru: { matchPrefixes:['ru'], boost:['RU'], primary:'RU' },
+  'pt-BR': { matchPrefixes:['pt'], boost:['BR'], primary:'BR', demote:['PT'] },
+  'fr-FR': { matchPrefixes:['fr'], boost:['FR'], primary:'FR' },
+  // Latin (Modern Ecclesiastical) -> Italian voice, per this course's
+  // explicit setup (not Spanish, unlike la-CI/la-HV below).
+  'la-ecc': {
+    matchPrefixes:['la','it'], alwaysApproximate:true,
+  },
+  // Latin (Classical) and Latin (Hispania Vulgaris) -> Spanish, United
+  // States accent specifically, per this course's explicit setup.
+  'la-hisp': {
+    matchPrefixes:['la','es','it'], alwaysApproximate:true,
+    boost:ES_LATAM_REGIONS, primary:'US', demote:['ES'],
+    preferredNames:['Spanish United States'],
+  },
+};
+
+// Maps a selectable language `code` to its region-profile key. Unlisted
+// codes fall back to their own 2-letter prefix (and, failing that, to no
+// profile at all — meaning no region preference is applied, same as
+// before this engine change, e.g. Swahili, isiZulu, isiXhosa, Samoan,
+// Tongan, Ancient Greek, and casual Japanese all still just match by
+// their own prefix with no regional ranking).
+const CODE_TO_REGION_KEY = {
+  'la-VA':'la-ecc',
+  'la-CI':'la-hisp', 'la-HV':'la-hisp', 'la':'la-ecc',
+};
+
+function resolveRegionProfile(code){
+  const prefix = code ? String(code).split('-')[0] : 'en';
+  const key = CODE_TO_REGION_KEY[code] || CODE_TO_REGION_KEY[prefix] || prefix;
+  return REGION_PROFILES[key] || REGION_PROFILES[prefix] || null;
+}
+function preferExactNamesFirst(list, profile){
+  const preferred = profile && profile.preferredNames;
+  if(!preferred || !preferred.length) return list;
+  const wanted = preferred.map(n=>n.toLowerCase());
+  const hits = list.filter(v=>wanted.includes((v.name||'').toLowerCase()));
+  if(!hits.length) return list;
+  hits.sort((a,b)=> wanted.indexOf(a.name.toLowerCase()) - wanted.indexOf(b.name.toLowerCase()));
+  const hitSet = new Set(hits);
+  return [...hits, ...list.filter(v=>!hitSet.has(v))];
+}
+function preferNetworkVoicesFirst(list){
+  return [...list].sort((a,b)=>{
+    const aNet = a.localService===false ? 0 : 1;
+    const bNet = b.localService===false ? 0 : 1;
+    return aNet - bNet;
+  });
+}
+function regionRank(voice, profile){
+  if(!profile) return 2;
+  const region = (voice.lang || '').split(/[-_]/)[1];
+  const r = region ? region.toUpperCase() : '';
+  if(profile.primary && r===profile.primary) return 0;
+  if(profile.boost && profile.boost.includes(r)) return 1;
+  if(profile.demote && profile.demote.includes(r)) return 3;
+  return 2;
+}
+function preferRegionFirst(list, profile){
+  return [...list].sort((a,b)=> regionRank(a, profile) - regionRank(b, profile));
+}
+function voicesByPrefix(prefix){
+  if(!prefix) return [];
+  return S.voices.filter(v=>{
+    if(!v.lang) return false;
+    const vPrefix = v.lang.toLowerCase().replace(/_/g,'-').split('-')[0];
+    return vPrefix === prefix;
+  });
+}
+
+// Returns the best checkmark-worthy voice list for a language code, region-
+// and name-ranked: a direct match first (in its preferred regional accent),
+// and if there's no native voice at all (e.g. Latin), the closest related-
+// language voices per that code's region profile.
+function matchingVoicesForCode(code){
+  const profile = resolveRegionProfile(code);
+  const prefix = code ? String(code).split('-')[0].toLowerCase() : 'en';
+  const matchPrefixes = (profile && profile.matchPrefixes && profile.matchPrefixes.length) ? profile.matchPrefixes : [prefix];
+  let matches = [];
+  for(let i=0;i<matchPrefixes.length;i++){
+    matches = voicesByPrefix(matchPrefixes[i]);
+    if(matches.length) break;
+  }
+  matches = preferNetworkVoicesFirst(matches);
+  matches = preferRegionFirst(matches, profile);
+  matches = preferExactNamesFirst(matches, profile);
+  return matches;
+}
+
+/* ============================================================
+   SETUP UI — 10 language + accent slot rows
+   ============================================================ */
+function buildSlotRows(){
+  const langWrap = document.getElementById('langList');
+  const voiceWrap = document.getElementById('voiceList');
+  langWrap.innerHTML = '';
+  voiceWrap.innerHTML = '';
+  for(let i=0;i<NUM_SLOTS;i++){
+    const langRow = document.createElement('div');
+    langRow.className = 'split-row';
+    langRow.id = 'langRow'+i;
+    langRow.innerHTML = `<span class="slot-num">${i+1}</span><select id="slotLang${i}"></select>`;
+    langWrap.appendChild(langRow);
+
+    const voiceRow = document.createElement('div');
+    voiceRow.className = 'split-row';
+    voiceRow.id = 'voiceRow'+i;
+    voiceRow.innerHTML = `<span class="slot-num">${i+1}</span><select id="slotVoice${i}"></select>`;
+    voiceWrap.appendChild(voiceRow);
+  }
+}
+
+function populateSlotLangOptions(i){
+  const sel = document.getElementById('slotLang'+i);
+  sel.innerHTML = '<option value="">— none —</option>';
+  LANGS.forEach(l=>{
+    const o = document.createElement('option');
+    o.value = l.code; o.textContent = l.label;
+    sel.appendChild(o);
+  });
+  sel.value = S.slotLang[i] || '';
+  sel.onchange = ()=>{
+    S.slotLang[i] = sel.value;
+    document.getElementById('langRow'+i).classList.toggle('active', !!sel.value);
+    document.getElementById('voiceRow'+i).classList.toggle('active', !!sel.value);
+    populateSlotVoiceOptions(i);
+    updateStartState();
+  };
+}
+
+function populateSlotVoiceOptions(i){
+  const sel = document.getElementById('slotVoice'+i);
+  const code = S.slotLang[i];
+  sel.innerHTML = '';
+  if(!code){
+    sel.innerHTML = '<option value="">—</option>';
+    sel.disabled = true;
+    S.slotVoiceURI[i] = '';
+    return;
+  }
+  sel.disabled = false;
+  const lang = langByCode(code);
+  const matches = matchingVoicesForCode(code);
+
+  if(S.voices.length===0){
+    const o = document.createElement('option');
+    o.value=''; o.textContent='System default (voices still loading…)';
+    sel.appendChild(o);
+    S.slotVoiceURI[i] = '';
+    sel.onchange = ()=>{ S.slotVoiceURI[i] = sel.value; };
+    return;
+  }
+
+  // Always list every installed voice — language matches float to the top
+  // and are checkmarked, but nothing is ever hidden. On devices missing a
+  // native voice pack for this language (common on Android Chrome, which
+  // only ships whatever TTS languages the user has downloaded), this still
+  // gives a pickable fallback instead of a dead-end "no voice found".
+  const matchSet = new Set(matches);
+  const ordered = [...matches, ...S.voices.filter(v=>!matchSet.has(v))];
+  ordered.forEach(v=>{
+    const o = document.createElement('option');
+    const isMatch = matchSet.has(v);
+    o.value = v.voiceURI;
+    o.textContent = (isMatch ? '\u2713 ' : '') + v.name + ' (' + v.lang + ')';
+    sel.appendChild(o);
+  });
+  if(!ordered.find(v=>v.voiceURI===S.slotVoiceURI[i])){
+    S.slotVoiceURI[i] = ordered[0].voiceURI;
+  }
+  sel.value = S.slotVoiceURI[i];
+  sel.onchange = ()=>{ S.slotVoiceURI[i] = sel.value; };
+}
+
+function populateAllSlotRows(){
+  for(let i=0;i<NUM_SLOTS;i++){
+    populateSlotLangOptions(i);
+    document.getElementById('langRow'+i).classList.toggle('active', !!S.slotLang[i]);
+    document.getElementById('voiceRow'+i).classList.toggle('active', !!S.slotLang[i]);
+    populateSlotVoiceOptions(i);
+  }
+  updateStartState();
+  const note = document.getElementById('voiceLoadNote');
+  if(!SPEECH_SUPPORTED){
+    note.textContent = 'This browser/preview doesn\'t support speech synthesis — open this file in a standard browser tab (Chrome, Safari, Edge) to hear it spoken aloud.';
+  } else {
+    note.textContent = S.voices.length ? '' : 'Loading available voices… if a language shows no native voice, your browser/OS may not have one installed — it will still try to speak using a default voice.';
+  }
+}
+
+function updateStartState(){
+  const anyActive = S.slotLang.some(c=>!!c);
+  if(!SPEECH_SUPPORTED){
+    document.getElementById('startBtn').disabled = true;
+    document.getElementById('startNote').textContent = 'Speech synthesis isn\'t available here — open this file in a standard browser tab to begin.';
+    return;
+  }
+  document.getElementById('startBtn').disabled = !anyActive;
+  document.getElementById('startNote').textContent = anyActive ? '' : 'Choose at least one language to begin.';
+}
+
+buildSlotRows();
+populateAllSlotRows();
+loadVoices();
+updateSheetNavButtons();
+
+/* ============================================================
+   PLAYBACK
+   ============================================================ */
+function computeActiveOrder(){
+  S.activeOrder = [];
+  for(let i=0;i<NUM_SLOTS;i++){ if(S.slotLang[i]) S.activeOrder.push(i); }
+}
+
+function textForSlot(lineEntry, slotIdx){
+  const code = S.slotLang[slotIdx];
+  const bucket = S.sheet==='female' ? lineEntry.female : lineEntry.male;
+  return (bucket && bucket[code]) || lineEntry.en;
+}
+
+function setPhase(txt){ document.getElementById('phaseLabel').textContent = txt; }
+
+function updateMilestone(){
+  document.getElementById('capLeft').textContent = `Line ${S.lineIdx+1} of ${LINES.length}`;
+  const slotsLeft = S.activeOrder.length;
+  document.getElementById('capRight').textContent = slotsLeft>1 ? `${S.subIdx+1} / ${slotsLeft} languages` : '';
+  const pct = Math.round(((S.lineIdx + (S.subIdx / Math.max(1,S.activeOrder.length))) / LINES.length) * 100);
+  document.getElementById('roadFill').style.width = pct + '%';
+}
+
+function safeCancel(){
+  if(SPEECH_SUPPORTED) speechSynthesis.cancel();
+}
+
+function speak(text, voiceLang, voiceURI, token){
+  return new Promise(resolve=>{
+    if(!text || !SPEECH_SUPPORTED){ resolve(); return; }
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = S.rate;
+    const v = S.voices.find(vv=>vv.voiceURI===voiceURI);
+    // If a specific (possibly fallback-language) voice is chosen, tag the
+    // utterance with THAT voice's own lang — mismatching u.lang against the
+    // actual voice can cause some engines to ignore the voice entirely.
+    if(v){ u.voice = v; u.lang = v.lang; } else { u.lang = voiceLang; }
+    u.onend = ()=>resolve();
+    u.onerror = ()=>resolve();
+    if(token!==S.token){ resolve(); return; }
+    speechSynthesis.speak(u);
+    // Backup to onend: some engines never fire it for a given utterance,
+    // which would otherwise hang playback indefinitely. Also lets a
+    // mid-utterance token change (skip/stop/pause) cut speech short.
+    const check = setInterval(()=>{
+      if(token!==S.token){ speechSynthesis.cancel(); clearInterval(check); resolve(); }
+      if(!speechSynthesis.speaking){ clearInterval(check); }
+    }, 120);
+  });
+}
+
+async function runStep(){
+  if(!S.running || S.paused) return;
+  const token = S.token;
+  if(S.lineIdx >= LINES.length){
+    if(S.loop){ S.lineIdx = 0; S.subIdx = 0; S.pass = 1; }
+    else { finishSession(); return; }
+  }
+  computeActiveOrder();
+  if(S.activeOrder.length===0){ finishSession(); return; }
+  if(S.subIdx >= S.activeOrder.length){
+    S.subIdx = 0; S.pass = 1; S.lineIdx++;
+    S.linesCompleted++;
+    if(token!==S.token) return;
+    return runStep();
+  }
+
+  const slotIdx = S.activeOrder[S.subIdx];
+  const lineEntry = LINES[S.lineIdx];
+  const code = S.slotLang[slotIdx];
+  const lang = langByCode(code);
+  const text = textForSlot(lineEntry, slotIdx);
+  const voice = S.voices.find(v=>v.voiceURI===S.slotVoiceURI[slotIdx]);
+
+  document.getElementById('langTag').textContent = lang.label;
+  document.getElementById('voiceTag').textContent = voice ? voice.name : 'system default';
+  document.getElementById('targetLineEl').textContent = text;
+  document.getElementById('enLineEl').textContent = code==='en' ? '' : lineEntry.en;
+  setPhase(S.pass===1 ? 'Listen' : 'Once more');
+  updateMilestone();
+
+  await speak(text, lang.voiceLang, S.slotVoiceURI[slotIdx], token);
+  if(token!==S.token || !S.running || S.paused) return;
+  await new Promise(r=>setTimeout(r, GAP_MS));
+  if(token!==S.token || !S.running || S.paused) return;
+
+  if(S.pass===1){ S.pass=2; }
+  else { S.pass=1; S.subIdx++; }
+  runStep();
+}
+
+function startPlayback(){
+  computeActiveOrder();
+  if(S.activeOrder.length===0) return;
+  document.querySelectorAll('.setup-card').forEach(c=>c.classList.add('hidden'));
+  document.getElementById('drillScreen').classList.remove('hidden');
+  document.getElementById('doneScreen').classList.add('hidden');
+  S.lineIdx = 0; S.subIdx = 0; S.pass = 1;
+  S.running = true; S.paused = false; S.loop = true;
+  S.linesCompleted = 0; S.sessionStart = Date.now();
+  document.getElementById('jumpInput').max = LINES.length;
+  document.getElementById('playPauseBtn').textContent = '⏸';
+  document.getElementById('loopBtn').classList.add('active');
+  S.token++;
+  runStep();
+}
+
+function finishSession(){
+  document.getElementById('drillScreen').classList.add('hidden');
+  document.getElementById('doneScreen').classList.remove('hidden');
+  const mins = Math.max(1, Math.round((Date.now()-S.sessionStart)/60000));
+  document.getElementById('doneStats').textContent =
+    `${S.linesCompleted} line${S.linesCompleted===1?'':'s'} completed in about ${mins} minute${mins===1?'':'s'}.`;
+}
+
+/* ---- transport ---- */
+document.getElementById('startBtn').addEventListener('click', startPlayback);
+
+document.getElementById('playerHomeBtn').addEventListener('click', ()=>{
+  safeCancel();
+  S.running = false; S.token++;
+  document.getElementById('drillScreen').classList.add('hidden');
+  document.querySelectorAll('.setup-card').forEach(c=>c.classList.remove('hidden'));
+});
+
+document.getElementById('playPauseBtn').addEventListener('click', ()=>{
+  S.paused = !S.paused;
+  document.getElementById('playPauseBtn').textContent = S.paused ? '▶' : '⏸';
+  if(S.paused){
+    safeCancel();
+    S.token++;
+    setPhase('Paused');
+  } else {
+    runStep();
+  }
+});
+document.getElementById('prevBtn').addEventListener('click', ()=>{
+  safeCancel();
+  S.token++;
+  S.lineIdx = Math.max(0, S.lineIdx-1);
+  S.subIdx = 0; S.pass = 1;
+  runStep();
+});
+document.getElementById('nextBtn').addEventListener('click', ()=>{
+  safeCancel();
+  S.token++;
+  S.lineIdx = Math.min(LINES.length-1, S.lineIdx+1);
+  S.subIdx = 0; S.pass = 1;
+  runStep();
+});
+document.getElementById('repeatBtn').addEventListener('click', ()=>{
+  safeCancel();
+  S.token++;
+  S.subIdx = 0; S.pass = 1;
+  runStep();
+});
+document.getElementById('loopBtn').addEventListener('click', ()=>{
+  S.loop = !S.loop;
+  document.getElementById('loopBtn').classList.toggle('active', S.loop);
+});
+document.getElementById('drillRateSlider').addEventListener('input', e=>{
+  S.rate = parseFloat(e.target.value);
+  document.getElementById('drillRateVal').textContent = S.rate.toFixed(2)+'×';
+});
+document.getElementById('stopBtn').addEventListener('click', ()=>{
+  safeCancel();
+  S.running = false; S.token++;
+  finishSession();
+});
+document.getElementById('jumpBtn').addEventListener('click', ()=>{
+  const v = parseInt(document.getElementById('jumpInput').value,10);
+  if(!v || v<1 || v>LINES.length) return;
+  safeCancel();
+  S.token++;
+  S.lineIdx = v-1; S.subIdx = 0; S.pass = 1;
+  runStep();
+});
+document.getElementById('restartSameBtn').addEventListener('click', ()=>{
+  document.getElementById('doneScreen').classList.add('hidden');
+  document.getElementById('drillScreen').classList.remove('hidden');
+  S.lineIdx = 0; S.subIdx = 0; S.pass = 1;
+  S.running = true; S.paused = false; S.linesCompleted = 0; S.sessionStart = Date.now();
+  S.token++;
+  runStep();
+});
+document.getElementById('newSetupBtn').addEventListener('click', ()=>{
+  document.getElementById('doneScreen').classList.add('hidden');
+  document.querySelectorAll('.setup-card').forEach(c=>c.classList.remove('hidden'));
+});
+</script>
+</body>
+</html>
