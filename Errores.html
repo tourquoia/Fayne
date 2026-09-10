@@ -1,3 +1,36 @@
+<!--
+=====================================================================
+INSTRUCTIONS FOR CLAUDE (any session, any user)
+=====================================================================
+This file is a reusable player template. It is sometimes used as-is
+(loading a spreadsheet at runtime via the "＋" button), and sometimes
+handed to Claude together with a specific spreadsheet, with a request
+to produce a new, standalone HTML file already wired to that one
+course — i.e. do at build time what the "＋" loader's setup modal
+(see openCourseSetupModal in the script) does at runtime.
+
+If asked to build a course-specific version of this template from a
+spreadsheet, ALWAYS collect these three things from the person before
+generating the final file — do not guess or silently default them:
+
+  1. DEFAULT SOURCE LANGUAGE for this course (which detected language
+     column should be the source; "none / target only" is also valid)
+  2. DEFAULT TARGET LANGUAGE for this course (which detected language
+     column should be the target)
+  3. Each character's GENDER (male / female / not sure) — list every
+     speaker code found in the sheet and ask for each one
+
+Read the spreadsheet first, detect its language columns and character
+codes (the same logic this template's own detectLangFromHeader /
+buildCourseFromLayout functions use), then present that detected list
+back to the person as the options for these three questions — don't
+make them guess column names blind. Set the resulting course object's
+defaultSrc / defaultTgt / each character's gender from their answers
+before writing the final file, exactly as courseSetupConfirm does here
+at runtime.
+=====================================================================
+-->
+<!-- build:JysnMlnrMthd -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,11 +56,14 @@
     --amber-dim:#8a6a34;
     --amber-glow: rgba(240,169,62,.5);
     --amber-glow-soft: rgba(240,169,62,.22);
-    --teal:#2FD9C4;
-    --teal-bright:#8BFCEC;
-    --teal-dim:#1f8f80;
-    --teal-glow: rgba(47,217,196,.5);
-    --teal-glow-soft: rgba(47,217,196,.22);
+    --amber-vivid:#F5860D;
+    --amber-vivid-glow: rgba(245,134,13,.75);
+    --amber-vivid-glow-soft: rgba(245,134,13,.4);
+    --teal:#F0A93E;
+    --teal-bright:#FFCE7A;
+    --teal-dim:#8a6a34;
+    --teal-glow: rgba(240,169,62,.5);
+    --teal-glow-soft: rgba(240,169,62,.22);
     --white-dot:#C8CCD2;
     --ok:#4FB86B;
     --danger:#D9614F;
@@ -80,7 +116,7 @@
     margin:0;
   }
   summary.section-title::-webkit-details-marker{ display:none; }
-  summary.section-title .chev{ font-size:13px; color:var(--amber); transition:transform .15s; }
+  summary.section-title .chev{ font-size:13px; color:var(--amber); }
   details[open] > summary.section-title .chev{ transform:rotate(180deg); }
   details[open] > summary.section-title{ margin-bottom:10px; }
   details > .details-body{ padding-top:2px; }
@@ -147,8 +183,8 @@
   .dot.teal{ background:var(--teal); color:var(--teal); }
   .dot.white{ background:var(--white-dot); color:transparent; box-shadow:none; }
   .dot.danger{ background:var(--danger); color:var(--danger); }
-  .voice-note-row{ display:flex; align-items:flex-start; gap:5px; margin-top:4px; }
-  .voice-note{ font-family:'Source Code Pro', monospace; font-size:9px; color:var(--ink-dim); flex:1 1 auto; min-width:0; margin-top:0; }
+  .voice-control-row{ display:flex; align-items:center; gap:6px; margin-top:4px; }
+  .voice-note{ font-family:'Source Code Pro', monospace; font-size:9px; color:var(--ink-dim); width:100%; margin-top:4px; }
   .voice-test-btn{
     flex:none; padding:5px 10px; margin-top:-1px;
     border-radius:7px; border:1px solid var(--border); background:#0d0f12;
@@ -161,7 +197,21 @@
   .voice-test-btn.tgt:hover{ color:var(--teal-bright); border-color:var(--teal-dim); }
   .voice-test-btn:disabled{ opacity:.35; cursor:default; }
   .voice-test-btn:disabled:hover{ color:var(--ink-soft); border-color:var(--border); }
-  .char-voice-row select{ font-size:12px; padding:7px 8px; width:100%; }
+  /* Pitch control: a small dropdown sitting right beside the Test button,
+     not its own row — keeps the card no taller than before, and leaves the
+     voice-note line (below both) the full card width to wrap in. */
+  .pitch-select{
+    width:auto; min-width:0; flex:none; appearance:auto;
+    font-family:'Source Code Pro', monospace; font-size:10px; font-weight:600;
+    padding:5px 5px; border-radius:7px; border:1px solid var(--border);
+    background:#0d0f12; color:var(--ink-soft); cursor:pointer; text-align:center;
+  }
+  .voice-control-row.src .pitch-select{ border-color:var(--amber-dim); }
+  .voice-control-row.tgt .pitch-select{ border-color:var(--teal-dim); }
+  .pitch-select:focus{ outline:2px solid var(--amber-dim); outline-offset:1px; }
+  .voice-control-row.src .pitch-select.adjusted{ color:var(--amber-bright); border-color:var(--amber); }
+  .voice-control-row.tgt .pitch-select.adjusted{ color:var(--teal-bright); border-color:var(--teal); }
+  .char-voice-row select:not(.pitch-select){ font-size:12px; padding:7px 8px; width:100%; }
 
   /* ---- course / section row ---- */
   .course-row{ display:flex; gap:8px; align-items:flex-end; }
@@ -173,7 +223,7 @@
     box-shadow:0 0 18px -8px var(--amber-glow);
   }
   .btn:hover{ filter:brightness(1.08); }
-  .btn.secondary{ background:var(--teal); color:#062824; box-shadow:0 0 18px -8px var(--teal-glow); }
+  .btn.secondary{ background:var(--teal); color:#1A1206; box-shadow:0 0 18px -8px var(--teal-glow); }
   .btn.ghost{ background:transparent; border-color:var(--border); color:var(--ink-soft); box-shadow:none; }
   .btn.ghost:hover{ color:var(--ink); border-color:var(--ink-dim); }
   .btn.block{ width:100%; padding:11px; font-size:14px; margin-top:10px; }
@@ -182,40 +232,48 @@
   .course-row-mini{ display:flex; gap:8px; align-items:flex-end; }
   .course-row-mini > div:first-child{ flex:1; min-width:0; }
 
-  /* ---- hero "start practice" panel ---- */
+  /* ---- hero "start practice" panel (now also holds the lesson grid) ---- */
   .hero-card{
-    background:linear-gradient(160deg, #0e2d2a 0%, #0a201f 55%, #071615 100%);
-    border:1.5px solid var(--teal);
+    background:linear-gradient(160deg, #2a1f0e 0%, #1f160a 55%, #151006 100%);
+    border:1.5px solid var(--amber);
     border-radius:var(--radius-lg);
-    box-shadow:0 0 0 1px var(--teal-glow-soft), 0 0 44px -10px var(--teal-glow), var(--shadow);
-    padding:16px 18px;
+    box-shadow:0 0 0 1px var(--amber-glow-soft), 0 0 44px -10px var(--amber-glow), var(--shadow);
+    padding:20px 18px 18px;
     margin-bottom:14px;
     position:relative;
   }
   .hero-start-btn{
-    display:flex; align-items:center; gap:16px; width:100%;
+    display:flex; flex-direction:column; align-items:center; gap:14px; width:100%;
     background:transparent; border:none; margin:0; padding:0;
-    cursor:pointer; text-align:left;
+    cursor:pointer; text-align:center;
+  }
+  .hero-play-wrap{ position:relative; flex:none; width:86px; height:86px; }
+  .hero-play-wrap::before{
+    content:''; position:absolute; inset:-8px; border-radius:50%;
+    border:2px solid var(--amber-vivid);
+    box-shadow:0 0 0 1px var(--amber-vivid-glow-soft), 0 0 34px 4px var(--amber-vivid-glow);
+    pointer-events:none;
   }
   .hero-play{
-    flex:none; width:64px; height:64px; border-radius:50%;
-    background:#05100f; border:1.5px solid var(--amber);
-    color:var(--amber-bright); font-size:20px;
-    display:flex; align-items:center; justify-content:center; padding-left:4px;
-    box-shadow:0 0 20px -3px var(--amber-glow), inset 0 0 12px -4px var(--amber-glow);
+    position:relative; z-index:1;
+    flex:none; width:86px; height:86px; border-radius:50%;
+    background:#05100f; border:2px solid var(--amber-vivid);
+    color:var(--amber-vivid); font-size:27px;
+    display:flex; align-items:center; justify-content:center; padding-left:5px;
+    box-shadow:0 0 0 1px var(--amber-vivid-glow-soft), 0 0 28px 3px var(--amber-vivid-glow), inset 0 0 16px -4px var(--amber-vivid-glow);
   }
-  .hero-text{ display:flex; flex-direction:column; gap:3px; min-width:0; flex:1 1 auto; }
+  .hero-text{ display:flex; flex-direction:column; align-items:center; gap:3px; min-width:0; }
   .hero-eyebrow{
-    font-family:'Inter', inherit; font-size:15px; font-weight:800;
-    letter-spacing:.03em; text-transform:uppercase; color:var(--amber-bright);
+    font-family:'Inter', inherit; font-size:18px; font-weight:800;
+    letter-spacing:.1em; text-transform:uppercase; color:var(--amber-bright);
     line-height:1.2;
   }
   .hero-title{
-    font-family:'Inter', inherit; font-size:15px; font-weight:600;
-    color:var(--ink); line-height:1.3;
+    font-family:'Inter', inherit; font-size:13px; font-weight:600;
+    color:var(--ink-soft); line-height:1.3;
   }
   .hero-stats{
-    display:flex; align-items:center; flex-wrap:wrap; gap:5px;
+    display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:5px;
     font-size:11px; color:var(--ink-soft); margin-top:2px;
   }
   .hero-stats .sep{ color:var(--ink-dim); }
@@ -224,7 +282,7 @@
   /* ---- lessons grid ---- */
   .lessons-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
   .lessons-header .eyebrow-label{ margin:0; }
-  .lessons-grid{ display:grid; grid-template-columns:repeat(2, 1fr); grid-auto-flow:column; gap:8px; }
+  .lessons-grid{ display:grid; grid-template-columns:repeat(2, 1fr); grid-auto-flow:row; gap:8px; }
   .lesson-tile{
     display:flex; align-items:center; gap:6px; min-width:0;
     border:1.5px solid var(--border-soft); border-radius:10px;
@@ -301,7 +359,7 @@
   }
   .road{ flex:1; }
   .track{ height:6px; border-radius:5px; background:var(--border-soft); overflow:hidden; }
-  .fill{ height:100%; background:linear-gradient(90deg, var(--amber), var(--teal)); border-radius:5px; transition:width .3s; }
+  .fill{ height:100%; background:linear-gradient(90deg, var(--amber), var(--teal)); border-radius:5px; }
   .cap{ display:flex; justify-content:space-between; font-size:10.5px; color:var(--ink-dim); margin-top:5px; font-family:'Source Code Pro', monospace; }
 
   .stage{
@@ -318,7 +376,7 @@
 
   .your-turn{ display:none; flex-direction:column; align-items:center; gap:10px; margin-top:10px; }
   .your-turn.show{ display:flex; }
-  .mic-pulse{ width:14px; height:14px; border-radius:50%; background:var(--danger); animation:pulse 1.1s infinite; box-shadow:0 0 10px 0 var(--danger); }
+  .mic-pulse{ width:14px; height:14px; border-radius:50%; background:var(--danger); box-shadow:0 0 10px 0 var(--danger); }
   @keyframes pulse{ 0%{opacity:.4;} 50%{opacity:1;} 100%{opacity:.4;} }
   .small-muted{ font-size:12px; color:var(--ink-dim); }
   .heard{ font-size:13px; color:var(--ink-soft); min-height:16px; }
@@ -327,23 +385,31 @@
 
   .transport{ display:flex; justify-content:center; gap:7px; margin-top:14px; flex-wrap:wrap; }
   .icon-btn{
-    width:40px; height:40px; border-radius:50%; border:1.5px solid var(--amber-dim);
+    width:40px; height:40px; border-radius:50%; border:2px solid var(--amber-vivid);
     background:var(--card); color:var(--ink-soft); font-size:14px; cursor:pointer;
-    box-shadow:0 0 12px -7px var(--amber-glow);
+    box-shadow:0 0 0 1px var(--amber-vivid-glow-soft), 0 0 14px 1px var(--amber-vivid-glow);
   }
-  .icon-btn.primary{ background:var(--amber); border-color:var(--amber); color:#1A1206; box-shadow:0 0 18px -6px var(--amber-glow); }
+  .icon-btn.primary{
+    background:radial-gradient(circle at 35% 30%, var(--amber-bright), var(--amber-vivid));
+    border-color:var(--amber-vivid); color:#1A1206;
+    box-shadow:0 0 0 1px var(--amber-vivid-glow-soft), 0 0 24px 4px var(--amber-vivid-glow);
+  }
   .icon-btn:hover{ color:var(--ink); }
 
   .settings-panel{ background:var(--card-hi); border:1px solid var(--border-soft); border-radius:12px; padding:10px 12px; margin-top:10px; }
-  .icon-btn.active{ background:var(--teal); border-color:var(--teal); color:#062824; box-shadow:0 0 18px -6px var(--teal-glow); }
-  .icon-btn.active:hover{ color:#062824; }
+  .icon-btn.active{
+    background:radial-gradient(circle at 35% 30%, var(--amber-bright), var(--amber-vivid));
+    border-color:var(--amber-vivid); color:#1A1206;
+    box-shadow:0 0 0 1px var(--amber-vivid-glow-soft), 0 0 24px 4px var(--amber-vivid-glow);
+  }
+  .icon-btn.active:hover{ color:#1A1206; }
 
   .drill-foot{ display:flex; justify-content:space-between; align-items:center; margin-top:16px; flex-wrap:wrap; gap:10px; }
   .jump{ display:flex; align-items:center; gap:8px; }
   .jump input{ width:64px; padding:8px 10px; }
 
   .done{ text-align:center; }
-  .done h2{ font-family:'Cormorant Garamond', serif; font-style:italic; font-size:28px; margin:0 0 8px; color:var(--ink); text-shadow:0 0 18px rgba(47,217,196,.35); }
+  .done h2{ font-family:'Cormorant Garamond', serif; font-style:italic; font-size:28px; margin:0 0 8px; color:var(--ink); text-shadow:0 0 18px rgba(240,169,62,.35); }
 
   /* ---- column picker modal ---- */
   .modal-overlay{
@@ -372,6 +438,17 @@
   .modal-actions{ display:flex; gap:10px; justify-content:flex-end; flex:none; }
   .colopt-confirm-btn{ padding:22px 16px; font-size:16px; }
   .colopt-confirm-top{ width:100%; margin:0 0 14px; flex:none; }
+
+  /* ---- course setup modal (defaults + gender confirm on new-course load) ---- */
+  .modal-card.wide{ max-width:480px; }
+  .setup-modal-body{ overflow-y:auto; min-height:0; flex:1 1 auto; margin-bottom:14px; }
+  .gender-list{ display:flex; flex-direction:column; gap:8px; margin-top:8px; }
+  .gender-row{ border:1.5px solid var(--border); border-radius:10px; padding:9px 11px; background:#0d0f12; }
+  .gender-row-name{ font-size:13px; font-weight:600; color:var(--ink); margin-bottom:6px; display:flex; align-items:baseline; gap:6px; flex-wrap:wrap; }
+  .gender-guess-note{ font-family:'Source Code Pro', monospace; font-size:9px; color:var(--ink-dim); font-weight:400; margin-left:auto; text-transform:uppercase; letter-spacing:.04em; }
+  .gender-options{ display:flex; gap:14px; font-size:12.5px; color:var(--ink-soft); }
+  .gender-options label{ display:flex; align-items:center; gap:5px; cursor:pointer; }
+  .gender-options input{ accent-color:var(--amber); width:14px; height:14px; }
 </style>
 </head>
 <body>
@@ -380,7 +457,7 @@
   <!-- ===================== START PRACTICE (hero) ===================== -->
   <section class="hero-card setup-card">
     <button class="hero-start-btn" id="startBtn">
-      <span class="hero-play">▶</span>
+      <span class="hero-play-wrap"><span class="hero-play">▶</span></span>
       <span class="hero-text">
         <span class="hero-eyebrow">Start Practice</span>
         <span class="hero-title" id="heroLessonTitle">Lesson 1: Meeting Someone</span>
@@ -416,6 +493,7 @@
       </div>
     </div>
     <div class="note warn hidden" id="osVoiceHelp"></div>
+    <div class="note warn hidden" id="voiceCoverageWarning"></div>
   </section>
 
   <section class="card setup-card">
@@ -561,7 +639,72 @@
   </div>
 </div>
 
+<!-- Shown every time a new course is loaded from a spreadsheet — asks for
+     the default source/target language and confirms each character's
+     gender before the course is added, since voice + pitch defaults
+     throughout the app key off both. -->
+<div class="modal-overlay" id="courseSetupModal">
+  <div class="modal-card wide">
+    <h2>Set up this course</h2>
+    <p class="modal-sub">Confirm the default languages and each character's gender — these drive voice and pitch defaults everywhere else in the app.</p>
+    <div class="setup-modal-body">
+      <div class="lang-grid" style="margin-top:0; padding-top:0; border-top:none;">
+        <div class="lang-col src">
+          <div class="eyebrow-label src">Default source</div>
+          <select id="setupSrcLangSelect"></select>
+        </div>
+        <div style="width:34px; flex:none;"></div>
+        <div class="lang-col tgt">
+          <div class="eyebrow-label tgt">Default target</div>
+          <select id="setupTgtLangSelect"></select>
+        </div>
+      </div>
+      <div class="eyebrow-label" style="margin-top:14px;">Character genders</div>
+      <div class="gender-list" id="courseSetupGenderList"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="courseSetupCancel">Cancel</button>
+      <button class="btn" id="courseSetupConfirm">Start</button>
+    </div>
+  </div>
+</div>
+
 <script>
+// build:JysnMlnrMthd
+/* ============================================================
+   TEMPLATE INSTRUCTIONS — READ BEFORE ADAPTING THIS FILE
+   ============================================================
+   This file is a reusable template. When applying it to a new
+   spreadsheet or document to build a new course, ask the user
+   (do not assume, and do not carry over defaults from whatever
+   course this template previously held):
+     1. Which language should be the SOURCE language?
+     2. Which language should be the TARGET language?
+     3. Which voice(s) — including region/accent — they want used
+        for the source and target, if they have a preference beyond
+        the template's default (US) pick.
+   Confirm these before building out the new course's languages,
+   characters, and rows.
+
+   If the new language has more than one register/accent that would
+   share a voice-search prefix (e.g. adding another Portuguese, French,
+   or Latin variant), or has no dedicated TTS voice on most platforms
+   (e.g. Lao, Lingala, Swahili), add or update an entry in
+   CODE_TO_REGION_KEY / REGION_PROFILES (search "REGION PROFILES" below)
+   so its default accent is set explicitly — don't rely on the plain
+   2-letter prefix, since that's shared across registers and can't tell
+   them apart.
+
+   THIS IS NOT OPTIONAL, AND IT'S NOW ENFORCED: a language with no path
+   to a widely-available voice doesn't just sound wrong — it plays
+   SILENTLY on many engines (Chrome/Android in particular), with no
+   error anywhere. This template now runs a VOICE COVERAGE CHECK on
+   every course load and course switch (search "VOICE COVERAGE CHECK"
+   below): after adding a language to BASE_LANGS, reload the page — if
+   the language needs a fallback and doesn't have one yet, a banner
+   appears in the setup screen (and a console.error) naming it
+   explicitly. Don't ship a course with that banner showing.
+   ============================================================ */
 /* ============================================================
    BUILT-IN COURSE — Concept Romance, "Meeting Someone" (dialogue only)
    Row shape: [SPEAKER, en, ro, it, es, pt-BR, pt-PT, fr-FR, fr-AFR, la-CI, la-VA, la-HV]
@@ -728,11 +871,22 @@ function populateCourseSelect(){
 
 function chooseDefaultLangsForCourse(course){
   const has = code => !!langByCode(course, code);
-  S.tgtCode = has(DEFAULT_TGT) ? DEFAULT_TGT : course.langs[0].code;
+  // A course loaded through the setup modal carries its own confirmed
+  // defaults (course.defaultTgt/defaultSrc, with defaultSrc possibly '' for
+  // "target only") — those always win over the global fallback constants,
+  // which exist only for the built-in demo course that never goes through
+  // that modal.
+  const selectableLangs = course.langs.filter(l=>l.selectable!==false);
+  const wantTgt = course.defaultTgt || DEFAULT_TGT;
+  S.tgtCode = has(wantTgt) ? wantTgt : (selectableLangs[0]||course.langs[0]).code;
+  if(course.defaultSrc !== undefined){
+    S.srcCode = (course.defaultSrc && has(course.defaultSrc) && course.defaultSrc!==S.tgtCode) ? course.defaultSrc : '';
+    return;
+  }
   if(has(DEFAULT_SRC) && DEFAULT_SRC!==S.tgtCode){
     S.srcCode = DEFAULT_SRC;
   } else {
-    const alt = course.langs.find(l=>l.code!==S.tgtCode);
+    const alt = selectableLangs.find(l=>l.code!==S.tgtCode);
     S.srcCode = alt ? alt.code : '';
   }
 }
@@ -749,11 +903,13 @@ function switchCourse(idx){
   updateSheetMeta();
   populateVoicesForOSHelp();
   updateListenNote();
+  renderVoiceCoverageWarning(currentCourse());
 }
 
 function fillLangOptions(selectEl, course, allowNone){
   selectEl.innerHTML = allowNone ? '<option value="">— none (target only) —</option>' : '';
   course.langs.forEach(l=>{
+    if(l.selectable===false) return;
     const o = document.createElement('option'); o.value=l.code; o.textContent=l.label; selectEl.appendChild(o);
   });
 }
@@ -799,6 +955,8 @@ document.getElementById('swapBtn').addEventListener('click', ()=>{
     const tmpURI = cv.src; cv.src = cv.tgt; cv.tgt = tmpURI;
     const tmpLang = cv.srcLang; cv.srcLang = cv.tgtLang; cv.tgtLang = tmpLang;
     const tmpPicked = cv.srcUserPicked; cv.srcUserPicked = cv.tgtUserPicked; cv.tgtUserPicked = tmpPicked;
+    const tmpPitch = cv.srcPitch; cv.srcPitch = cv.tgtPitch; cv.tgtPitch = tmpPitch;
+    const tmpPitchPicked = cv.srcPitchUserPicked; cv.srcPitchUserPicked = cv.tgtPitchUserPicked; cv.tgtPitchUserPicked = tmpPitchPicked;
   });
   syncDrillLangSelects();
   onLangChange();
@@ -1177,6 +1335,26 @@ function updateOSVoiceHelp(candidates, usingFallback, alwaysApproximate, regionM
 /* ============================================================
    VOICES
    ============================================================ */
+// KNOWN PLATFORM LIMITATION (2 Sep 2026) — "only one voice shows up per
+// language in the dropdown, even though the phone's Settings > Text-to-
+// speech screen lists two (e.g. Thai Voice I / Voice II)":
+// This is Chrome-on-Android's own speechSynthesis.getVoices() behavior,
+// not something populateVoiceSelect()/getVoiceCandidates() below is
+// filtering out. Android's TTS Settings screen talks directly to the
+// installed TTS engine and can show every voice variant it has; Chrome's
+// Web Speech API, on the other hand, typically exposes just one merged
+// SpeechSynthesisVoice object per language/locale from that engine,
+// regardless of how many variants are installed underneath it. There is
+// no documented way from page JS to ask Chrome for the engine's full
+// variant list — populateVoiceSelect() already lists every voice
+// getVoices() returns, so if only one Thai entry appears, that's the
+// entire list the browser is giving us. Confirmed by outside reports of
+// the same getVoices()-vs-Settings mismatch on Android Chrome (Chromium
+// issue tracker, readium.org Web Speech API notes). If per-voice
+// male/female choice for a language matters, the only reliable path is
+// outside the browser's speechSynthesis API entirely (e.g. calling a
+// separate installed app/engine via an Android-native wrapper, or a
+// server-side TTS API), not a fix inside this HTML file.
 // Some languages have one regional variant that's the far-more-common default
 // for learners (e.g. US English, and US/Latin-American Spanish rather than
 // Spain) — so within a language's matches, float those regions to the top
@@ -1227,6 +1405,7 @@ function updateOSVoiceHelp(candidates, usingFallback, alwaysApproximate, regionM
 //                       when the fallback chain had to skip past the
 //                       first prefix.
 const AFRICAN_FR_REGIONS = ['CI','SN','CD','CM','ML','BF','NE','TG','BJ','GN','GA','CG'];
+const AFRICAN_PT_REGIONS = ['AO','MZ','GW','CV','ST','TL'];
 const ES_LATAM_REGIONS = ['US','MX','AR','CO','CL','PE','UY','VE','EC','GT','BO','PY','CR','PA','DO','HN','SV','NI','419'];
 
 const REGION_PROFILES = {
@@ -1256,6 +1435,14 @@ const REGION_PROFILES = {
     matchPrefixes:['pt'], boost:['PT'], primary:'PT', demote:['BR'],
     label:{ en:'Portugal', es:'Portugal' },
   },
+  // No browser realistically ships an Angola/Mozambique-accented Portuguese
+  // voice — same situation as fr-AFR above — so this just searches "pt"
+  // with African regions boosted (a no-op boost in practice) and BR/PT
+  // demoted, rather than pretending a specific regional match exists.
+  'pt-AFR': {
+    matchPrefixes:['pt'], boost:AFRICAN_PT_REGIONS, demote:['BR','PT'],
+    label:{ en:'a Sub-Saharan African Portuguese accent', es:'un acento portugu\u00e9s subsahariano' },
+  },
   'fr-FR': {
     matchPrefixes:['fr'], boost:['FR'], primary:'FR', demote:AFRICAN_FR_REGIONS,
     label:{ en:'France', es:'Francia' },
@@ -1281,6 +1468,27 @@ const REGION_PROFILES = {
     label:{ en:'United States or Latin America Spanish (standing in for this Latin register)', es:'espa\u00f1ol de Estados Unidos o Latinoam\u00e9rica (para este registro de lat\u00edn)' },
   },
   // Lao has no dedicated voice on most platforms -> Thai by default.
+  //
+  // KNOWN LIMITATION (2 Sep 2026): this fallback makes the Thai *engine*
+  // speak, but the course text for a Lao line is still written in LAO
+  // script. Thai and Lao are different Unicode blocks/scripts (they look
+  // related but aren't the same characters), so the Thai voice can't
+  // recognize Lao text as words at all — it falls back to sounding out
+  // small character/syllable clusters one at a time, which is the
+  // "staccato, stops at every syllable" behavior. This is NOT a bug in
+  // this file's speak()/getVoiceCandidates() logic (u.lang is already
+  // being set correctly to the chosen voice's own lang) — it's a script
+  // mismatch between the text and the substitute engine, and it will
+  // reproduce in ANY player built off this template until a real Lao
+  // (lo/lo-LA) voice exists on the device. Options if this needs fixing:
+  //   1. Check whether the device/browser has since added a real "lo"
+  //      voice (matchPrefixes already tries 'lo' first — if one appears,
+  //      it will be picked up automatically, no code change needed).
+  //   2. Transliterate the Lao-script course text into Thai script before
+  //      calling speak() for lo-th lines specifically (nontrivial — the
+  //      scripts share ancestry but aren't a 1:1 character mapping).
+  //   3. Leave the approximation as-is and rely on alwaysApproximate's
+  //      "using a related language instead" note to set expectations.
   'lo-th': {
     matchPrefixes:['lo','th'], alwaysApproximate:true, boost:['TH'], primary:'TH',
     label:{ en:'Thai (standing in for Lao, which has no dedicated voice)', es:'tailand\u00e9s (para el lao)' },
@@ -1295,6 +1503,67 @@ const REGION_PROFILES = {
     matchPrefixes:['en'], alwaysApproximate:true, boost:['NG'], primary:'NG', demote:['US'],
     label:{ en:'Nigerian English (standing in for a language with no dedicated voice)', es:'ingl\u00e9s nigeriano' },
   },
+  // Navajo has no dedicated voice on any platform -> US English by default.
+  // Tries an actual "nv" voice first in case a browser ever ships one, but
+  // that's not expected. Its own profile (not the plain "en" one above) so
+  // this fallback is ranked independently of English's own defaults.
+  'nv-en': {
+    matchPrefixes:['nv','en'], alwaysApproximate:true, boost:['US'], primary:'US',
+    label:{ en:'English (standing in for Navajo, which has no dedicated voice)', es:'ingl\u00e9s (para el navajo)' },
+  },
+  // Huasteca Nahuatl has no dedicated voice -> Mexican Spanish by default,
+  // since it's spoken in the same Huasteca region of Mexico. Tries an
+  // actual "nah" voice first in case one ever ships.
+  'nah-es': {
+    matchPrefixes:['nah','es'], alwaysApproximate:true, boost:['MX', ...ES_LATAM_REGIONS], primary:'MX',
+    label:{ en:'Mexican Spanish (standing in for Huasteca Nahuatl, which has no dedicated voice)', es:'espa\u00f1ol mexicano (para el n\u00e1huatl huasteco)' },
+  },
+  // Southern Quechua has no dedicated voice -> Peruvian Spanish by default,
+  // since it's spoken across the same Andean region of Peru/Bolivia. Tries
+  // an actual "quz" voice first in case one ever ships.
+  'quz-es': {
+    matchPrefixes:['quz','es'], alwaysApproximate:true, boost:['PE', ...ES_LATAM_REGIONS], primary:'PE',
+    label:{ en:'Peruvian Spanish (standing in for Southern Quechua, which has no dedicated voice)', es:'espa\u00f1ol peruano (para el quechua sure\u00f1o)' },
+  },
+  // Samoan has no dedicated voice on most platforms -> New Zealand English
+  // by default (NZ is the largest Samoan-diaspora anglophone market, and
+  // English is Samoa's other official language). Tries an actual "sm"
+  // voice first in case one ever ships.
+  'sm-en-nz': {
+    matchPrefixes:['sm','en'], alwaysApproximate:true, boost:['NZ'], primary:'NZ',
+    label:{ en:'New Zealand English (standing in for Samoan, which has no dedicated voice)', es:'ingl\u00e9s neozeland\u00e9s (para el samoano)' },
+  },
+  // Hawaiian has no dedicated voice on most platforms -> US English by
+  // default (Hawaii is a US state and English is co-official there).
+  // Tries an actual "haw" voice first in case one ever ships. Its own
+  // profile (not the plain "en" one above) so it's ranked independently.
+  'haw-en-us': {
+    matchPrefixes:['haw','en'], alwaysApproximate:true, boost:['US'], primary:'US',
+    label:{ en:'English (standing in for Hawaiian, which has no dedicated voice)', es:'ingl\u00e9s (para el hawaiano)' },
+  },
+  // Maori has no dedicated voice on most platforms -> New Zealand English
+  // by default, for the same reason as the Samoan fallback above (NZ is
+  // where Te Reo Maori is an official language). Tries an actual "mi"
+  // voice first in case one ever ships.
+  'mi-en-nz': {
+    matchPrefixes:['mi','en'], alwaysApproximate:true, boost:['NZ'], primary:'NZ',
+    label:{ en:'New Zealand English (standing in for M\u0101ori, which has no dedicated voice)', es:'ingl\u00e9s neozeland\u00e9s (para el maor\u00ed)' },
+  },
+  // Tongan has no dedicated voice on most platforms -> New Zealand English
+  // by default, matching the Samoan fallback above (NZ has the largest
+  // Tongan-diaspora anglophone population). Tries an actual "to" voice
+  // first in case one ever ships.
+  'to-en-nz': {
+    matchPrefixes:['to','en'], alwaysApproximate:true, boost:['NZ'], primary:'NZ',
+    label:{ en:'New Zealand English (standing in for Tongan, which has no dedicated voice)', es:'ingl\u00e9s neozeland\u00e9s (para el tongano)' },
+  },
+  // Klingon is constructed and has no real-world region to anchor a
+  // fallback to, so it defaults to plain US English like Navajo does.
+  // Tries an actual "tlh" voice first.
+  'tlh-en': {
+    matchPrefixes:['tlh','en'], alwaysApproximate:true, boost:['US'], primary:'US',
+    label:{ en:'English (standing in for Klingon, which has no dedicated voice)', es:'ingl\u00e9s (para el klingon)' },
+  },
 };
 
 // Maps a selectable language `code` (as used in a course's langs array) to
@@ -1305,16 +1574,111 @@ const REGION_PROFILES = {
 // it needs a specific default region, shares a prefix with another
 // register, or has no dedicated voice.
 const CODE_TO_REGION_KEY = {
-  'pt-BR':'pt-BR', 'pt-PT':'pt-PT', 'pt':'pt-BR',
+  'pt-BR':'pt-BR', 'pt-PT':'pt-PT', 'pt-AFR':'pt-AFR', 'pt':'pt-BR',
   'fr-FR':'fr-FR', 'fr-AFR':'fr-AFR', 'fr':'fr-FR',
   'la-CI':'la-hisp', 'la-HV':'la-hisp', 'la-VA':'la-ecc', 'la':'la-ecc',
   'lo':'lo-th',
-  'ln':'afr-en-ng', 'sw':'afr-en-ng',
+  // Every African language below has no dedicated browser/OS voice and no
+  // better regional match, so all of them share the same Nigerian-English
+  // catch-all fallback (see the 'afr-en-ng' profile above).
+  'ln':'afr-en-ng', 'sw':'afr-en-ng', 'ha':'afr-en-ng', 'yo':'afr-en-ng',
+  'zu':'afr-en-ng', 'xh':'afr-en-ng', 'ig':'afr-en-ng', 'am':'afr-en-ng',
+  'nv':'nv-en', 'nah-hua':'nah-es', 'quz':'quz-es',
+  'sm':'sm-en-nz', 'haw':'haw-en-us', 'mi':'mi-en-nz', 'to':'to-en-nz',
+  // Susu has no dedicated voice either; routed to the same Nigerian-English
+  // catch-all as the other no-better-option African languages above
+  // (previously stood in with Guinean French, but that never resolves to
+  // an actually-installed voice on real devices any better than this does).
+  'sus':'afr-en-ng', 'tlh':'tlh-en',
 };
+// Normalizes a language code's casing to match this file's own convention
+// (and the literal keys used in CODE_TO_REGION_KEY / REGION_PROFILES above):
+// the primary subtag lowercase (e.g. 'es', 'en'), and any subtag after a
+// '-' UPPERCASE (e.g. 'pt-BR', 'fr-AFR', 'la-VA') — a blanket .toLowerCase()
+// would silently break those intentionally-uppercase region suffixes.
+// Spreadsheet authors are inconsistent about casing inside the header
+// parentheses ("Spanish (ES)" vs "Spanish (es)"), so every code parsed from
+// an uploaded file is run through this before it's used anywhere. It's also
+// applied defensively here in resolveRegionProfile, since this function is
+// the shared gateway every code passes through on its way to a voice.
+function normalizeLangCode(code){
+  const raw = code ? String(code).trim() : '';
+  if(!raw) return raw;
+  const parts = raw.split('-');
+  parts[0] = parts[0].toLowerCase();
+  for(let i=1;i<parts.length;i++){ parts[i] = parts[i].toUpperCase(); }
+  return parts.join('-');
+}
 function resolveRegionProfile(code){
-  const prefix = code ? String(code).split('-')[0] : 'en';
-  const key = CODE_TO_REGION_KEY[code] || CODE_TO_REGION_KEY[prefix] || prefix;
+  const norm = normalizeLangCode(code);
+  const prefix = norm ? String(norm).split('-')[0] : 'en';
+  const key = CODE_TO_REGION_KEY[norm] || CODE_TO_REGION_KEY[prefix] || prefix;
   return REGION_PROFILES[key] || REGION_PROFILES[prefix] || null;
+}
+
+// ------------------------------------------------------------------
+// VOICE COVERAGE CHECK — the rule that keeps a newly-added language
+// from silently failing to play.
+// ------------------------------------------------------------------
+// Root cause this check exists to catch: speak()/previewVoice() only
+// attach a real browser voice (u.voice = v) when getVoiceCandidates()
+// found at least one match. When it finds none, u.lang gets set to the
+// *raw* unmatched code (e.g. "nv", "nah", "quz") with NO voice object
+// attached — and several speechSynthesis engines (notably
+// Chrome/Android) silently refuse to speak an utterance whose lang tag
+// doesn't correspond to any installed voice when no explicit voice is
+// given. Result: total silence, no error, nothing in the console —
+// exactly what makes this bug easy to ship and hard to notice in
+// testing (it can pass on a dev machine that happens to have a stray
+// voice covering that prefix).
+//
+// THE RULE: every code in a course's `langs` must resolve — either
+// directly (its own voiceLang prefix) or via CODE_TO_REGION_KEY ->
+// REGION_PROFILES matchPrefixes — to at least one prefix in
+// SAFE_VOICE_PREFIXES below, i.e. a language family with near-universal
+// OS/browser TTS coverage. If it doesn't, that language MUST get a
+// CODE_TO_REGION_KEY entry pointing to a REGION_PROFILES profile with
+// alwaysApproximate:true and a matchPrefixes chain that ends in a safe
+// prefix (see 'lo-th' / 'afr-en-ng' above for the pattern). This is not
+// optional style guidance — it's checked below, at load time, for
+// every course, so a gap can't ship unnoticed. When adapting this
+// template for a new course, add every new language to BASE_LANGS
+// FIRST, then reload — this check will tell you immediately, via a
+// banner in the setup screen and a console.error, whether it also
+// needs a CODE_TO_REGION_KEY / REGION_PROFILES entry before it's safe
+// to ship.
+const SAFE_VOICE_PREFIXES = [
+  'en','es','fr','de','it','pt','ru','zh','ja','ko','ar','nl','pl',
+  'sv','da','no','nb','fi','tr','el','he','hi','id','th','vi','cs',
+  'hu','ro','sk','uk','bg','hr','ca','fil','ms'
+];
+// Returns an array of {code, label} for every language in `course.langs`
+// that has no path to a SAFE_VOICE_PREFIXES-covered voice — i.e. would
+// hit the silent-failure path described above.
+function findUncoveredLanguages(course){
+  const problems = [];
+  (course.langs||[]).forEach(l=>{
+    if(l.selectable===false) return;
+    const profile = resolveRegionProfile(l.code);
+    const prefix = String(l.code).split('-')[0];
+    const chain = (profile && profile.matchPrefixes && profile.matchPrefixes.length) ? profile.matchPrefixes : [prefix];
+    const covered = chain.some(p=>SAFE_VOICE_PREFIXES.includes(p));
+    if(!covered) problems.push({code:l.code, label:l.label});
+  });
+  return problems;
+}
+// Shows a hard-to-miss banner (and logs to console) naming any language
+// in the active course that fails the rule above, so a silent,
+// untestable voice gap can't ship unnoticed.
+function renderVoiceCoverageWarning(course){
+  const el = document.getElementById('voiceCoverageWarning');
+  if(!el) return;
+  const problems = findUncoveredLanguages(course);
+  if(!problems.length){ el.classList.add('hidden'); el.innerHTML=''; return; }
+  const names = problems.map(p=>p.label||p.code).join(', ');
+  console.error('[voice coverage] These languages have no fallback to a widely-available TTS voice and will likely play SILENTLY: '+names+'. Add a CODE_TO_REGION_KEY / REGION_PROFILES entry for each (see "VOICE COVERAGE CHECK" comment above resolveRegionProfile) before shipping.');
+  el.innerHTML = `<b>Voice setup incomplete</b><br>${escapeHtml(names)} — no fallback voice configured. These will likely play silently until a CODE_TO_REGION_KEY / REGION_PROFILES entry is added. See console for details.`;
+  el.classList.remove('hidden');
 }
 function preferExactNamesFirst(list, profile){
   const preferred = profile && profile.preferredNames;
@@ -1405,8 +1769,9 @@ function preferRegionFirst(list, profile){
 // codes share a voice-search prefix or fall back to a different language.
 function getVoiceCandidates(code, gender){
   const voices = S.voices;
-  const profile = resolveRegionProfile(code);
-  const prefix = code ? String(code).split('-')[0] : 'en';
+  const normCode = normalizeLangCode(code);
+  const profile = resolveRegionProfile(normCode);
+  const prefix = normCode ? String(normCode).split('-')[0] : 'en';
   const matchPrefixes = (profile && profile.matchPrefixes && profile.matchPrefixes.length) ? profile.matchPrefixes : [prefix];
   let matches = [];
   let usingFallback = false;
@@ -1539,7 +1904,7 @@ function renderCharacterCards(){
   const tgtLangCode = tgtLang ? tgtLang.code : 'en';
 
   course.characters.forEach(ch=>{
-    if(!S.charVoices[ch.code]) S.charVoices[ch.code] = {src:'', tgt:'', srcLang:'', tgtLang:'', srcUserPicked:false, tgtUserPicked:false};
+    if(!S.charVoices[ch.code]) S.charVoices[ch.code] = {src:'', tgt:'', srcLang:'', tgtLang:'', srcUserPicked:false, tgtUserPicked:false, srcPitch:1, tgtPitch:1, srcPitchUserPicked:false, tgtPitchUserPicked:false};
     const cv = S.charVoices[ch.code];
     const charGender = guessCharGender(ch);
     const srcId = 'srcVoice__'+sanitizeId(ch.code);
@@ -1558,21 +1923,26 @@ function renderCharacterCards(){
         <div class="voice-col">
           <div class="voice-label src"><span class="dot" id="dot_${srcId}"></span>Source voice</div>
           <select id="${srcId}"></select>
-          <div class="voice-note-row">
-            <div class="voice-note" id="note_${srcId}"></div>
+          <div class="voice-control-row src">
             <button type="button" class="voice-test-btn src" id="test_${srcId}" title="Preview this voice">Test ▶</button>
+            <select class="pitch-select" id="pitch_${srcId}" title="Pitch"></select>
           </div>
+          <div class="voice-note" id="note_${srcId}"></div>
         </div>
         <div class="voice-col">
           <div class="voice-label tgt"><span class="dot" id="dot_${tgtId}"></span>Target voice</div>
           <select id="${tgtId}"></select>
-          <div class="voice-note-row">
-            <div class="voice-note" id="note_${tgtId}"></div>
+          <div class="voice-control-row tgt">
             <button type="button" class="voice-test-btn tgt" id="test_${tgtId}" title="Preview this voice">Test ▶</button>
+            <select class="pitch-select" id="pitch_${tgtId}" title="Pitch"></select>
           </div>
+          <div class="voice-note" id="note_${tgtId}"></div>
         </div>
       </div>`;
     wrap.appendChild(card);
+    // Pitch dropdowns are wired in a second pass below, once every
+    // character's voice URI for this language pair is known — the
+    // collision check needs the full picture first.
 
     if(noSrc){
       const sel = document.getElementById(srcId);
@@ -1601,7 +1971,7 @@ function renderCharacterCards(){
         updateDotAndNote(srcId, e.target.value, matches, false, srcUsingFallback, charGender, srcLang && srcLang.label);
       };
       const srcTestBtn = document.getElementById('test_'+srcId);
-      if(srcTestBtn) srcTestBtn.onclick = ()=> previewVoice(cv.src, srcVoiceLangCode, srcTestBtn);
+      if(srcTestBtn) srcTestBtn.onclick = ()=> previewVoice(cv.src, srcVoiceLangCode, srcTestBtn, cv.srcPitch);
     }
 
     const prevTgtURI = (cv.tgtUserPicked && cv.tgtLang===tgtLangCode) ? cv.tgt : '';
@@ -1616,7 +1986,64 @@ function renderCharacterCards(){
       updateDotAndNote(tgtId, e.target.value, tMatches, false, usingFallback, charGender, tgtLang && tgtLang.label);
     };
     const tgtTestBtn = document.getElementById('test_'+tgtId);
-    if(tgtTestBtn) tgtTestBtn.onclick = ()=> previewVoice(cv.tgt, tgtVoiceLangCode, tgtTestBtn);
+    if(tgtTestBtn) tgtTestBtn.onclick = ()=> previewVoice(cv.tgt, tgtVoiceLangCode, tgtTestBtn, cv.tgtPitch);
+  });
+
+  // Second pass: every character now has a resolved voice URI for both
+  // sides, so this is the first point where a "two characters ended up on
+  // the same underlying voice" collision can actually be detected. Nudge
+  // pitch apart for anyone caught in a collision who hasn't manually set
+  // their own pitch, then build/wire the dropdowns with the final values.
+  applyVoiceCollisionPitch(course);
+  course.characters.forEach(ch=>{
+    const cv = S.charVoices[ch.code];
+    const srcId = 'srcVoice__'+sanitizeId(ch.code);
+    const tgtId = 'tgtVoice__'+sanitizeId(ch.code);
+    setupPitchSelect(srcId, cv, 'srcPitch', 'srcPitchUserPicked');
+    setupPitchSelect(tgtId, cv, 'tgtPitch', 'tgtPitchUserPicked');
+  });
+}
+
+/* ============================================================
+   VOICE-COLLISION PITCH NUDGING
+   When two or more characters end up assigned the same underlying voice
+   (same voiceURI) for a given side (source or target), that voice's own
+   character can't do much to distinguish them — so nudge pitch apart just
+   enough to tell them apart: male characters step down, female characters
+   step up. A manual pitch pick on a character is always left alone. Non-
+   manual pitches are reset to Mid first so a nudge from a previous
+   language pairing doesn't linger once the voices no longer clash.
+   ============================================================ */
+const PITCH_MID = 1.00;
+const PITCH_MALE_COLLISION = 0.90;
+const PITCH_FEMALE_COLLISION = 1.10;
+function applyVoiceCollisionPitch(course){
+  ['src','tgt'].forEach(side=>{
+    const uriKey = side;
+    const pitchKey = side+'Pitch';
+    const pickedKey = side+'PitchUserPicked';
+    course.characters.forEach(ch=>{
+      const cv = S.charVoices[ch.code];
+      if(cv && !cv[pickedKey]) cv[pitchKey] = PITCH_MID;
+    });
+    const groups = {};
+    course.characters.forEach(ch=>{
+      const cv = S.charVoices[ch.code];
+      const uri = cv && cv[uriKey];
+      if(!uri) return;
+      (groups[uri] = groups[uri] || []).push(ch);
+    });
+    Object.values(groups).forEach(group=>{
+      if(group.length < 2) return; // no collision, nothing to distinguish
+      group.forEach(ch=>{
+        const cv = S.charVoices[ch.code];
+        if(cv[pickedKey]) return; // respect a manual pick
+        const gender = guessCharGender(ch);
+        if(gender==='male') cv[pitchKey] = PITCH_MALE_COLLISION;
+        else if(gender==='female') cv[pitchKey] = PITCH_FEMALE_COLLISION;
+        // unknown gender: leave at Mid — no basis to pick a direction
+      });
+    });
   });
 }
 
@@ -1677,11 +2104,14 @@ document.getElementById('testAudioBtn').addEventListener('click', async ()=>{
    ============================================================ */
 const KNOWN_VOICE_LANG = {
   en:'en-US', ro:'ro-RO', it:'it-IT', es:'es-ES', 'es-ES':'es-ES',
-  'pt-BR':'pt-BR', 'pt-PT':'pt-PT', pt:'pt-PT',
+  'pt-BR':'pt-BR', 'pt-PT':'pt-PT', 'pt-AFR':'pt-PT', pt:'pt-PT',
   'fr-FR':'fr-FR', 'fr-AFR':'fr-FR', fr:'fr-FR',
   'la-CI':'la', 'la-VA':'la', 'la-HV':'la', la:'la',
   de:'de-DE', ru:'ru-RU', sw:'sw-KE', el:'el-GR', ja:'ja-JP', zh:'zh-CN',
   ko:'ko-KR', ar:'ar-SA', hi:'hi-IN', nl:'nl-NL', pl:'pl-PL', tr:'tr-TR',
+  vi:'vi-VN', km:'km-KH', lo:'lo-LA', ln:'ln-CD', ha:'ha-NG', yo:'yo-NG',
+  zu:'zu-ZA', xh:'xh-ZA', ig:'ig-NG', am:'am-ET',
+  haw:'haw-US', mi:'mi-NZ', sm:'sm-WS', to:'to-TO', sus:'sus-GN',
 };
 function guessVoiceLang(code){
   if(KNOWN_VOICE_LANG[code]) return KNOWN_VOICE_LANG[code];
@@ -1774,6 +2204,78 @@ function analyzeWorkbookLayouts(workbook){
 /* Builds a course from one layout group, once the person has said which
    column (by position within that layout's header row) holds the
    character/speaker names. Only sheets in this exact layout are used. */
+// Detects a course-language `code` from a spreadsheet header cell's text
+// (e.g. "English (US)", "LÍNEA EN ESPAÑOL", "Español (EE. UU.)", "Portuguese
+// (Brazilian)"). Real-world workbooks are inconsistent: some put a real
+// language code in parentheses, some put a *region* label there instead
+// ("US", "EE. UU." — not language codes at all), and some have no
+// parenthetical at all and only say the language's name in the header text.
+// So this tries the language's actual NAME first — matched against the
+// languages this template already knows about — and only falls back to
+// treating a "(...)" as a literal code when the name-match fails and that
+// parenthetical content is actually a recognized code (not a bare region
+// abbreviation like "US").
+const LANG_NAME_PATTERNS = [
+  {code:'fr-AFR', re:/african\s*french|fran[cç]ais\s*africain/},
+  {code:'fr-FR',  re:/\bfrench\b|\bfran[cç]ais\b|\bfrances?\b/},
+  {code:'pt-AFR', re:/african\s*portuguese|portugu[eê]s\s*africano/},
+  {code:'pt-BR',  re:/brazilian\s*portuguese|portuguese\s*brazilian|portugu[eê]s\s*brasileiro|portuguese\s*\(?\s*brazil|portugu[eê]s\s*do\s*brasil/},
+  {code:'pt-PT',  re:/european\s*portuguese|portuguese\s*european|portugu[eê]s\s*europeu|portuguese\s*\(?\s*portugal/},
+  {code:'pt-BR',  re:/\bportuguese\b|\bportugu[eê]s\b/},
+  {code:'la-VA',  re:/ecclesiastical\s*latin|vatican\s*latin|lat[ií]n\s*eclesi[aá]stico|lat[ií]n\s*vaticano/},
+  {code:'la-HV',  re:/hispania\s*vulgaris/},
+  {code:'la-CI',  re:/classical\s*latin|latin\s*classical|lat[ií]n\s*cl[aá]sico|\blatin\b|\blat[ií]n\b/},
+  {code:'es',     re:/\bspanish\b|\bespa[nñ]ol\b|\bcastellano\b/},
+  {code:'en',     re:/\benglish\b|\bingl[eé]s\b/},
+  {code:'de',     re:/\bgerman\b|\bdeutsch\b|\balem[aá]n\b/},
+  {code:'ru',     re:/\brussian\b|\bruso\b|русск/},
+  {code:'ro',     re:/\bromanian\b|\brom[aâ]n[aă]?\b/},
+  {code:'it',     re:/\bitalian\b|\bitaliano\b/},
+  {code:'ja',     re:/\bjapanese\b|\bjapon[eé]s\b|\bnihongo\b/},
+  {code:'vi',     re:/\bvietnamese\b|\bvietnamita\b/},
+  {code:'km',     re:/\bkhmer\b|\bcambodian\b/},
+  {code:'lo',     re:/\blao\b|\blaotian\b/},
+  {code:'sw',     re:/\bswahili\b/},
+  {code:'ln',     re:/\blingala\b/},
+  {code:'ha',     re:/\bhausa\b/},
+  {code:'yo',     re:/\byoruba\b/},
+  {code:'zu',     re:/\bisizulu\b|\bzulu\b/},
+  {code:'xh',     re:/\bisixhosa\b|\bxhosa\b/},
+  {code:'ig',     re:/\bigbo\b/},
+  {code:'am',     re:/\bamharic\b/},
+  {code:'haw',    re:/\bhawaiian\b/},
+  {code:'mi',     re:/\bm[aā]ori\b|\bte\s*reo\b/},
+  {code:'sm',     re:/\bsamoan\b/},
+  {code:'to',     re:/\btongan\b/},
+  {code:'nv',     re:/\bnavajo\b|\bdin[eé]\b/},
+  {code:'nah-hua',re:/\bnahuatl\b/},
+  {code:'quz',    re:/\bquechua\b/},
+  {code:'sus',    re:/\bsusu\b/},
+  {code:'tlh',    re:/\bklingon\b/},
+];
+// Bare/legacy codes this template already recognizes elsewhere (via
+// KNOWN_VOICE_LANG / CODE_TO_REGION_KEY / REGION_PROFILES). A "(...)"
+// parenthetical is only trusted as a literal code if it's in this list —
+// which excludes things like "(US)" or "(EE. UU.)" that are region labels,
+// not language codes, and would otherwise silently produce a phantom
+// unmatched code.
+const KNOWN_HEADER_CODES = new Set([
+  'en','es','de','ru','ro','it','ja','vi','km','el','zh','ko','ar','hi','nl','pl','tr',
+  'pt','pt-br','pt-pt','pt-afr','fr','fr-fr','fr-afr','la','la-ci','la-va','la-hv',
+  'lo','ln','sw','ha','yo','zu','xh','ig','am','haw','mi','sm','to','nv','nah-hua','quz','sus','tlh',
+]);
+function detectLangFromHeader(raw, colIndex){
+  const norm = raw.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  for(const {code, re} of LANG_NAME_PATTERNS){
+    if(re.test(norm)) return code;
+  }
+  const m = raw.match(/^(.*)\(([a-zA-Z-]+)\)\s*$/);
+  if(m){
+    const candidate = normalizeLangCode(m[2].trim());
+    if(KNOWN_HEADER_CODES.has(candidate.toLowerCase())) return candidate;
+  }
+  return colIndex===1 ? 'en' : null;
+}
 function buildCourseFromLayout(workbook, filename, layout, speakerColIdx){
   const sheetsOut = [];
   const langsMap = {};
@@ -1790,15 +2292,34 @@ function buildCourseFromLayout(workbook, filename, layout, speakerColIdx){
       const raw = String(headerRow[c]||'').trim();
       if(!raw) continue;
       sheetHasLangs = true;
-      const m = raw.match(/^(.*)\(([a-zA-Z-]+)\)\s*$/);
+      const code = detectLangFromHeader(raw, c);
       let lang;
-      if(m){
-        const code = m[2].trim();
-        lang = {code, label:m[1].trim(), voiceLang:guessVoiceLang(code)};
-      } else if(c===1){
-        lang = {code:'en', label: raw.replace(/\+.*$/,'').trim()||'English', voiceLang:'en-US'};
+      if(code){
+        // A column that resolves to English (whether its header literally
+        // says "English" or it was only assumed to be English by column
+        // position — e.g. "SOURCE", "Source Language Line" — must always
+        // be *labeled* "English" too. Otherwise the language picker never
+        // shows the word "English" anywhere, and there is no way to
+        // knowingly select it as source or target.
+        let label;
+        if(code==='en'){
+          label = 'English';
+        } else {
+          label = raw.replace(/\s*\([^)]*\)\s*$/,'').replace(/\+.*$/,'').trim();
+          if(!label) label = raw;
+        }
+        lang = {code, label, voiceLang:guessVoiceLang(code)};
       } else {
-        lang = {code:'col'+c, label:raw, voiceLang:'en-US'};
+        // "REPEAT CUE" (and close variants) is a known structural column
+        // from this template's own header spec — it holds a "[REPEAT]"
+        // marker, never a translation — so it must still occupy a slot in
+        // langsMap (later columns' positions are found by counting entries
+        // in this map, so skipping it would misalign every language after
+        // it), but it must NOT be offered as a pickable language: mark it
+        // `selectable:false` so the language dropdowns and the voice-
+        // coverage check both skip it.
+        const isStructural = /^repeat\s*cue$/i.test(raw);
+        lang = {code:'col'+c, label:raw, voiceLang:'en-US', selectable:!isStructural};
       }
       if(!langsMap[lang.code]) langsMap[lang.code] = lang;
     }
@@ -1858,7 +2379,7 @@ document.getElementById('loadCourseBtn').addEventListener('click', ()=>{
   document.getElementById('courseFileInput').click();
 });
 
-let pendingWorkbook=null, pendingFilename=null, pendingLayouts=null;
+let pendingWorkbook=null, pendingFilename=null, pendingLayouts=null, pendingCourse=null;
 
 document.getElementById('courseFileInput').addEventListener('change', async e=>{
   const file = e.target.files[0];
@@ -1931,21 +2452,94 @@ function confirmColumnPick(){
   const layout = pendingLayouts[0];
   const course = buildCourseFromLayout(pendingWorkbook, pendingFilename, layout, colIdx);
   closeModal('columnPickerModal');
+  pendingWorkbook=null; pendingFilename=null; pendingLayouts=null;
   if(!course){
     noteEl.style.color = 'var(--danger)';
     noteEl.textContent = 'That column didn\u2019t have any usable dialogue rows under it.';
-  } else {
-    COURSES.push(course);
-    populateCourseSelect();
-    document.getElementById('courseSelect').value = COURSES.length-1;
-    switchCourse(COURSES.length-1);
-    noteEl.style.color = 'var(--ok)';
-    noteEl.textContent = `Loaded "${course.title}" — ${course.characters.length} character${course.characters.length===1?'':'s'}, ${course.langs.length} language${course.langs.length===1?'':'s'}, ${course.sheets[0].rows.length} lines.`;
+    return;
   }
-  pendingWorkbook=null; pendingFilename=null; pendingLayouts=null;
+  // Don't add the course to COURSES yet — first confirm default languages
+  // and each character's gender via the setup modal below.
+  pendingCourse = course;
+  openCourseSetupModal(course);
 }
 document.getElementById('columnPickerConfirm').addEventListener('click', confirmColumnPick);
 document.getElementById('columnPickerConfirmTop').addEventListener('click', confirmColumnPick);
+
+/* ============================================================
+   NEW-COURSE SETUP MODAL — default languages + gender confirmation.
+   Runs every time a course is loaded from a spreadsheet (never for the
+   built-in demo course, which ships with sensible constants already).
+   Gender guesses come from guessCharGender() and are pre-selected, but the
+   user must still confirm or correct them — nothing here is skippable by
+   leaving the modal's guessed state untouched, since "Not sure" is only
+   pre-checked when there was no guess to begin with.
+   ============================================================ */
+function openCourseSetupModal(course){
+  const srcSel = document.getElementById('setupSrcLangSelect');
+  const tgtSel = document.getElementById('setupTgtLangSelect');
+  srcSel.innerHTML = '<option value="">— none (target only) —</option>';
+  tgtSel.innerHTML = '';
+  course.langs.forEach(l=>{
+    if(l.selectable===false) return;
+    const o1 = document.createElement('option'); o1.value=l.code; o1.textContent=l.label; srcSel.appendChild(o1);
+    const o2 = document.createElement('option'); o2.value=l.code; o2.textContent=l.label; tgtSel.appendChild(o2);
+  });
+  const selectableLangs = course.langs.filter(l=>l.selectable!==false);
+  const preferredTgt = langByCode(course,'en') ? 'en' : (selectableLangs[0]||course.langs[0]).code;
+  tgtSel.value = preferredTgt;
+  const altSrc = selectableLangs.find(l=>l.code!==preferredTgt);
+  srcSel.value = altSrc ? altSrc.code : '';
+
+  const listEl = document.getElementById('courseSetupGenderList');
+  listEl.innerHTML = '';
+  course.characters.forEach(ch=>{
+    const guess = guessCharGender(ch); // 'male' | 'female' | 'unknown'
+    const groupName = 'gender_'+sanitizeId(ch.code);
+    const row = document.createElement('div');
+    row.className = 'gender-row';
+    row.innerHTML = `
+      <div class="gender-row-name">${escapeHtml(ch.name)}
+        <span class="char-role-tag">${escapeHtml(ch.code)}</span>
+        <span class="gender-guess-note">${guess==='unknown' ? 'no guess — please pick' : 'guessed — please confirm'}</span>
+      </div>
+      <div class="gender-options">
+        <label><input type="radio" name="${groupName}" value="female" ${guess==='female'?'checked':''}> Female</label>
+        <label><input type="radio" name="${groupName}" value="male" ${guess==='male'?'checked':''}> Male</label>
+        <label><input type="radio" name="${groupName}" value="" ${guess==='unknown'?'checked':''}> Not sure</label>
+      </div>`;
+    listEl.appendChild(row);
+  });
+  openModal('courseSetupModal');
+}
+document.getElementById('courseSetupCancel').addEventListener('click', ()=>{
+  closeModal('courseSetupModal');
+  const noteEl = document.getElementById('courseLoadNote');
+  noteEl.style.color = 'var(--ink-soft)';
+  noteEl.textContent = 'Course load cancelled.';
+  pendingCourse = null;
+});
+document.getElementById('courseSetupConfirm').addEventListener('click', ()=>{
+  const course = pendingCourse;
+  if(!course) return;
+  course.defaultSrc = document.getElementById('setupSrcLangSelect').value; // '' = target-only
+  course.defaultTgt = document.getElementById('setupTgtLangSelect').value;
+  course.characters.forEach(ch=>{
+    const picked = document.querySelector(`input[name="gender_${sanitizeId(ch.code)}"]:checked`);
+    const val = picked ? picked.value : '';
+    if(val==='male' || val==='female') ch.gender = val;
+    else delete ch.gender; // "Not sure" — leave the best-effort guess logic in charge
+  });
+  closeModal('courseSetupModal');
+  COURSES.push(course);
+  populateCourseSelect();
+  document.getElementById('courseSelect').value = COURSES.length-1;
+  switchCourse(COURSES.length-1);
+  const noteEl = document.getElementById('courseLoadNote');
+  noteEl.style.color = 'var(--ok)';
+  noteEl.textContent = `Loaded "${course.title}" — ${course.characters.length} character${course.characters.length===1?'':'s'}, ${course.langs.length} language${course.langs.length===1?'':'s'}, ${course.sheets[0].rows.length} lines.`;
+  pendingCourse = null;
+});
 
 /* ============================================================
    SPEECH HELPERS
@@ -1953,15 +2547,60 @@ document.getElementById('columnPickerConfirmTop').addEventListener('click', conf
 function pickVoiceByURI(uri){
   return S.voices.find(v=>v.voiceURI===uri) || null;
 }
+// Seven-step pitch dropdown, replacing the old free-drag slider: Low sits
+// at the bottom of the opened list, Mid (the default/neutral pitch) in the
+// middle, High at the top — the rest are unlabeled step marks between them.
+const PITCH_LEVELS = [
+  {value:1.30, label:'High'},
+  {value:1.20, label:'▲▲'},
+  {value:1.10, label:'▲'},
+  {value:1.00, label:'Mid'},
+  {value:0.90, label:'▼'},
+  {value:0.80, label:'▼▼'},
+  {value:0.70, label:'Low'},
+];
+function nearestPitchLevel(v){
+  let best = PITCH_LEVELS[3].value, bestDiff = Infinity;
+  PITCH_LEVELS.forEach(p=>{
+    const d = Math.abs(p.value - v);
+    if(d < bestDiff){ bestDiff = d; best = p.value; }
+  });
+  return best;
+}
+// Wires a per-character, per-role pitch dropdown. Value lives on the passed
+// state object (cv[key]) so it's read straight out of S.charVoices by
+// speak()/previewVoice() later — same object, no separate lookup needed.
+// A picked flag (cv[userPickedKey]) mirrors the voice-pick pattern above:
+// once the user chooses a pitch themselves, auto adjustments (e.g. voice-
+// collision nudging) leave it alone.
+function setupPitchSelect(id, cv, key, userPickedKey){
+  const sel = document.getElementById('pitch_'+id);
+  if(!sel) return;
+  sel.innerHTML = '';
+  PITCH_LEVELS.forEach(p=>{
+    const o = document.createElement('option');
+    o.value = p.value;
+    o.textContent = p.label;
+    sel.appendChild(o);
+  });
+  sel.value = nearestPitchLevel(cv[key] || 1);
+  sel.classList.toggle('adjusted', !cv[userPickedKey] && parseFloat(sel.value) !== PITCH_MID);
+  sel.onchange = ()=>{
+    cv[key] = parseFloat(sel.value);
+    cv[userPickedKey] = true;
+    sel.classList.remove('adjusted');
+  };
+}
 // Plays a short sample through one specific voice, independent of the main
 // practice-playback state (token/S.running), so a preview never gets caught
 // up in — or interrupted by — the drill loop's own cancellation logic.
-function previewVoice(uri, langCode, btn){
+function previewVoice(uri, langCode, btn, pitch){
   if(!window.speechSynthesis || !uri) return;
   speechSynthesis.cancel();
   const v = pickVoiceByURI(uri);
   const u = new SpeechSynthesisUtterance('One, two, three.');
   u.rate = S.rate;
+  u.pitch = pitch || 1;
   if(v){ u.voice = v; u.lang = v.lang; } else if(langCode){ u.lang = langCode; }
   if(btn) btn.disabled = true;
   const reset = ()=>{ if(btn) btn.disabled = false; };
@@ -1969,11 +2608,12 @@ function previewVoice(uri, langCode, btn){
   u.onerror = reset;
   speechSynthesis.speak(u);
 }
-function speak(text, langCode, token, voiceURI){
+function speak(text, langCode, token, voiceURI, pitch){
   return new Promise(resolve=>{
     if(!text || !window.speechSynthesis){ resolve(); return; }
     const u = new SpeechSynthesisUtterance(text);
     u.rate = S.rate;
+    u.pitch = pitch || 1;
     const v = pickVoiceByURI(voiceURI);
     if(v){ u.voice = v; u.lang = v.lang; } else { u.lang = langCode; }
     u.onend = ()=>resolve();
@@ -2024,7 +2664,12 @@ function stopRecognition(){
    dedicated source voice chosen. */
 function voicesForEntry(entry){
   const cv = S.charVoices[entry.speaker] || {};
-  return { srcURI: cv.src || cv.tgt || '', tgtURI: cv.tgt || cv.src || '' };
+  return {
+    srcURI: cv.src || cv.tgt || '',
+    tgtURI: cv.tgt || cv.src || '',
+    srcPitch: cv.srcPitch || 1,
+    tgtPitch: cv.tgtPitch || 1,
+  };
 }
 
 /* ============================================================
@@ -2108,21 +2753,21 @@ async function runLine(i){
 }
 
 async function runExposureLine(entry, token){
-  const {srcURI, tgtURI} = voicesForEntry(entry);
+  const {srcURI, tgtURI, srcPitch, tgtPitch} = voicesForEntry(entry);
   setPhase('Listen');
   if(entry.source && S.sourceLangGuess){
-    await speak(entry.source, S.sourceLangGuess, token, srcURI);
+    await speak(entry.source, S.sourceLangGuess, token, srcURI, srcPitch);
     if(token!==S.token) return;
     await sleep(Math.min(estimateMs(entry.target), 2000), token);
     if(token!==S.token) return;
   }
   document.getElementById('targetLineEl').textContent = entry.target;
-  await speak(entry.target, S.targetLangGuess, token, tgtURI);
+  await speak(entry.target, S.targetLangGuess, token, tgtURI, tgtPitch);
   if(token!==S.token) return;
   await sleep(estimateMs(entry.target)*1.2, token);
   if(token!==S.token) return;
   setPhase('Once more');
-  await speak(entry.target, S.targetLangGuess, token, tgtURI);
+  await speak(entry.target, S.targetLangGuess, token, tgtURI, tgtPitch);
   if(token!==S.token) return;
   await sleep(estimateMs(entry.target)*1.2, token);
   if(token!==S.token) return;
@@ -2133,11 +2778,11 @@ async function runExposureLine(entry, token){
 async function runJudgedLine(entry, token, attempt){
   S.attempt = attempt;
   updateMilestone();
-  const {srcURI, tgtURI} = voicesForEntry(entry);
+  const {srcURI, tgtURI, srcPitch, tgtPitch} = voicesForEntry(entry);
   if(attempt===1){
     setPhase('Listen');
     if(entry.source && S.sourceLangGuess){
-      await speak(entry.source, S.sourceLangGuess, token, srcURI);
+      await speak(entry.source, S.sourceLangGuess, token, srcURI, srcPitch);
       if(token!==S.token) return;
       await sleep(Math.min(estimateMs(entry.target), 2000), token);
       if(token!==S.token) return;
@@ -2146,7 +2791,7 @@ async function runJudgedLine(entry, token, attempt){
     setPhase('One more time');
   }
   document.getElementById('targetLineEl').textContent = entry.target;
-  await speak(entry.target, S.targetLangGuess, token, tgtURI);
+  await speak(entry.target, S.targetLangGuess, token, tgtURI, tgtPitch);
   if(token!==S.token) return;
 
   setPhase(attempt===1 ? 'Your turn' : 'Your turn — last try');
@@ -2299,6 +2944,7 @@ renderCharacterCards();
 updateSheetMeta();
 populateVoicesForOSHelp();
 updateListenNote();
+renderVoiceCoverageWarning(currentCourse());
 </script>
 </body>
 </html>
