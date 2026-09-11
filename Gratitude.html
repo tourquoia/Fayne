@@ -778,16 +778,23 @@ function speak(text, voiceLang, voiceURI, token){
     // utterance with THAT voice's own lang — mismatching u.lang against the
     // actual voice can cause some engines to ignore the voice entirely.
     if(v){ u.voice = v; u.lang = v.lang; } else { u.lang = voiceLang; }
-    u.onend = ()=>resolve();
-    u.onerror = ()=>resolve();
-    if(token!==S.token){ resolve(); return; }
+    let done = false, check;
+    const finish = ()=>{
+      if(done) return;
+      done = true;
+      clearInterval(check);
+      resolve();
+    };
+    u.onend = finish;
+    u.onerror = finish;
+    if(token!==S.token){ finish(); return; }
     speechSynthesis.speak(u);
     // Backup to onend: some engines never fire it for a given utterance,
     // which would otherwise hang playback indefinitely. Also lets a
     // mid-utterance token change (skip/stop/pause) cut speech short.
-    const check = setInterval(()=>{
-      if(token!==S.token){ speechSynthesis.cancel(); clearInterval(check); resolve(); }
-      if(!speechSynthesis.speaking){ clearInterval(check); }
+    check = setInterval(()=>{
+      if(token!==S.token){ speechSynthesis.cancel(); finish(); return; }
+      if(!speechSynthesis.speaking){ finish(); }
     }, 120);
   });
 }

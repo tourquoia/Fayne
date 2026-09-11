@@ -2128,12 +2128,19 @@ function speak(text, langCode, token, voiceURI, pitch){
     u.pitch = pitch || 1;
     const v = pickVoiceByURI(voiceURI);
     if(v){ u.voice = v; u.lang = v.lang; } else { u.lang = langCode; }
-    u.onend = ()=>resolve();
-    u.onerror = ()=>resolve();
+    let done = false, check;
+    const finish = ()=>{
+      if(done) return;
+      done = true;
+      clearInterval(check);
+      resolve();
+    };
+    u.onend = finish;
+    u.onerror = finish;
     speechSynthesis.speak(u);
-    const check = setInterval(()=>{
-      if(token!==S.token){ speechSynthesis.cancel(); clearInterval(check); resolve(); }
-      if(!speechSynthesis.speaking){ clearInterval(check); }
+    check = setInterval(()=>{
+      if(token!==S.token){ speechSynthesis.cancel(); finish(); return; }
+      if(!speechSynthesis.speaking){ finish(); }
     }, 120);
   });
 }
