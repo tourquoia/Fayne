@@ -1,3 +1,24 @@
+<!--
+=====================================================================
+INSTRUCTIONS FOR CLAUDE (any session, any user)
+=====================================================================
+This is a locked-down variant of the reusable player template: the
+runtime "＋" spreadsheet loader (button, file input, column-picker
+modal, course-setup modal, and their supporting XLSX-parsing code)
+has been intentionally removed. This file only ever plays the
+course(s) already baked into it at build time — do not re-add any
+file-upload / "load a different course" capability unless the person
+explicitly asks for it back.
+
+If the person hands you a new spreadsheet and asks for a new
+standalone build from this template, treat it the same as any other
+from-scratch build request: ask them for DEFAULT SOURCE LANGUAGE,
+DEFAULT TARGET LANGUAGE, and each character's GENDER before wiring
+the spreadsheet's data into the COURSES array, since none of that
+detection/setup machinery exists in this file anymore to do it for
+you at runtime.
+=====================================================================
+-->
 <!-- build:JysnMlnrMthd -->
 <!DOCTYPE html>
 <html lang="en">
@@ -23,6 +44,10 @@
     --amber-dim:#8a6a34;
     --amber-glow: rgba(240,169,62,.5);
     --amber-glow-soft: rgba(240,169,62,.22);
+    /* Vivid, saturated orange used specifically for the transport/player
+       control buttons and the big hero play button, matched to the
+       reference screenshot's glowing-orange ring color (as opposed to the
+       paler --amber used for card borders and text elsewhere). */
     --amber-vivid:#F5860D;
     --amber-vivid-glow: rgba(245,134,13,.75);
     --amber-vivid-glow-soft: rgba(245,134,13,.4);
@@ -214,6 +239,11 @@
     background:transparent; border:none; margin:0; padding:0;
     cursor:pointer; text-align:center;
   }
+  .hero-eyebrow{
+    font-family:'Inter', inherit; font-size:18px; font-weight:800;
+    letter-spacing:.1em; text-transform:uppercase; color:var(--amber-bright);
+    line-height:1.2;
+  }
   .hero-play-wrap{ position:relative; flex:none; width:86px; height:86px; }
   .hero-play-wrap::before{
     content:''; position:absolute; inset:-8px; border-radius:50%;
@@ -230,11 +260,6 @@
     box-shadow:0 0 0 1px var(--amber-vivid-glow-soft), 0 0 28px 3px var(--amber-vivid-glow), inset 0 0 16px -4px var(--amber-vivid-glow);
   }
   .hero-text{ display:flex; flex-direction:column; align-items:center; gap:3px; min-width:0; }
-  .hero-eyebrow{
-    font-family:'Inter', inherit; font-size:18px; font-weight:800;
-    letter-spacing:.1em; text-transform:uppercase; color:var(--amber-bright);
-    line-height:1.2;
-  }
   .hero-title{
     font-family:'Inter', inherit; font-size:13px; font-weight:600;
     color:var(--ink-soft); line-height:1.3;
@@ -245,6 +270,7 @@
   }
   .hero-stats .sep{ color:var(--ink-dim); }
   .hero-start-btn:hover .hero-play{ filter:brightness(1.1); }
+  .hero-lessons-grid{ margin-top:18px; }
 
   /* ---- lessons grid ---- */
   .lessons-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
@@ -344,7 +370,6 @@
   .your-turn{ display:none; flex-direction:column; align-items:center; gap:10px; margin-top:10px; }
   .your-turn.show{ display:flex; }
   .mic-pulse{ width:14px; height:14px; border-radius:50%; background:var(--danger); box-shadow:0 0 10px 0 var(--danger); }
-  @keyframes pulse{ 0%{opacity:.4;} 50%{opacity:1;} 100%{opacity:.4;} }
   .small-muted{ font-size:12px; color:var(--ink-dim); }
   .heard{ font-size:13px; color:var(--ink-soft); min-height:16px; }
   .judge-btns{ display:flex; gap:10px; }
@@ -421,26 +446,20 @@
 <body>
 <div class="wrap">
 
-  <!-- ===================== START PRACTICE (hero) ===================== -->
+  <!-- ===================== START PRACTICE (hero + lessons, one card) ===================== -->
   <section class="hero-card setup-card">
     <button class="hero-start-btn" id="startBtn">
+      <span class="hero-eyebrow">Start Practice</span>
       <span class="hero-play-wrap"><span class="hero-play">▶</span></span>
       <span class="hero-text">
-        <span class="hero-eyebrow">Start Practice</span>
         <span class="hero-title" id="heroLessonTitle">Lesson 1: Meeting Someone</span>
         <span class="hero-stats" id="heroStats"></span>
       </span>
     </button>
-  </section>
-
-  <!-- ===================== LESSONS ===================== -->
-  <section class="card setup-card">
-    <div class="lessons-header">
-      <div class="eyebrow-label">Lessons</div>
-    </div>
-    <div class="lessons-grid" id="lessonsGrid"></div>
+    <div class="lessons-grid hero-lessons-grid" id="lessonsGrid"></div>
     <select id="courseSelect" class="hidden"></select>
     <div class="sheet-meta" id="sheetMeta"></div>
+    <div class="note" id="courseLoadNote"></div>
   </section>
 
   <!-- ===================== SETUP (single page) ===================== -->
@@ -660,24 +679,7 @@ const BUILT_IN_COURSE = {
 /* ============================================================
    COURSES REGISTRY + STATE
    ============================================================ */
-const ESEN_LANGS = [
-  {code:'en', label:'English', voiceLang:'en-US'},
-  {code:'es', label:'Spanish', voiceLang:'es-ES'},
-];
-
-const ESEN_COURSE = {
-  id: 'esen_primer',
-  title: 'ES→EN Primer',
-  langs: ESEN_LANGS,
-  characters: [
-    {code:'NARRATOR', name:'Narrator', role:'single narrator voice — no MAIN/SUPPORTING split'},
-  ],
-  sheets: [
-{ name:"Errores Comunes — Gramática y Pronunciación", desc:"Two source sheets combined into one continuous session: grammar, vocabulary, and word-order traps first (17 topics), then pronunciation traps (8 topics) — false friends, articles, negation, prepositions, reflexive se, and sounds like epenthetic e, TH, V/B, R, silent H, vowel reduction, consonant clusters, and word stress. Sequential play covers grammar then pronunciation in order; random mode draws from both.", rows:[["NARRATOR", "[casual] Want some spaghetti?", "[casual] ¿Quieres spaghettis?"], ["NARRATOR", "[casual] Want some coffee?", "[casual] ¿Quieres café?"], ["NARRATOR", "[curious] Coming with us?", "[curious] ¿Vienes con nosotros?"], ["NARRATOR", "[matter-of-fact] Think so.", "[matter-of-fact] Creo que sí."], ["NARRATOR", "[matter-of-fact] Gonna step out for a bit.", "[matter-of-fact] Voy a salir un rato."], ["NARRATOR", "[matter-of-fact] It's late.", "[matter-of-fact] Es tarde."], ["NARRATOR", "[matter-of-fact] It's raining a lot.", "[matter-of-fact] Llueve mucho."], ["NARRATOR", "[matter-of-fact] It's hot today.", "[matter-of-fact] Hace calor hoy."], ["NARRATOR", "[casual] Want some spaghetti?", "[casual] ¿Quieres spaghettis?"], ["NARRATOR", "[matter-of-fact] I have a lot of homework.", "[matter-of-fact] Tengo mucha tarea."], ["NARRATOR", "[curious] Do you have any old furniture?", "[curious] ¿Tienes muebles viejos?"], ["NARRATOR", "[matter-of-fact] I need some information.", "[matter-of-fact] Necesito información."], ["NARRATOR", "[warm] Let me give you some advice.", "[warm] Te doy un consejo."], ["NARRATOR", "[matter-of-fact] I bought new luggage.", "[matter-of-fact] Compré equipaje nuevo."], ["NARRATOR", "[matter-of-fact] There's a lot of traffic today.", "[matter-of-fact] Hay mucho tráfico hoy."], ["NARRATOR", "[curious] Do you have any news?", "[curious] ¿Tienes noticias?"], ["NARRATOR", "[warm] My sister is pregnant.", "[warm] Mi hermana está embarazada."], ["NARRATOR", "[matter-of-fact] I'm going to attend the meeting.", "[matter-of-fact] Voy a asistir a la reunión."], ["NARRATOR", "[bright] It was a big success.", "[bright] Fue un gran éxito."], ["NARRATOR", "[matter-of-fact] We carried out the project last week.", "[matter-of-fact] Realizamos el proyecto la semana pasada."], ["NARRATOR", "[soft] She's a very sensitive person.", "[soft] Es una persona muy sensible."], ["NARRATOR", "[matter-of-fact] I need to buy new clothes.", "[matter-of-fact] Necesito comprar ropa nueva."], ["NARRATOR", "[matter-of-fact] Keep the papers in the folder.", "[matter-of-fact] Guarda los papeles en la carpeta."], ["NARRATOR", "[quiet] I have a cold, I can't go.", "[quiet] Estoy constipado, no puedo ir."], ["NARRATOR", "[earnest] Don't bother me right now.", "[earnest] No me molestes ahora."], ["NARRATOR", "[warm] I'm just trying to help.", "[warm] Solo pretendo ayudar."], ["NARRATOR", "[matter-of-fact] I live in a big house.", "[matter-of-fact] Vivo en una casa grande."], ["NARRATOR", "[warm] She has pretty eyes.", "[warm] Tiene ojos bonitos."], ["NARRATOR", "[curious] Did you see the red car?", "[curious] ¿Viste el carro rojo?"], ["NARRATOR", "[matter-of-fact] It's a good idea.", "[matter-of-fact] Es una idea buena."], ["NARRATOR", "[playful] I bought a new shirt.", "[playful] Compré una camisa nueva."], ["NARRATOR", "[matter-of-fact] I work in a tall building.", "[matter-of-fact] Trabajo en un edificio alto."], ["NARRATOR", "[matter-of-fact] I don't have anything.", "[matter-of-fact] No tengo nada."], ["NARRATOR", "[matter-of-fact] I don't know anyone here.", "[matter-of-fact] No conozco a nadie aquí."], ["NARRATOR", "[matter-of-fact] I don't want any trouble.", "[matter-of-fact] No quiero ningún problema."], ["NARRATOR", "[quiet] She didn't say anything.", "[quiet] No dijo nada."], ["NARRATOR", "[matter-of-fact] There's nothing to do.", "[matter-of-fact] No hay nada que hacer."], ["NARRATOR", "[matter-of-fact] I never go to that place.", "[matter-of-fact] Nunca voy a ese lugar."], ["NARRATOR", "[curious] Do you like this?", "[curious] ¿Te gusta esto?"], ["NARRATOR", "[matter-of-fact] I don't like it.", "[matter-of-fact] No me gusta."], ["NARRATOR", "[curious] Do you work on Saturdays?", "[curious] ¿Trabajas los sábados?"], ["NARRATOR", "[matter-of-fact] I don't work on Saturdays.", "[matter-of-fact] No trabajo los sábados."], ["NARRATOR", "[curious] Do you know the answer?", "[curious] ¿Sabes la respuesta?"], ["NARRATOR", "[matter-of-fact] I don't know the answer.", "[matter-of-fact] No sé la respuesta."], ["NARRATOR", "[curious] Did you go to the party?", "[curious] ¿Fuiste a la fiesta?"], ["NARRATOR", "[matter-of-fact] I didn't go to the party.", "[matter-of-fact] No fui a la fiesta."], ["NARRATOR", "[matter-of-fact] It's John's car.", "[matter-of-fact] Es el carro de Juan."], ["NARRATOR", "[matter-of-fact] It's my parents' house.", "[matter-of-fact] Es la casa de mis padres."], ["NARRATOR", "[curious] Is that your sister's dog?", "[curious] ¿Es el perro de tu hermana?"], ["NARRATOR", "[matter-of-fact] That's Ana's job.", "[matter-of-fact] Ese es el trabajo de Ana."], ["NARRATOR", "[warm] I love my grandma's smile.", "[warm] Me encanta la sonrisa de mi abuela."], ["NARRATOR", "[matter-of-fact] That's the boss's desk.", "[matter-of-fact] Ese es el escritorio del jefe."], ["NARRATOR", "[soft] I think about you.", "[soft] Pienso en ti."], ["NARRATOR", "[matter-of-fact] It depends on you.", "[matter-of-fact] Depende de ti."], ["NARRATOR", "[warm] I'm going to marry him.", "[warm] Me voy a casar con él."], ["NARRATOR", "[soft] I dream about going back someday.", "[soft] Sueño con volver algún día."], ["NARRATOR", "[playful] Don't laugh at me.", "[playful] No te rías de mí."], ["NARRATOR", "[warm] I'm counting on you.", "[warm] Cuento contigo."], ["NARRATOR", "[matter-of-fact] We got to the party late.", "[matter-of-fact] Llegamos tarde a la fiesta."], ["NARRATOR", "[warm] I fell in love with her.", "[warm] Me enamoré de ella."], ["NARRATOR", "[quiet] I forgot your birthday.", "[quiet] Se me olvidó tu cumpleaños."], ["NARRATOR", "[matter-of-fact] I lost my keys.", "[matter-of-fact] Se me perdieron las llaves."], ["NARRATOR", "[soft] I broke the glass.", "[soft] Se me rompió el vaso."], ["NARRATOR", "[matter-of-fact] We ran late.", "[matter-of-fact] Se nos hizo tarde."], ["NARRATOR", "[quiet] I lost my train of thought.", "[quiet] Se me fue la idea."], ["NARRATOR", "[matter-of-fact] He dropped his phone.", "[matter-of-fact] Se le cayó el teléfono."], ["NARRATOR", "[matter-of-fact] I'm a teacher.", "[matter-of-fact] Soy profesor."], ["NARRATOR", "[matter-of-fact] She's a nurse.", "[matter-of-fact] Es enfermera."], ["NARRATOR", "[curious] Are you a student?", "[curious] ¿Eres estudiante?"], ["NARRATOR", "[matter-of-fact] My dad's a lawyer.", "[matter-of-fact] Mi padre es abogado."], ["NARRATOR", "[warm] She's an excellent teacher.", "[warm] Es una profesora excelente."], ["NARRATOR", "[matter-of-fact] I like coffee.", "[matter-of-fact] Me gusta el café."], ["NARRATOR", "[matter-of-fact] Dogs are loyal.", "[matter-of-fact] Los perros son leales."], ["NARRATOR", "[matter-of-fact] Life is short.", "[matter-of-fact] La vida es corta."], ["NARRATOR", "[curious] What are you doing?", "[curious] ¿Qué haces?"], ["NARRATOR", "[matter-of-fact] I'm working from home this week.", "[matter-of-fact] Trabajo desde casa esta semana."], ["NARRATOR", "[matter-of-fact] I'm studying for the exam.", "[matter-of-fact] Estudio para el examen."], ["NARRATOR", "[matter-of-fact] I'm seeing her tomorrow.", "[matter-of-fact] La veo mañana."], ["NARRATOR", "[curious] Are you eating now?", "[curious] ¿Comes ahora?"], ["NARRATOR", "[matter-of-fact] I'm living with my parents for now.", "[matter-of-fact] Vivo con mis padres por ahora."], ["NARRATOR", "[matter-of-fact] I think it's a good idea.", "[matter-of-fact] Estoy pensando que es buena idea."], ["NARRATOR", "[warm] Just give me a second.", "[warm] Espérame un momentito."], ["NARRATOR", "[warm] Give me a little kiss.", "[warm] Dame un besito."], ["NARRATOR", "[soft] I have a quick question.", "[soft] Tengo una preguntica."], ["NARRATOR", "[warm] My grandma lives nearby.", "[warm] Mi abuelita vive cerca."], ["NARRATOR", "[warm] Want a little coffee?", "[warm] ¿Quieres un cafecito?"], ["NARRATOR", "[soft] I'll be right back.", "[soft] Ahorita vengo."], ["NARRATOR", "[matter-of-fact] I have to do my homework.", "[matter-of-fact] Tengo que hacer la tarea."], ["NARRATOR", "[matter-of-fact] I'm going to make dinner.", "[matter-of-fact] Voy a hacer la cena."], ["NARRATOR", "[matter-of-fact] I have to make the beds.", "[matter-of-fact] Tengo que hacer las camas."], ["NARRATOR", "[matter-of-fact] I need to do exercise.", "[matter-of-fact] Necesito hacer ejercicio."], ["NARRATOR", "[matter-of-fact] I already made a decision.", "[matter-of-fact] Ya hice una decisión."], ["NARRATOR", "[matter-of-fact] I'm going to do the shopping.", "[matter-of-fact] Voy a hacer las compras."], ["NARRATOR", "[matter-of-fact] You have to make an effort.", "[matter-of-fact] Tienes que hacer un esfuerzo."], ["NARRATOR", "[quiet] I'm bored.", "[quiet] Estoy aburrido."], ["NARRATOR", "[matter-of-fact] This class is boring.", "[matter-of-fact] Esta clase es aburrida."], ["NARRATOR", "[bright] I'm interested in this.", "[bright] Estoy interesado en esto."], ["NARRATOR", "[bright] It's an interesting topic.", "[bright] Es un tema interesante."], ["NARRATOR", "[quiet] I'm confused.", "[quiet] Estoy confundido."], ["NARRATOR", "[matter-of-fact] This is confusing.", "[matter-of-fact] Esto es confuso."], ["NARRATOR", "[matter-of-fact] I agree with you.", "[matter-of-fact] Estoy de acuerdo contigo."], ["NARRATOR", "[matter-of-fact] I currently live in Bogotá.", "[matter-of-fact] Actualmente vivo en Bogotá."], ["NARRATOR", "[matter-of-fact] I'm working from home right now.", "[matter-of-fact] Actualmente trabajo desde casa."], ["NARRATOR", "[bright] Actually, it wasn't me.", "[bright] En realidad, no fui yo."], ["NARRATOR", "[matter-of-fact] Actually, she's right.", "[matter-of-fact] De hecho, tiene razón."], ["NARRATOR", "[curious] So what do you do these days?", "[curious] ¿Y actualmente qué haces?"], ["NARRATOR", "[matter-of-fact] I've lived here for three years.", "[matter-of-fact] Vivo aquí desde hace tres años."], ["NARRATOR", "[matter-of-fact] I've worked here since 2020.", "[matter-of-fact] Trabajo aquí desde 2020."], ["NARRATOR", "[curious] How long have you been studying English?", "[curious] ¿Cuánto tiempo llevas estudiando inglés?"], ["NARRATOR", "[matter-of-fact] I've known her for a long time.", "[matter-of-fact] La conozco desde hace mucho tiempo."], ["NARRATOR", "[matter-of-fact] I haven't seen her since summer.", "[matter-of-fact] No la veo desde el verano."], ["NARRATOR", "[matter-of-fact] We've been married for ten years.", "[matter-of-fact] Estamos casados desde hace diez años."], ["NARRATOR", "[matter-of-fact] This option is better.", "[matter-of-fact] Esta opción es más buena."], ["NARRATOR", "[matter-of-fact] I feel worse today.", "[matter-of-fact] Hoy me siento más mal."], ["NARRATOR", "[matter-of-fact] He's taller than me.", "[matter-of-fact] Él es más alto que yo."], ["NARRATOR", "[matter-of-fact] This house is bigger.", "[matter-of-fact] Esta casa es más grande."], ["NARRATOR", "[matter-of-fact] It's more interesting than the other one.", "[matter-of-fact] Es más interesante que el otro."], ["NARRATOR", "[matter-of-fact] It's faster than before.", "[matter-of-fact] Es más rápido que antes."], ["NARRATOR", "[casual] Want some spaghetti?", "[casual] ¿Quieres spaghettis?"], ["NARRATOR", "[matter-of-fact] I'm going to study.", "[matter-of-fact] Voy a estudiar."], ["NARRATOR", "[matter-of-fact] We're going to school.", "[matter-of-fact] Vamos a la escuela."], ["NARRATOR", "[curious] Do you speak Spanish?", "[curious] ¿Hablas español?"], ["NARRATOR", "[matter-of-fact] I need special help.", "[matter-of-fact] Necesito ayuda especial."], ["NARRATOR", "[matter-of-fact] I live in a good state.", "[matter-of-fact] Vivo en un buen estado."], ["NARRATOR", "[matter-of-fact] I need more space.", "[matter-of-fact] Necesito más espacio."], ["NARRATOR", "[bright] Look at that star.", "[bright] Mira esa estrella."], ["NARRATOR", "[matter-of-fact] I think so.", "[matter-of-fact] Creo que sí."], ["NARRATOR", "[matter-of-fact] This is mine.", "[matter-of-fact] Esto es mío."], ["NARRATOR", "[warm] Thanks for everything.", "[warm] Gracias por todo."], ["NARRATOR", "[matter-of-fact] That's the thing.", "[matter-of-fact] Esa es la cosa."], ["NARRATOR", "[curious] What do you think about that?", "[curious] ¿Qué piensas de eso?"], ["NARRATOR", "[matter-of-fact] My parents live over there.", "[matter-of-fact] Mis padres viven allí."], ["NARRATOR", "[matter-of-fact] I'm voting tomorrow.", "[matter-of-fact] Voy a votar mañana."], ["NARRATOR", "[warm] I love you very much.", "[warm] Te quiero mucho."], ["NARRATOR", "[matter-of-fact] It's a good book.", "[matter-of-fact] Es un buen libro."], ["NARRATOR", "[matter-of-fact] I believe it, really.", "[matter-of-fact] Creo que sí, de verdad."], ["NARRATOR", "[bright] What a great view!", "[bright] ¡Qué buena vista!"], ["NARRATOR", "[matter-of-fact] We live very well here.", "[matter-of-fact] Vivimos muy bien aquí."], ["NARRATOR", "[matter-of-fact] It's my red car.", "[matter-of-fact] Es mi carro rojo."], ["NARRATOR", "[curious] Really?", "[curious] ¿De verdad?"], ["NARRATOR", "[matter-of-fact] I'm going running tomorrow.", "[matter-of-fact] Voy a correr mañana."], ["NARRATOR", "[warm] You're a really good person.", "[warm] Eres muy buena persona."], ["NARRATOR", "[matter-of-fact] The dog is right here.", "[matter-of-fact] El perro está aquí."], ["NARRATOR", "[bright] I prefer red.", "[bright] Prefiero el rojo."], ["NARRATOR", "[warm] Hey, how are you?", "[warm] Hola, ¿cómo estás?"], ["NARRATOR", "[matter-of-fact] I live in a big house.", "[matter-of-fact] Vivo en una casa grande."], ["NARRATOR", "[curious] Are you hungry?", "[curious] ¿Tienes hambre?"], ["NARRATOR", "[matter-of-fact] He's my older brother.", "[matter-of-fact] Es mi hermano mayor."], ["NARRATOR", "[bright] Yeah, of course.", "[bright] Sí, claro que sí."], ["NARRATOR", "[matter-of-fact] I need help with this.", "[matter-of-fact] Necesito ayuda con esto."], ["NARRATOR", "[matter-of-fact] I'm going to the store.", "[matter-of-fact] Voy a la tienda."], ["NARRATOR", "[curious] What time is it?", "[curious] ¿Qué hora es?"], ["NARRATOR", "[matter-of-fact] It's a banana.", "[matter-of-fact] Es una banana."], ["NARRATOR", "[matter-of-fact] I need to buy some food.", "[matter-of-fact] Necesito comprar comida."], ["NARRATOR", "[warm] I'll see you tomorrow morning.", "[warm] Te veo mañana en la mañana."], ["NARRATOR", "[matter-of-fact] I sent you some texts.", "[matter-of-fact] Te mandé unos textos."], ["NARRATOR", "[matter-of-fact] I asked you yesterday.", "[matter-of-fact] Te pregunté ayer."], ["NARRATOR", "[matter-of-fact] I've been here for three months.", "[matter-of-fact] Llevo tres meses aquí."], ["NARRATOR", "[matter-of-fact] I'll see you next week.", "[matter-of-fact] Nos vemos la próxima semana."], ["NARRATOR", "[matter-of-fact] I fixed it myself.", "[matter-of-fact] Lo arreglé yo mismo."], ["NARRATOR", "[curious] How many texts did you send?", "[curious] ¿Cuántos textos me mandaste?"], ["NARRATOR", "[matter-of-fact] I need a new record.", "[matter-of-fact] Necesito un récord nuevo."], ["NARRATOR", "[matter-of-fact] I'm going to record the song.", "[matter-of-fact] Voy a grabar la canción."], ["NARRATOR", "[matter-of-fact] I want to present my project.", "[matter-of-fact] Quiero presentar mi proyecto."], ["NARRATOR", "[warm] It's a nice present.", "[warm] Es un buen regalo."], ["NARRATOR", "[matter-of-fact] We're going to import these products.", "[matter-of-fact] Vamos a importar estos productos."], ["NARRATOR", "[matter-of-fact] This company sells imports.", "[matter-of-fact] Esta empresa vende de importación."]] }
-  ],
-};
-
-const COURSES = [ESEN_COURSE, BUILT_IN_COURSE];
+const COURSES = [BUILT_IN_COURSE];
 const DEFAULT_SRC = 'es';
 const DEFAULT_TGT = 'en';
 
@@ -2322,7 +2324,6 @@ async function runJudgedLine(entry, token, attempt){
 
 function flashOK(){
   const stage = document.querySelector('.stage');
-  stage.style.transition='background .15s';
   stage.style.background='#1C2A20';
   setTimeout(()=>{ stage.style.background=''; }, 300);
 }
