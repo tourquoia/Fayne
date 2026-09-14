@@ -694,6 +694,23 @@ function populateSlotVoiceOptions(i){
   // gives a pickable fallback instead of a dead-end "no voice found".
   const matchSet = new Set(matches);
   const ordered = [...matches, ...S.voices.filter(v=>!matchSet.has(v))];
+
+  // BUGFIX (2026-09): same root cause as the template player fix -- see
+  // player-template-voice-fixes.md. When nothing installed actually matches
+  // this language, don't auto-pick an arbitrary voice from the leftover
+  // list. speak() attaches whatever voice object slotVoiceURI points to,
+  // and that voice's OWN .lang always overrides the requested voiceLang --
+  // so an arbitrary fallback voice silently replaced the intended language
+  // entirely (e.g. an Arabic slot with no installed Arabic voice playing
+  // in French instead). The full voice list is still shown and still
+  // fully selectable for a deliberate manual override.
+  if(!matches.length){
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = '— no installed voice matches this language —';
+    sel.insertBefore(placeholder, sel.firstChild);
+  }
+
   ordered.forEach(v=>{
     const o = document.createElement('option');
     const isMatch = matchSet.has(v);
@@ -702,7 +719,9 @@ function populateSlotVoiceOptions(i){
     sel.appendChild(o);
   });
   if(!ordered.find(v=>v.voiceURI===S.slotVoiceURI[i])){
-    S.slotVoiceURI[i] = ordered[0].voiceURI;
+    // NOTE: intentionally NO "S.slotVoiceURI[i] = ordered[0].voiceURI"
+    // fallback here anymore -- only auto-pick when there's a real match.
+    S.slotVoiceURI[i] = matches.length ? matches[0].voiceURI : '';
   }
   sel.value = S.slotVoiceURI[i];
   sel.onchange = ()=>{ S.slotVoiceURI[i] = sel.value; };
@@ -793,7 +812,24 @@ function speak(text, voiceLang, voiceURI, token){
     // which would otherwise hang playback indefinitely. Also lets a
     // mid-utterance token change (skip/stop/pause) cut speech short.
     check = setInterval(()=>{
-      if(token!==S.token){ speechSynthesis.cancel(); finish(); return; }
+      if(token!==S.token){
+        // BUGFIX (2026-09): don't cancel() here. Every caller that bumps
+        // S.token (prevLessonBtn/nextLessonBtn, prevBtn/nextBtn, repeatBtn,
+        // pause) already calls speechSynthesis.cancel() itself, synchronously,
+        // BEFORE bumping the token and starting the next line. This interval
+        // belongs to the OLD utterance and only ticks every 120ms, so by the
+        // time it notices the token changed, the engine may already be a
+        // few ms into speaking the NEW utterance under the new token. Calling
+        // cancel() again here is a stale double-cancel that can silently wipe
+        // out that brand-new utterance instead of the one this poll was
+        // actually tracking. Network voices (e.g. Arabic) take longer to spin
+        // up than local ones, so they're the most likely to still be starting
+        // when this stale tick lands -- which is why this showed up as
+        // "Arabic source line gets skipped on the first line after changing
+        // lessons." Just stop polling and resolve; don't touch the engine.
+        finish();
+        return;
+      }
       if(!speechSynthesis.speaking){ finish(); }
     }, 120);
   });
