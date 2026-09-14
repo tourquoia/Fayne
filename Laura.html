@@ -1801,6 +1801,21 @@ function populateVoiceSelect(selectId, code, previousURI, gender){
   const matchSet = new Set(matches);
   const ordered = [...matches, ...voices.filter(v=>!matchSet.has(v))];
 
+  // BUGFIX (2026-09): when nothing installed actually matches this
+  // language, don't silently pretend one does. The full voice list below
+  // is still shown and still fully selectable -- a user can always
+  // deliberately override with a mismatched voice on purpose -- but the
+  // AUTO pick must not attach an arbitrary voice from a totally unrelated
+  // language. A placeholder keeps the dropdown's own selection in sync
+  // with that "nothing auto-picked" state instead of defaulting to
+  // whichever voice happens to sort first.
+  if(!matches.length){
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = '— no installed voice matches this language —';
+    sel.appendChild(placeholder);
+  }
+
   ordered.forEach(v=>{
     const o = document.createElement('option');
     const isMatch = matchSet.has(v);
@@ -1814,10 +1829,19 @@ function populateVoiceSelect(selectId, code, previousURI, gender){
     chosenURI = previousURI;
   } else if(matches.length){
     chosenURI = matches[0].voiceURI;
-  } else if(voices.length){
-    chosenURI = voices[0].voiceURI;
   }
-  if(chosenURI) sel.value = chosenURI;
+  // NOTE: intentionally NO "else if(voices.length) chosenURI = voices[0]"
+  // fallback here anymore. Root cause of the "Arabic line plays in French
+  // instead" bug: speak() attaches whatever voice object chosenURI points
+  // to, and an attached voice's OWN .lang always overrides the utterance's
+  // requested langCode. So auto-picking an unrelated installed voice (e.g.
+  // the first voice alphabetically, which happened to be a French voice on
+  // the device that was tested) didn't just mispronounce the Arabic line --
+  // it replaced the language entirely. Leaving chosenURI blank here lets
+  // speak() fall through to the raw language code with no forced voice,
+  // so the browser can use its own default engine for that language
+  // instead of one this template picked at random.
+  sel.value = chosenURI;
   return {chosenURI, matches, usingFallback, genderMatched};
 }
 
@@ -1830,7 +1854,10 @@ function updateDotAndNote(id, uri, matches, genderMatched, usingFallback, gender
   if(dot) dot.className = 'dot' + (!uri ? '' : noLangMatch ? ' danger' : (isRecommended ? (isSrc?' amber':' teal') : ' white'));
   let text = '';
   if(!uri){
-    text = 'no voice available on this device';
+    // Can mean either "no TTS voices installed at all" or "voices exist,
+    // just none for this language, and nothing's been manually picked yet"
+    // (see the populateVoiceSelect bugfix note above) -- distinguish them.
+    text = matches.length===0 ? `no ${langLabel || 'matching'} voice installed — pick one below to override` : 'no voice available on this device';
   } else if(noLangMatch){
     text = `no ${langLabel || 'matching'} voice installed on this device`;
   } else if(usingFallback){
@@ -2136,20 +2163,35 @@ function speak(text, langCode, token, voiceURI, pitch){
     u.pitch = pitch || 1;
     const v = pickVoiceByURI(voiceURI);
     if(v){ u.voice = v; u.lang = v.lang; } else { u.lang = langCode; }
-    let done = false, check;
+    let done = false, check, hardCeiling;
     const finish = ()=>{
       if(done) return;
       done = true;
       clearInterval(check);
+      clearTimeout(hardCeiling);
       resolve();
     };
     u.onend = finish;
-    u.onerror = finish;
+    u.onerror = (e)=>{ console.warn('[speech] utterance error', {langCode, voiceURI, error: e && e.error}); finish(); };
     speechSynthesis.speak(u);
     check = setInterval(()=>{
       if(token!==S.token){ speechSynthesis.cancel(); finish(); return; }
       if(!speechSynthesis.speaking){ finish(); }
     }, 120);
+    // Hard ceiling as a last resort, scoped to just THIS one utterance --
+    // unlike a global pause()/resume() nudge (tried and reverted: it wedged
+    // the whole speechSynthesis queue permanently during testing), cancel()
+    // on a single stuck utterance is the same safe cleanup call already
+    // used everywhere else in this file (prevBtn/nextBtn/stopBtn etc.) and
+    // never touches engine-wide state. Only fires if speechSynthesis.speaking
+    // somehow gets stuck reporting true for a line that isn't actually
+    // producing sound, so one bad line can't freeze the rest of the session.
+    hardCeiling = setTimeout(()=>{
+      if(done) return;
+      console.warn('[speech] watchdog: utterance never finished, cancelling', {langCode, voiceURI});
+      speechSynthesis.cancel();
+      finish();
+    }, Math.min(15000, estimateMs(text)*3 + 4000));
   });
 }
 function estimateMs(text){
@@ -2206,12 +2248,22 @@ function stopRecognition(){
 }
 
 /* Voice for a given line: falls back gracefully if a character has no
-   dedicated source voice chosen. */
+   dedicated source voice chosen -- but ONLY when source and target are
+   genuinely the same language (the "no separate source voice needed" case
+   set up in renderCharacterCards). BUGFIX (2026-09): this used to fall
+   back to the other side's voice any time one URI was blank, for ANY
+   reason -- including a source language with no installed voice that
+   simply hadn't been manually overridden yet (see populateVoiceSelect).
+   That silently played the SOURCE line using the TARGET language's voice
+   (e.g. an Arabic source line coming out in the French target voice)
+   instead of just leaving it unattached. Now the cross-fallback only
+   fires when the two sides are actually the same language. */
 function voicesForEntry(entry){
   const cv = S.charVoices[entry.speaker] || {};
+  const sameLang = !!cv.srcLang && cv.srcLang === cv.tgtLang;
   return {
-    srcURI: cv.src || cv.tgt || '',
-    tgtURI: cv.tgt || cv.src || '',
+    srcURI: cv.src || (sameLang ? cv.tgt : '') || '',
+    tgtURI: cv.tgt || (sameLang ? cv.src : '') || '',
     srcPitch: cv.srcPitch || 1,
     tgtPitch: cv.tgtPitch || 1,
   };
