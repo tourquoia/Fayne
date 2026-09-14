@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fayne’s Mini Language Course</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#ff8c00">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Fayne's Mini">
 <style>
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: #f8f9fa; }
@@ -14,10 +21,10 @@
     width: 100%;
     max-width: 1022px;
     margin: 0 auto;
-    aspect-ratio: 1022 / 1536;
     overflow: hidden;
     background: #f8f9fa;
     padding-top: 2.5%;
+    padding-bottom: 4%;
   }
   
   /* Top Header Navigation Bar */
@@ -136,6 +143,51 @@
     font-size: clamp(24px, 3.5vw, 36px);
     font-weight: 700;
   }
+
+  /* Save / Install section */
+  .save-section {
+    width: 90%;
+    margin: 4% auto 0 auto;
+  }
+
+  #installBtn {
+    display: none;
+    width: 100%;
+    border: 2px solid #ff8c00;
+    border-radius: 16px;
+    background: #fff7ec;
+    color: #b35900;
+    font-weight: 800;
+    font-size: clamp(14px, 2vw, 18px);
+    padding: 16px 14px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  #installBtn .sub {
+    display: block;
+    font-size: clamp(12px, 1.6vw, 15px);
+    font-weight: 600;
+    color: #92694a;
+    margin-top: 4px;
+  }
+  #iosInstructions {
+    display: none;
+    border: 2px dashed #ff8c00;
+    border-radius: 16px;
+    padding: 16px 14px;
+    color: #475569;
+    font-size: clamp(13px, 1.8vw, 16px);
+    line-height: 1.6;
+    background: #fff7ec;
+  }
+  #iosInstructions strong { color: #b35900; }
+  #installedNote {
+    display: none;
+    text-align: center;
+    color: #64748b;
+    font-size: clamp(12px, 1.6vw, 15px);
+    margin-top: 4px;
+  }
 </style>
 </head>
 <body>
@@ -167,6 +219,63 @@
         <span class="chevron">›</span>
       </a>
     </div>
+
+    <div class="save-section">
+      <button id="installBtn" type="button">
+        📲 SAVE THIS PAGE TO YOUR PHONE
+        <span class="sub">Guardar esta página en tu teléfono</span>
+      </button>
+
+      <div id="iosInstructions">
+        <strong>iPhone:</strong> Tap the Share icon <strong>⬆️</strong>, then tap <strong>"Add to Home Screen."</strong><br><br>
+        <strong>iPhone:</strong> Toca el ícono Compartir <strong>⬆️</strong>, luego toca <strong>"Agregar a inicio."</strong>
+      </div>
+
+      <div id="installedNote">✅ Already saved to your home screen / Ya está guardada en tu pantalla de inicio</div>
+    </div>
   </main>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  }
+
+  var installBtn = document.getElementById('installBtn');
+  var iosInstructions = document.getElementById('iosInstructions');
+  var installedNote = document.getElementById('installedNote');
+
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                      window.navigator.standalone === true;
+
+  if (isStandalone) {
+    installedNote.style.display = 'block';
+  } else {
+    var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+    if (isIOS) {
+      iosInstructions.style.display = 'block';
+    }
+
+    var deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.style.display = 'block';
+    });
+
+    installBtn.addEventListener('click', function () {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.finally(function () {
+        deferredPrompt = null;
+        installBtn.style.display = 'none';
+      });
+    });
+
+    window.addEventListener('appinstalled', function () {
+      installBtn.style.display = 'none';
+      installedNote.style.display = 'block';
+    });
+  }
+</script>
 </body>
 </html>
