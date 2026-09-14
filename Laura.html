@@ -2157,6 +2157,24 @@ function estimateMs(text){
   const secs = words / (2.3 * S.rate);
   return Math.max(500, Math.min(4200, secs*1000));
 }
+// speak() can resolve early on some browsers (notably Firefox) when the
+// speechSynthesis.speaking watchdog momentarily reports false before the
+// audio has actually finished — this is the same behavior behind the
+// audio-cutoff issue, and is left completely untouched here. This wrapper
+// doesn't change speak()'s own completion signal at all; it only measures
+// how much real wall-clock time speak() actually took, and if that's less
+// than estimateMs()'s prediction for the line, tops up the wait with the
+// difference BEFORE the caller moves on to change the on-screen text or
+// start the next step. That guarantees on-screen text can never be
+// replaced/cleared before at least a full estimated-speaking-length has
+// elapsed, even on a browser where speak() itself returned early.
+async function speakWithFloor(text, langCode, token, voiceURI, pitch){
+  const start = Date.now();
+  await speak(text, langCode, token, voiceURI, pitch);
+  if(token!==S.token) return;
+  const remaining = estimateMs(text) - (Date.now()-start);
+  if(remaining>0) await sleep(remaining, token);
+}
 function sleep(ms, token){
   return new Promise(resolve=>{
     const start = Date.now();
@@ -2311,12 +2329,12 @@ async function runExposureLine(entry, token){
     if(token!==S.token) return;
   }
   document.getElementById('targetLineEl').textContent = entry.target;
-  await speak(entry.target, S.targetLangGuess, token, tgtURI, tgtPitch);
+  await speakWithFloor(entry.target, S.targetLangGuess, token, tgtURI, tgtPitch);
   if(token!==S.token) return;
   await sleep(estimateMs(entry.target)*1.2, token);
   if(token!==S.token) return;
   setPhase('Once more');
-  await speak(entry.target, S.targetLangGuess, token, tgtURI, tgtPitch);
+  await speakWithFloor(entry.target, S.targetLangGuess, token, tgtURI, tgtPitch);
   if(token!==S.token) return;
   await sleep(estimateMs(entry.target)*1.2, token);
   if(token!==S.token) return;
@@ -2340,7 +2358,7 @@ async function runJudgedLine(entry, token, attempt){
     setPhase('One more time');
   }
   document.getElementById('targetLineEl').textContent = entry.target;
-  await speak(entry.target, S.targetLangGuess, token, tgtURI, tgtPitch);
+  await speakWithFloor(entry.target, S.targetLangGuess, token, tgtURI, tgtPitch);
   if(token!==S.token) return;
 
   setPhase(attempt===1 ? 'Your turn' : 'Your turn — last try');
