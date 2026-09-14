@@ -9,31 +9,31 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700&family=Source+Code+Pro:wght@500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#06080a;
-    --bg-hi: radial-gradient(1200px 700px at 15% -10%, #101a1c 0%, transparent 55%), radial-gradient(900px 620px at 108% 8%, #14100c 0%, transparent 55%), #06080a;
-    --card:#0b0d10;
-    --card-hi:#12161b;
-    --border:#2a2f38;
-    --border-soft:#1c2128;
-    --ink:#F4F1E6;
-    --ink-soft:#A9B0AE;
-    --ink-dim:#6E7579;
-    --amber:#F0A93E;
-    --amber-bright:#FFCE7A;
-    --amber-dim:#8a6a34;
-    --amber-glow: rgba(240,169,62,.5);
-    --amber-glow-soft: rgba(240,169,62,.22);
-    --amber-vivid:#F5860D;
-    --amber-vivid-glow: rgba(245,134,13,.75);
-    --amber-vivid-glow-soft: rgba(245,134,13,.4);
-    --teal:#F0A93E;
-    --teal-bright:#FFCE7A;
-    --teal-dim:#8a6a34;
-    --teal-glow: rgba(240,169,62,.5);
-    --teal-glow-soft: rgba(240,169,62,.22);
+    --bg:#FBF7F3;
+    --bg-hi: #FBF7F3;
+    --card:#FFFFFF;
+    --card-hi:#FFF9FA;
+    --border:#F1C9D1;
+    --border-soft:#F6DEE3;
+    --ink:#332B27;
+    --ink-soft:#8A817B;
+    --ink-dim:#B4ACA6;
+    --amber:#B0132C;
+    --amber-bright:#D81E3D;
+    --amber-dim:#F1C9D1;
+    --amber-glow: rgba(176,19,44,.14);
+    --amber-glow-soft: rgba(176,19,44,.07);
+    --amber-vivid:#D81E3D;
+    --amber-vivid-glow: rgba(216,30,61,.28);
+    --amber-vivid-glow-soft: rgba(216,30,61,.12);
+    --teal:#A6394C;
+    --teal-bright:#C24560;
+    --teal-dim:#F1C9D1;
+    --teal-glow: rgba(166,57,76,.14);
+    --teal-glow-soft: rgba(166,57,76,.07);
     --ok:#4FB86B;
-    --danger:#D9614F;
-    --shadow: 0 1px 0 rgba(0,0,0,.5), 0 14px 34px -16px rgba(0,0,0,.85);
+    --danger:#B0132C;
+    --shadow: 0 1px 0 rgba(0,0,0,.02), 0 10px 24px -14px rgba(176,19,44,.18);
     --radius-lg:18px;
     --radius-md:13px;
     /* Reserved clearance for a host-injected sticky/anchor ad bar at the
@@ -65,14 +65,13 @@
   header.top h1{
     font-family:'Cormorant Garamond', serif;
     font-weight:700;
-    font-style:italic;
-    font-size:24px;
+    font-style:normal;
+    font-size:28px;
     margin:0;
-    color:var(--ink);
-    letter-spacing:.02em;
-    text-shadow:0 0 18px rgba(240,169,62,.35);
+    color:var(--amber);
+    letter-spacing:.01em;
   }
-  header.top p.sub{ font-size:11.5px; color:var(--ink-dim); margin:3px 0 0; }
+  header.top p.sub{ font-size:12px; color:var(--ink-soft); margin:4px 0 0; }
 
   .card{
     background:var(--card);
@@ -86,7 +85,7 @@
   h2.section-title{
     font-family:'Cormorant Garamond', serif;
     font-size:17px; font-weight:700; font-style:italic;
-    margin:0 0 8px; color:var(--ink);
+    margin:0 0 8px; color:var(--amber);
   }
   .eyebrow-label{
     font-family:'Source Code Pro', monospace;
@@ -102,11 +101,11 @@
   select, input[type=text], input[type=number]{
     width:100%; font-family:'Inter', inherit; font-size:13.5px;
     padding:8px 10px; border-radius:9px;
-    border:1.5px solid var(--border); background:#0d0f12;
+    border:1.5px solid var(--border); background:#FBF3F4;
     color:var(--ink);
   }
-  select:focus, input:focus{ outline:2px solid var(--amber-dim); outline-offset:1px; }
-  select option{ background:#12161b; color:var(--ink); }
+  select:focus, input:focus{ outline:2px solid var(--amber-bright); outline-offset:1px; }
+  select option{ background:#FFFFFF; color:var(--ink); }
   select:disabled{ opacity:.4; }
 
   /* ---- language + voice split card (this card keeps its own shape:      ---- */
@@ -134,11 +133,11 @@
   .btn{
     font-family:'Inter', inherit; font-weight:700; font-size:13px;
     padding:9px 13px; border-radius:10px; border:1.5px solid transparent;
-    background:var(--amber); color:#1A1206; cursor:pointer;
+    background:var(--amber); color:#FFFFFF; cursor:pointer;
     box-shadow:0 0 18px -8px var(--amber-glow);
   }
   .btn:hover{ filter:brightness(1.08); }
-  .btn.secondary{ background:var(--teal); color:#1A1206; box-shadow:0 0 18px -8px var(--teal-glow); }
+  .btn.secondary{ background:var(--teal); color:#FFFFFF; box-shadow:0 0 18px -8px var(--teal-glow); }
   .btn.ghost{ background:transparent; border-color:var(--border); color:var(--ink-soft); box-shadow:none; }
   .btn.ghost:hover{ color:var(--ink); border-color:var(--ink-dim); }
   .btn.block{ width:100%; padding:11px; font-size:14px; margin-top:10px; }
@@ -146,40 +145,32 @@
 
   /* ---- hero "start practice" panel (now also holds the lesson grid) ---- */
   .hero-card{
-    background:linear-gradient(160deg, #2a1f0e 0%, #1f160a 55%, #151006 100%);
-    border:1.5px solid var(--amber);
+    background:#FFFFFF;
+    border:1.5px solid var(--border);
     border-radius:var(--radius-lg);
-    box-shadow:0 0 0 1px var(--amber-glow-soft), 0 0 44px -10px var(--amber-glow), var(--shadow);
-    padding:20px 18px 18px;
+    box-shadow:var(--shadow);
+    padding:28px 18px 22px;
     margin-bottom:14px;
     position:relative;
   }
   .hero-start-btn{
-    display:flex; flex-direction:column; align-items:center; gap:14px; width:100%;
+    display:flex; flex-direction:column; align-items:center; gap:16px; width:100%;
     background:transparent; border:none; margin:0; padding:0;
     cursor:pointer; text-align:center;
   }
   .hero-start-btn:disabled{ opacity:.5; cursor:not-allowed; }
-  .hero-play-wrap{ position:relative; flex:none; width:86px; height:86px; }
-  .hero-play-wrap::before{
-    content:''; position:absolute; inset:-8px; border-radius:50%;
-    border:2px solid var(--amber-vivid);
-    box-shadow:0 0 0 1px var(--amber-vivid-glow-soft), 0 0 34px 4px var(--amber-vivid-glow);
-    pointer-events:none;
+  .hero-play-wrap{
+    position:relative; flex:none; width:100px; height:100px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:50%;
+    background:#FBDCE2;
   }
-  .hero-play{
-    position:relative; z-index:1;
-    flex:none; width:86px; height:86px; border-radius:50%;
-    background:#05100f; border:2px solid var(--amber-vivid);
-    color:var(--amber-vivid); font-size:27px;
-    display:flex; align-items:center; justify-content:center; padding-left:5px;
-    box-shadow:0 0 0 1px var(--amber-vivid-glow-soft), 0 0 28px 3px var(--amber-vivid-glow), inset 0 0 16px -4px var(--amber-vivid-glow);
-  }
-  .hero-text{ display:flex; flex-direction:column; align-items:center; gap:3px; min-width:0; }
+  .hero-heart{ width:60px; height:54px; display:block; }
+  .hero-text{ display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; }
   .hero-eyebrow{
-    font-family:'Inter', inherit; font-size:18px; font-weight:800;
-    letter-spacing:.1em; text-transform:uppercase; color:var(--amber-bright);
-    line-height:1.2;
+    font-family:'Inter', inherit; font-size:16px; font-weight:800;
+    letter-spacing:.03em; text-transform:uppercase; color:var(--amber);
+    line-height:1.3;
   }
   .hero-title{
     font-family:'Inter', inherit; font-size:13px; font-weight:600;
@@ -189,21 +180,21 @@
     display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:5px;
     font-size:11px; color:var(--ink-soft); margin-top:2px;
   }
-  .hero-start-btn:hover .hero-play{ filter:brightness(1.1); }
+  .hero-start-btn:hover .hero-play-wrap{ filter:brightness(1.04); }
 
   .toggle-row{ display:flex; gap:6px; }
   .toggle-pill{
     flex:1; padding:8px 10px; border-radius:9px; border:1.5px solid var(--border);
-    background:#0d0f12; color:var(--ink-soft); font-size:12.5px; font-weight:600; cursor:pointer;
+    background:#FBF3F4; color:var(--ink-soft); font-size:12.5px; font-weight:600; cursor:pointer;
   }
-  .toggle-pill.on{ background:var(--amber); border-color:var(--amber); color:#1A1206; box-shadow:0 0 16px -7px var(--amber-glow); }
+  .toggle-pill.on{ background:var(--amber); border-color:var(--amber); color:#FFFFFF; box-shadow:0 0 16px -7px var(--amber-glow); }
 
   .rate-row{ display:flex; align-items:center; gap:10px; }
   .rate-row input[type=range]{ flex:1; accent-color:var(--amber); }
   .rate-row span{ font-family:'Source Code Pro', monospace; font-size:12px; color:var(--ink-soft); width:40px; text-align:right; }
 
   .note{ font-size:11.5px; color:var(--ink-soft); margin-top:6px; line-height:1.45; }
-  .note.warn{ background:#1E1712; border:1px solid #4A3A1E; color:#E3C68A; border-radius:10px; padding:10px 12px; }
+  .note.warn{ background:#FDF1E7; border:1px solid #EAD2AE; color:#8A5A1E; border-radius:10px; padding:10px 12px; }
   .hidden{ display:none !important; }
 
   /* ---- drill screen ---- */
@@ -240,7 +231,7 @@
   .lang-tag{ font-family:'Source Code Pro', monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--amber-bright); }
   .voice-tag{ font-size:11.5px; color:var(--ink-dim); }
   .phase-label{ font-size:12px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.1em; font-family:'Source Code Pro', monospace; }
-  .target-line{ font-family:'Cormorant Garamond', serif; font-size:30px; font-weight:700; color:#FFFFFF; margin-top:4px; min-height:34px; }
+  .target-line{ font-family:'Cormorant Garamond', serif; font-size:30px; font-weight:700; color:var(--ink); margin-top:4px; min-height:34px; }
   .en-line{ font-size:13px; color:var(--ink-dim); margin-top:4px; font-style:italic; }
 
   .transport{ display:flex; justify-content:center; gap:7px; margin-top:14px; flex-wrap:wrap; }
@@ -251,16 +242,16 @@
   }
   .icon-btn.primary{
     background:radial-gradient(circle at 35% 30%, var(--amber-bright), var(--amber-vivid));
-    border-color:var(--amber-vivid); color:#1A1206;
+    border-color:var(--amber-vivid); color:#FFFFFF;
     box-shadow:0 0 0 1px var(--amber-vivid-glow-soft), 0 0 24px 4px var(--amber-vivid-glow);
   }
   .icon-btn.active{
     background:radial-gradient(circle at 35% 30%, var(--amber-bright), var(--amber-vivid));
-    border-color:var(--amber-vivid); color:#1A1206;
+    border-color:var(--amber-vivid); color:#FFFFFF;
     box-shadow:0 0 0 1px var(--amber-vivid-glow-soft), 0 0 24px 4px var(--amber-vivid-glow);
   }
   .icon-btn:hover{ color:var(--ink); }
-  .icon-btn.active:hover{ color:#1A1206; }
+  .icon-btn.active:hover{ color:#FFFFFF; }
 
   .settings-panel{ background:var(--card-hi); border:1px solid var(--border-soft); border-radius:12px; padding:10px 12px; margin-top:10px; }
 
@@ -269,7 +260,7 @@
   .jump input{ width:64px; padding:8px 10px; }
 
   .done{ text-align:center; }
-  .done h2{ font-family:'Cormorant Garamond', serif; font-style:italic; font-size:28px; margin:0 0 8px; color:var(--ink); text-shadow:0 0 18px rgba(240,169,62,.35); }
+  .done h2{ font-family:'Cormorant Garamond', serif; font-style:italic; font-size:28px; margin:0 0 8px; color:var(--amber); }
   .small-muted{ font-size:12px; color:var(--ink-dim); }
 </style>
 </head>
@@ -284,7 +275,12 @@
   <!-- ===================== START PRACTICE (hero) ===================== -->
   <section class="hero-card setup-card">
     <button class="hero-start-btn" id="startBtn">
-      <span class="hero-play-wrap"><span class="hero-play">▶</span></span>
+      <span class="hero-play-wrap">
+        <svg class="hero-heart" viewBox="0 0 100 88" xmlns="http://www.w3.org/2000/svg">
+          <path d="M50 82 C50 82 6 53 6 26 C6 11 18 1 32 1 C41 1 47 6 50 13 C53 6 59 1 68 1 C82 1 94 11 94 26 C94 53 50 82 50 82 Z" fill="var(--amber-vivid)"/>
+          <polygon points="41,31 41,57 65,44" fill="#FFFFFF"/>
+        </svg>
+      </span>
       <span class="hero-text">
         <span class="hero-eyebrow">Begin Practice</span>
         <span class="hero-title">Gratitude &amp; Abundance</span>
