@@ -2175,7 +2175,24 @@ function speak(text, langCode, token, voiceURI, pitch){
     u.onerror = (e)=>{ console.warn('[speech] utterance error', {langCode, voiceURI, error: e && e.error}); finish(); };
     speechSynthesis.speak(u);
     check = setInterval(()=>{
-      if(token!==S.token){ speechSynthesis.cancel(); finish(); return; }
+      if(token!==S.token){
+        // BUGFIX (2026-09): don't cancel() here. Every caller that bumps
+        // S.token (prevLessonBtn/nextLessonBtn, prevBtn/nextBtn, repeatBtn,
+        // pause) already calls speechSynthesis.cancel() itself, synchronously,
+        // BEFORE bumping the token and starting the next line. This interval
+        // belongs to the OLD utterance and only ticks every 120ms, so by the
+        // time it notices the token changed, the engine may already be a
+        // few ms into speaking the NEW utterance under the new token. Calling
+        // cancel() again here is a stale double-cancel that can silently wipe
+        // out that brand-new utterance instead of the one this poll was
+        // actually tracking. Network voices (e.g. Arabic) take longer to spin
+        // up than local ones, so they're the most likely to still be starting
+        // when this stale tick lands -- which is why this showed up as
+        // "Arabic source line gets skipped on the first line after changing
+        // lessons." Just stop polling and resolve; don't touch the engine.
+        finish();
+        return;
+      }
       if(!speechSynthesis.speaking){ finish(); }
     }, 120);
     // Hard ceiling as a last resort, scoped to just THIS one utterance --
