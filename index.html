@@ -4,45 +4,148 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fayne’s Mini Language Course</title>
+<!-- JysnMlnrMthd -->
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<meta name="theme-color" content="#ff8c00">
+<meta name="theme-color" content="#e8630f">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Fayne's Mini">
 <style>
   * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; background: #f8f9fa; }
-  body { min-height: 100vh; font-family: system-ui, -apple-system, sans-serif; }
-  
+  html, body { margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #f5f3ef;
+  }
+
+  /* Shared background artwork — fixed to the viewport (not the scrolling
+     page). Lives at z-index:-1: above the plain page background, below
+     every real element, and never intercepts taps (pointer-events:none). */
+  .arch-bg {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    z-index: -1;
+    pointer-events: none;
+    display: flex;
+    justify-content: center;
+    /* Nudged down ~12% so less of the top of the arch gets clipped by the
+       viewport edge; shrunk by a matching ~12% so we don't lose the orange
+       at the bottom in the process. */
+    transform: translateY(12%);
+  }
+  .arch-bg img {
+    width: min(634px, 132vw);
+    max-width: none;
+    height: auto;
+    display: block;
+  }
+  /* On phone widths, show the artwork close to its natural proportions
+     (roughly full viewport width, bottom-anchored) instead of zoomed in —
+     this keeps the image's own broad white sky visible above the arch,
+     so the page reads as roughly half white / half orange-artwork rather
+     than a wall of orange. */
+  @media (max-width: 700px) {
+    .arch-bg { transform: translateY(0%); }
+    .arch-bg img { width: 100vw; }
+  }
+
   .screen {
     position: relative;
+    z-index: 1;
     width: 100%;
-    max-width: 1022px;
+    max-width: 1024px;
     margin: 0 auto;
-    overflow: hidden;
-    background: #f8f9fa;
-    padding-top: 2.5%;
-    padding-bottom: 4%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
   }
-  
-  /* Top Header Navigation Bar */
+
+  .top-banner {
+    width: 100%;
+    background: #e8630f;
+    color: #ffffff;
+    padding: 3.2% 5%;
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-start;
+    gap: 0.6em;
+    flex-shrink: 0;
+  }
+  .top-banner .es { font-size: clamp(14px, 2.3vw, 21px); font-weight: 800; letter-spacing: 0.01em; }
+  .top-banner .sep { font-size: clamp(14px, 2.3vw, 21px); font-weight: 400; opacity: 0.85; }
+  .top-banner .en { font-size: clamp(13px, 2vw, 19px); font-weight: 500; opacity: 0.95; }
+
+  .save-section {
+    width: 90%;
+    margin: 4% auto 5% auto;
+  }
+
+  #installBtn {
+    display: none;
+    width: 100%;
+    border: 2px solid #e8630f;
+    border-radius: 16px;
+    background: rgba(255, 243, 233, 0.92);
+    color: #b3480f;
+    font-weight: 800;
+    font-size: clamp(14px, 2vw, 18px);
+    padding: 16px 14px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  #installBtn .sub {
+    display: block;
+    font-size: clamp(12px, 1.6vw, 15px);
+    font-weight: 600;
+    color: #92582f;
+    margin-top: 4px;
+  }
+  #iosInstructions {
+    display: none;
+    border: 2px dashed #e8630f;
+    border-radius: 16px;
+    padding: 16px 14px;
+    color: #475569;
+    font-size: clamp(13px, 1.8vw, 16px);
+    line-height: 1.6;
+    background: rgba(255, 243, 233, 0.92);
+  }
+  #iosInstructions strong { color: #b3480f; }
+  #installedNote {
+    display: none;
+    text-align: center;
+    color: #7c8a97;
+    font-size: clamp(12px, 1.6vw, 15px);
+    margin-top: 4px;
+  }
+
+  .body-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
   .header-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 5%;
-    margin-bottom: 4%;
+    margin-bottom: 5%;
   }
-  
+
   .header-title {
-    color: #0f172a;
-    font-size: clamp(18px, 2.6vw, 28px);
+    color: #1f374a;
+    font-size: clamp(17px, 2.5vw, 26px);
     font-weight: 800;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.03em;
     text-align: center;
     margin: 0;
+    line-height: 1.25;
   }
 
   .icon-btn {
@@ -56,168 +159,105 @@
     cursor: pointer;
     flex-shrink: 0;
   }
-
   .moon { border: 2px solid #cbd5e1; }
   .moon svg { width: 22px; height: 22px; fill: #64748b; }
-
   .heart { border: 2px solid #ef4444; }
   .heart svg { width: 22px; height: 22px; fill: #ef4444; }
 
-  .hotspot:focus-visible { outline: 3px solid #ff8c00; outline-offset: 4px; }
+  .hotspot:focus-visible { outline: 3px solid #e8630f; outline-offset: 4px; }
 
-  /* Compact Main Player Card */
-  .main-course {
-    width: 90%;
-    margin: 0 auto 3% auto;
-    padding: 8% 4%;
-    border-radius: 24px;
-    background: #ffffff;
-    border: 2.5px solid #ff8c00;
-    text-decoration: none;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-  }
-  
-  /* Flat Orange Play Button (No Shadows) */
-  .play-button-container {
-    width: 130px; height: 130px;
-    border-radius: 50%;
-    background: #ff8c00;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 24px;
-  }
-  
-  .play-icon {
-    width: 0; height: 0;
-    margin-left: 8px;
-    border-top: 22px solid transparent;
-    border-bottom: 22px solid transparent;
-    border-left: 36px solid #ffffff;
-  }
-
-  .player-label {
-    color: #0f172a;
-    font-size: clamp(16px, 2.2vw, 22px);
-    font-weight: 700;
-    letter-spacing: 0.03em;
-    text-align: center;
-  }
-
-  /* Secondary Track Buttons */
   .track-list {
     width: 90%;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 4%;
   }
 
   .track-btn {
     width: 100%;
-    height: 72px;
-    background: #ffffff;
-    border: 2px solid #e2e8f0;
-    border-left: 10px solid #ff8c00;
+    background: rgba(255, 255, 255, 0.78);
+    border: 2px solid rgba(236, 232, 225, 0.9);
+    border-left: 8px solid #e8630f;
     border-radius: 16px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 0 5%;
+    gap: 4%;
+    padding: 4% 5%;
     text-decoration: none;
     cursor: pointer;
   }
 
-  .track-title {
-    color: #0f172a;
-    font-size: clamp(15px, 2vw, 22px);
-    font-weight: 700;
-  }
-  
-  .chevron {
-    color: #ff8c00;
-    font-size: clamp(24px, 3.5vw, 36px);
-    font-weight: 700;
+  .track-btn.featured {
+    border-left-width: 10px;
+    padding: 6% 5%;
   }
 
-  /* Save / Install section */
-  .save-section {
-    width: 90%;
-    margin: 4% auto 0 auto;
+  .track-icon {
+    width: 62px; height: 62px;
+    min-width: 62px;
+    border-radius: 50%;
+    background: #e8630f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .track-icon svg {
+    width: 28px; height: 28px;
+    fill: none;
+    stroke: #ffffff;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
-  #installBtn {
-    display: none;
-    width: 100%;
-    border: 2px solid #ff8c00;
-    border-radius: 16px;
-    background: #fff7ec;
-    color: #b35900;
-    font-weight: 800;
-    font-size: clamp(14px, 2vw, 18px);
-    padding: 16px 14px;
-    cursor: pointer;
-    font-family: inherit;
-  }
-  #installBtn .sub {
+  .track-text { flex: 1; min-width: 0; }
+
+  .track-title-es {
     display: block;
-    font-size: clamp(12px, 1.6vw, 15px);
+    color: #1f374a;
+    font-size: clamp(14px, 1.9vw, 19px);
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    line-height: 1.3;
+  }
+  .track-btn.featured .track-title-es {
+    padding-bottom: 6%;
+    margin-bottom: 6%;
+    border-bottom: 2px solid rgba(238, 240, 242, 0.9);
+  }
+  .track-title-en {
+    display: block;
+    color: #1f374a;
+    font-size: clamp(13px, 1.7vw, 17px);
+    font-weight: 700;
+    line-height: 1.3;
+  }
+  .track-btn:not(.featured) .track-title-en {
+    color: #7c8a97;
     font-weight: 600;
-    color: #92694a;
-    margin-top: 4px;
+    font-size: clamp(12px, 1.5vw, 15px);
   }
-  #iosInstructions {
-    display: none;
-    border: 2px dashed #ff8c00;
-    border-radius: 16px;
-    padding: 16px 14px;
-    color: #475569;
-    font-size: clamp(13px, 1.8vw, 16px);
-    line-height: 1.6;
-    background: #fff7ec;
-  }
-  #iosInstructions strong { color: #b35900; }
-  #installedNote {
-    display: none;
-    text-align: center;
-    color: #64748b;
-    font-size: clamp(12px, 1.6vw, 15px);
-    margin-top: 4px;
+
+  .chevron {
+    color: #c9530a;
+    font-size: clamp(22px, 3vw, 32px);
+    font-weight: 700;
+    flex-shrink: 0;
   }
 </style>
 </head>
 <body>
+
+  <div class="arch-bg" aria-hidden="true"><img src="arch.png" alt=""></div>
+
   <main class="screen" aria-label="Fayne’s Mini Language Course">
-    <header class="header-bar">
-      <a href="Luna.html" class="icon-btn moon" aria-label="Luna">
-        <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-      </a>
-      <h1 class="header-title">FAYNE'S MINI LANGUAGE COURSE</h1>
-      <a href="Gratitude.html" class="icon-btn heart" aria-label="Gratitude">
-        <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-      </a>
-    </header>
-    
-    <a href="POC.html" class="hotspot main-course" aria-label="Begin Main Course">
-      <div class="play-button-container">
-        <div class="play-icon"></div>
-      </div>
-      <div class="player-label">MAIN PLAYER / REPRODUCTOR PRINCIPAL</div>
-    </a>
-    
-    <div class="track-list">
-      <a href="Brennan.html" class="track-btn" aria-label="Brennan Vacation">
-        <span class="track-title">BRENNAN VACATION</span>
-        <span class="chevron">›</span>
-      </a>
-      <a href="Errores.html" class="track-btn" aria-label="Errores Comunes en Español">
-        <span class="track-title">ERRORES COMUNES (EN ESPAÑOL)</span>
-        <span class="chevron">›</span>
-      </a>
+
+    <div class="top-banner">
+      <span class="es">Lecciones de diez minutos</span>
+      <span class="sep">|</span>
+      <span class="en">Ten-Minute Lessons</span>
     </div>
 
     <div class="save-section">
@@ -225,13 +265,107 @@
         📲 SAVE THIS PAGE TO YOUR PHONE
         <span class="sub">Guardar esta página en tu teléfono</span>
       </button>
-
       <div id="iosInstructions">
         <strong>iPhone:</strong> Tap the Share icon <strong>⬆️</strong>, then tap <strong>"Add to Home Screen."</strong><br><br>
         <strong>iPhone:</strong> Toca el ícono Compartir <strong>⬆️</strong>, luego toca <strong>"Agregar a inicio."</strong>
       </div>
-
       <div id="installedNote">✅ Already saved to your home screen / Ya está guardada en tu pantalla de inicio</div>
+    </div>
+
+    <div class="body-area">
+      <header class="header-bar">
+        <a href="Luna.html" class="icon-btn moon" aria-label="Luna">
+          <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </a>
+        <h1 class="header-title">FAYNE'S MINI LANGUAGE COURSE</h1>
+        <a href="Gratitude.html" class="icon-btn heart" aria-label="Gratitude">
+          <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+        </a>
+      </header>
+      <div class="track-list">
+        <a href="Laura.html" class="hotspot track-btn featured" aria-label="Ejercicios de Idioma para el Trabajo">
+          <div class="track-icon">
+            <svg viewBox="0 0 24 24"><path d="M2 5c2.2-1 4.6-1.4 6.8-.6C10 4.9 11 5.6 12 6.5c1-.9 2-1.6 3.2-2.1C17.4 3.6 19.8 4 22 5v13c-2.2-1-4.6-1.4-6.8-.6-1.2.4-2.2 1.1-3.2 2-1-.9-2-1.6-3.2-2.1C6.6 16.6 4.2 17 2 18V5z"/><path d="M12 6.5V20.5"/></svg>
+          </div>
+          <div class="track-text">
+            <span class="track-title-es">EJERCICIOS DE IDIOMA PARA EL TRABAJO</span>
+            <span class="track-title-en">WORK LANGUAGE EXERCISES</span>
+          </div>
+          <span class="chevron">›</span>
+        </a>
+
+        <a href="POC.html" class="hotspot track-btn" aria-label="Curso Viejo">
+          <div class="track-icon">
+            <svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h8"/></svg>
+          </div>
+          <div class="track-text">
+            <span class="track-title-es">CURSO VIEJO</span>
+            <span class="track-title-en">OLD COURSE</span>
+          </div>
+          <span class="chevron">›</span>
+        </a>
+
+        <a href="Brennan.html" class="hotspot track-btn" aria-label="Vacación de Brennan">
+          <div class="track-icon">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 4 6 4 9s-1.5 6.4-4 9c-2.5-2.6-4-6-4-9s1.5-6.4 4-9z"/></svg>
+          </div>
+          <div class="track-text">
+            <span class="track-title-es">VACACIÓN DE BRENNAN</span>
+            <span class="track-title-en">BRENNAN'S VACATION</span>
+          </div>
+          <span class="chevron">›</span>
+        </a>
+
+        <a href="Errores.html" class="hotspot track-btn" aria-label="Errores Comunes en Español">
+          <div class="track-icon">
+            <svg viewBox="0 0 24 24"><path d="M4 4h16a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H9l-5 4v-4H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/></svg>
+          </div>
+          <div class="track-text">
+            <span class="track-title-es">ERRORES COMUNES EN ESPAÑOL</span>
+          </div>
+          <span class="chevron">›</span>
+        </a>
+
+        <a href="file1.html" class="hotspot track-btn" aria-label="Placeholder 1">
+          <div class="track-icon">
+            <svg viewBox="0 0 24 24"><path d="M4 4h16a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H9l-5 4v-4H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/></svg>
+          </div>
+          <div class="track-text">
+            <span class="track-title-es">PLACEHOLDER 1</span>
+          </div>
+          <span class="chevron">›</span>
+        </a>
+
+        <a href="file2.html" class="hotspot track-btn" aria-label="Placeholder 2">
+          <div class="track-icon">
+            <svg viewBox="0 0 24 24"><path d="M4 4h16a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H9l-5 4v-4H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/></svg>
+          </div>
+          <div class="track-text">
+            <span class="track-title-es">PLACEHOLDER 2</span>
+          </div>
+          <span class="chevron">›</span>
+        </a>
+
+        <a href="file3.html" class="hotspot track-btn" aria-label="Placeholder 3">
+          <div class="track-icon">
+            <svg viewBox="0 0 24 24"><path d="M4 4h16a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H9l-5 4v-4H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/></svg>
+          </div>
+          <div class="track-text">
+            <span class="track-title-es">PLACEHOLDER 3</span>
+          </div>
+          <span class="chevron">›</span>
+        </a>
+
+        <a href="file4.html" class="hotspot track-btn" aria-label="Placeholder 4">
+          <div class="track-icon">
+            <svg viewBox="0 0 24 24"><path d="M4 4h16a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H9l-5 4v-4H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/></svg>
+          </div>
+          <div class="track-text">
+            <span class="track-title-es">PLACEHOLDER 4</span>
+          </div>
+          <span class="chevron">›</span>
+        </a>
+      </div>
     </div>
   </main>
 
@@ -254,14 +388,12 @@
     if (isIOS) {
       iosInstructions.style.display = 'block';
     }
-
     var deferredPrompt = null;
     window.addEventListener('beforeinstallprompt', function (e) {
       e.preventDefault();
       deferredPrompt = e;
       installBtn.style.display = 'block';
     });
-
     installBtn.addEventListener('click', function () {
       if (!deferredPrompt) return;
       deferredPrompt.prompt();
@@ -270,7 +402,6 @@
         installBtn.style.display = 'none';
       });
     });
-
     window.addEventListener('appinstalled', function () {
       installBtn.style.display = 'none';
       installedNote.style.display = 'block';
