@@ -610,18 +610,12 @@ you at runtime.
   .drawer-arch-bg img{
     width:min(634px, 132vw); max-width:none; height:auto; display:block;
   }
-  /* On phone-width screens the desktop sizing above only ever shows the flat
-     foreground strip at the very bottom of the artwork (the actual arch
-     shape sits much higher up in the source image than the space most
-     phone screens leave open near the bottom). Scaling the image up a lot
-     more here pushes its top edge — which is blank sky, so nothing is lost
-     — well above the viewport, while bringing the arch itself into the
-     visible area. The extra width overflows left/right off-screen, which
-     is fine since the arch is roughly centered in the source art and the
-     container is pointer-events:none. */
+  /* Matches .brand-arch-bg's mobile override: natural-proportion sizing so
+     the artwork's own white sky stays visible above the arch, instead of
+     zooming in to a wall of orange. */
   @media (max-width:700px){
     .drawer-arch-bg{ transform:translateY(0%); }
-    .drawer-arch-bg img{ width:min(1400px, 340vw); }
+    .drawer-arch-bg img{ width:100vw; }
   }
   .drawer-head{
     flex:none; display:flex; align-items:center; justify-content:space-between;
@@ -650,12 +644,14 @@ you at runtime.
   .brand-arch-bg img{
     width:min(634px, 132vw); max-width:none; height:auto; display:block;
   }
-  /* Same reasoning as .drawer-arch-bg's mobile override above: scale up a
-     lot more on phone widths so the arch shape itself clears the bottom
-     UI, not just the flat foreground beneath it. */
+  /* On phone widths, show the artwork close to its natural proportions
+     (roughly full viewport width, bottom-anchored) instead of zoomed in —
+     this keeps the image's own broad white sky visible above the arch,
+     so the page reads as roughly half white / half orange-artwork rather
+     than a wall of orange. */
   @media (max-width:700px){
     .brand-arch-bg{ transform:translateY(0%); }
-    .brand-arch-bg img{ width:min(1400px, 340vw); }
+    .brand-arch-bg img{ width:100vw; }
   }
 </style>
 </head>
