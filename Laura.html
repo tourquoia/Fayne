@@ -2543,7 +2543,7 @@ function speak(text, langCode, token, voiceURI, pitch){
     u.pitch = pitch || 1;
     const v = pickVoiceByURI(voiceURI);
     if(v){ u.voice = v; u.lang = v.lang; } else { u.lang = langCode; }
-    let done = false, check, hardCeiling;
+    let done = false, check, hardCeiling, started = false, missCount = 0;
     const finish = ()=>{
       if(done) return;
       done = true;
@@ -2551,6 +2551,7 @@ function speak(text, langCode, token, voiceURI, pitch){
       clearTimeout(hardCeiling);
       resolve();
     };
+    u.onstart = ()=>{ started = true; };
     u.onend = finish;
     u.onerror = (e)=>{ console.warn('[speech] utterance error', {langCode, voiceURI, error: e && e.error}); finish(); };
     speechSynthesis.speak(u);
@@ -2573,7 +2574,31 @@ function speak(text, langCode, token, voiceURI, pitch){
         finish();
         return;
       }
-      if(!speechSynthesis.speaking){ finish(); }
+      // WATCHDOG BUGFIX (2026-09): speechSynthesis.speaking is not a reliable
+      // instant signal, and trusting a single false reading of it caused
+      // random cutoffs at BOTH ends of a line:
+      //  - START cutoff: right after speechSynthesis.speak(u) is called there
+      //    is real startup latency -- worst on network/remote voices -- before
+      //    the engine actually begins producing audio and `speaking` flips
+      //    true. If this poll's very first tick landed in that gap, `speaking`
+      //    still read false, so finish() fired immediately and the line was
+      //    skipped before a single word played.
+      //  - END cutoff: some engines briefly report `speaking === false` for a
+      //    tick or two mid-utterance (e.g. at internal clause boundaries on
+      //    longer lines) even though speech resumes right after. One false
+      //    reading was enough to end the utterance early and chop off the
+      //    tail of the line.
+      // Fix: ignore the "not speaking" reading entirely until the real
+      // onstart event has fired (kills the start-cutoff case), and require
+      // two consecutive false readings -- 240ms apart -- before treating it
+      // as genuinely finished (kills the mid-utterance blip / end-cutoff case).
+      if(!started) return;
+      if(!speechSynthesis.speaking){
+        missCount++;
+        if(missCount>=2) finish();
+      } else {
+        missCount = 0;
+      }
     }, 120);
     // Hard ceiling as a last resort, scoped to just THIS one utterance --
     // unlike a global pause()/resume() nudge (tried and reverted: it wedged
@@ -2583,12 +2608,30 @@ function speak(text, langCode, token, voiceURI, pitch){
     // never touches engine-wide state. Only fires if speechSynthesis.speaking
     // somehow gets stuck reporting true for a line that isn't actually
     // producing sound, so one bad line can't freeze the rest of the session.
-    hardCeiling = setTimeout(()=>{
-      if(done) return;
-      console.warn('[speech] watchdog: utterance never finished, cancelling', {langCode, voiceURI});
-      speechSynthesis.cancel();
-      finish();
-    }, Math.min(15000, estimateMs(text)*3 + 4000));
+    let ceilingExtensions = 0;
+    const scheduleCeiling = (ms)=>{
+      hardCeiling = setTimeout(()=>{
+        if(done) return;
+        if(!started && ceilingExtensions < 2){
+          // Engine hasn't fired onstart yet -- most likely a slow-spinning-up
+          // network voice, not a genuinely stuck one. Give it a couple of
+          // short grace extensions instead of killing the line before it
+          // ever made a sound. Capped at 2 (2.5s each) so a voice that
+          // silently drops the utterance entirely -- a real glitch some
+          // engines have when speak() is called in rapid back-to-back
+          // succession, which is exactly what fast source/target switching
+          // does -- can't stall the session forever; it still gets force-
+          // cancelled and the drill moves on.
+          ceilingExtensions++;
+          scheduleCeiling(2500);
+          return;
+        }
+        console.warn('[speech] watchdog: utterance never finished, cancelling', {langCode, voiceURI, started});
+        speechSynthesis.cancel();
+        finish();
+      }, ms);
+    };
+    scheduleCeiling(Math.min(15000, estimateMs(text)*3 + 4000));
   });
 }
 function estimateMs(text){
