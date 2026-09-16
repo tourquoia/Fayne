@@ -793,13 +793,15 @@ function speak(text, voiceLang, voiceURI, token){
     // utterance with THAT voice's own lang — mismatching u.lang against the
     // actual voice can cause some engines to ignore the voice entirely.
     if(v){ u.voice = v; u.lang = v.lang; } else { u.lang = voiceLang; }
-    let done = false, check;
+    let done = false, check, hardCeiling, started = false, missCount = 0;
     const finish = ()=>{
       if(done) return;
       done = true;
       clearInterval(check);
+      clearTimeout(hardCeiling);
       resolve();
     };
+    u.onstart = ()=>{ started = true; };
     u.onend = finish;
     u.onerror = finish;
     if(token!==S.token){ finish(); return; }
@@ -826,8 +828,45 @@ function speak(text, voiceLang, voiceURI, token){
         finish();
         return;
       }
-      if(!speechSynthesis.speaking){ finish(); }
+      // WATCHDOG BUGFIX (2026-09): same fix as the shared player template's
+      // speak() (see Laura.html etc.) -- speechSynthesis.speaking is not a
+      // reliable instant signal. A false reading right after speak() is
+      // called (before the engine has actually started) skipped lines
+      // entirely, and a transient blip mid-utterance chopped off the tail.
+      // Fix: don't trust the poll until the real onstart event has fired,
+      // and require two consecutive false readings -- 240ms apart -- before
+      // treating it as really finished.
+      if(!started) return;
+      if(!speechSynthesis.speaking){
+        missCount++;
+        if(missCount>=2) finish();
+      } else {
+        missCount = 0;
+      }
     }, 120);
+    // Bounded hard-ceiling fallback. This file had no such backstop before;
+    // adding the `started` gate above means an utterance that never fires
+    // onstart (a real glitch some engines have under rapid back-to-back
+    // speak() calls) would otherwise poll forever with no way out. Estimate
+    // is a local, self-contained version of the same formula used in the
+    // shared template (this file has no estimateMs() of its own).
+    const words = (text||'').trim().split(/\s+/).filter(Boolean).length || 1;
+    const estimate = Math.max(500, Math.min(4200, (words/2.3/(S.rate||1))*1000));
+    let ceilingExtensions = 0;
+    const scheduleCeiling = (ms)=>{
+      hardCeiling = setTimeout(()=>{
+        if(done) return;
+        if(!started && ceilingExtensions < 2){
+          ceilingExtensions++;
+          scheduleCeiling(2500);
+          return;
+        }
+        console.warn('[speech] watchdog: utterance never finished, cancelling', {voiceLang, voiceURI});
+        speechSynthesis.cancel();
+        finish();
+      }, ms);
+    };
+    scheduleCeiling(Math.min(15000, estimate*3 + 4000));
   });
 }
 

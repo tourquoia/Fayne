@@ -428,22 +428,24 @@ function speakPiper(text, token, voiceId){
 function speakBrowser(text, token){
   return new Promise(resolve=>{
     if(!window.speechSynthesis){ resolve(); return; }
-    let done = false;
+    let done = false, check, hardCeiling, started = false, missCount = 0;
     const finish = ()=>{
       if(done) return;
       done = true;
       clearInterval(check);
+      clearTimeout(hardCeiling);
       resolve();
     };
     const u = new SpeechSynthesisUtterance(text);
     u.rate = S.rate;
     const v = pickVoice(S.voiceURI);
     if(v){ u.voice = v; u.lang = v.lang; }
+    u.onstart = ()=>{ started = true; };
     u.onend = finish;
     u.onerror = finish;
     speechSynthesis.cancel(); // clear any stuck/pending queue before starting fresh
     speechSynthesis.speak(u);
-    const check = setInterval(()=>{
+    check = setInterval(()=>{
       if(token!==S.token){
         // BUGFIX (2026-09): don't cancel() here. Every caller that bumps
         // S.token (prevLessonBtn/nextLessonBtn, prevBtn/nextBtn, repeatBtn,
@@ -462,8 +464,45 @@ function speakBrowser(text, token){
         finish();
         return;
       }
-      if(!speechSynthesis.speaking && !speechSynthesis.pending){ finish(); }
+      // WATCHDOG BUGFIX (2026-09): same fix as the shared player template's
+      // speak() (see Laura.html etc.) -- speechSynthesis.speaking/.pending
+      // are not reliable instant signals. A false "not speaking, not
+      // pending" reading right after speak() is called (before the engine
+      // has actually started) skipped lines entirely, and a transient blip
+      // mid-utterance chopped off the tail. Fix: don't trust the poll until
+      // the real onstart event has fired, and require two consecutive false
+      // readings -- 240ms apart -- before treating it as really finished.
+      if(!started) return;
+      if(!speechSynthesis.speaking && !speechSynthesis.pending){
+        missCount++;
+        if(missCount>=2) finish();
+      } else {
+        missCount = 0;
+      }
     }, 120);
+    // Bounded hard-ceiling fallback. This file had no such backstop before;
+    // adding the `started` gate above means an utterance that never fires
+    // onstart (a real glitch some engines have under rapid back-to-back
+    // speak() calls) would otherwise poll forever with no way out. Estimate
+    // is a local, self-contained version of the same formula used in the
+    // shared template (this file has no estimateMs() of its own).
+    const words = (text||'').trim().split(/\s+/).filter(Boolean).length || 1;
+    const estimate = Math.max(500, Math.min(4200, (words/2.3/(S.rate||1))*1000));
+    let ceilingExtensions = 0;
+    const scheduleCeiling = (ms)=>{
+      hardCeiling = setTimeout(()=>{
+        if(done) return;
+        if(!started && ceilingExtensions < 2){
+          ceilingExtensions++;
+          scheduleCeiling(2500);
+          return;
+        }
+        console.warn('[speech] watchdog: utterance never finished, cancelling', {token});
+        speechSynthesis.cancel();
+        finish();
+      }, ms);
+    };
+    scheduleCeiling(Math.min(15000, estimate*3 + 4000));
   });
 }
 
