@@ -26,6 +26,14 @@ you at runtime.
 <meta name="google" content="notranslate"> <!-- prevents iOS Safari auto-translate from stripping page content -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- CACHE-BUSTING (2026-09): asks the browser to always revalidate/fetch a
+     fresh copy of this page instead of serving a stale cached version when
+     reopened. Note: for a file opened directly from disk (file://) browsers
+     largely ignore these headers, so this mainly helps when the file is
+     hosted online -- it is not a fix for local double-opens. -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Laura</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Code+Pro:wght@500;600&display=swap" rel="stylesheet">
@@ -400,6 +408,19 @@ you at runtime.
   .track{ height:6px; border-radius:5px; background:var(--border-soft); overflow:hidden; }
   .fill{ height:100%; background:var(--amber); border-radius:5px; transition:width var(--ease); }
   .cap{ display:flex; justify-content:space-between; font-size:10.5px; color:var(--ink-dim); margin-top:5px; font-family:'Source Code Pro', monospace; }
+  /* Gendered-speech speaker reminder — reverse-direction only (source
+     language = English). Sits between the lesson-picker nav and the
+     stage card holding the source/target lines, so it's easy to see
+     right where the learner is about to read. Kept short on purpose:
+     a running per-line badge, not a paragraph of explanation. See
+     "GENDER REMINDER" in the script for the toggle/update logic and
+     for the note on always asking for explicit character gender when
+     setting up a new course. */
+  .gender-reminder{
+    display:none; text-align:center; font-weight:800; font-size:13px;
+    color:var(--amber-bright); letter-spacing:.02em; margin:0 0 10px;
+  }
+  .gender-reminder.show{ display:block; }
 
   /* ---- drill stage: instrument panel, not a flashcard ---- */
   .stage{
@@ -677,6 +698,15 @@ you at runtime.
   <button type="button" id="webviewNoticeDismiss" style="background:none;border:none;color:#664d03;font-size:18px;line-height:1;cursor:pointer;flex-shrink:0;" aria-label="Dismiss">&times;</button>
 </div>
 
+<!-- STALE-TAB NOTICE (2026-09): shown to an OLDER tab once a NEWER tab of
+     this same page announces itself as active (see the single-instance
+     control script below). Not dismissible -- this tab's audio is already
+     stopped and staying open here serves no purpose except hogging
+     resources, so the message just tells the person to close it. -->
+<div id="staleTabNotice" class="hidden" style="background:#f8d7da;color:#58151c;border-bottom:1px solid #f1aeb5;padding:10px 16px;font-size:14px;line-height:1.4;">
+  This lesson was opened in a newer tab. Audio here has been stopped — you can close this tab and continue in the newer one.
+</div>
+
 <div class="wrap">
 
   <!-- ===================== START PRACTICE (lesson picker + language launcher) ===================== -->
@@ -722,6 +752,7 @@ you at runtime.
       </div>
       <button class="icon-btn" id="nextLessonBtn" title="Next lesson"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
     </div>
+    <div class="gender-reminder" id="genderReminder"></div>
     <div class="stage">
       <div class="speaker-tag" id="speakerTag">&nbsp;</div>
       <div class="tone-tag" id="toneTag">&nbsp;</div>
@@ -788,6 +819,7 @@ you at runtime.
           </div>
           <div class="note warn hidden" id="osVoiceHelp"></div>
           <div class="note warn hidden" id="voiceCoverageWarning"></div>
+          <div class="note warn hidden" id="genderCoverageWarning"></div>
 
           <div class="subgroup-label">Characters &amp; voices</div>
           <div id="charactersList"></div>
@@ -915,6 +947,93 @@ document.addEventListener('DOMContentLoaded', ()=>{
   const dismiss = document.getElementById('webviewNoticeDismiss');
   if(dismiss) dismiss.addEventListener('click', ()=>{ notice.classList.add('hidden'); });
 });
+
+/* ============================================================
+   SINGLE-INSTANCE CONTROL + VISIBILITY-BASED AUDIO CLEANUP (2026-09)
+   ============================================================
+   Root cause being fixed: nothing in this file used to react to (a) a
+   second/newer tab of this same page opening, or (b) this tab going
+   hidden/backgrounded. So every reopen just piled up another live tab,
+   each with its own speechSynthesis engine, and on Android in particular
+   multiple tabs' speech engines fighting over the same audio channel
+   produced exactly the random front/end-of-sentence cutoffs being
+   reported. This does NOT touch the AudioContext-priming/retry logic
+   above (v3-v5) -- that's a separate, already-confirmed-working fix for a
+   different failure mode (single-tab clipping). This section only stops
+   OTHER/OLD tabs from competing in the first place.
+
+   How it works:
+     - Every tab of this page picks a random instanceId on load and
+       broadcasts "claim" with it (BroadcastChannel where available,
+       localStorage as the fallback for older/odd browsers).
+     - Any tab that sees a claim from an instanceId that ISN'T its own
+       treats itself as the OLD tab: it immediately cancels its own
+       speech/recognition, marks itself stale, and shows a dismissed-free
+       "opened in a newer tab" banner instead of continuing to run.
+     - A brand-new tab always wins (it claims right after loading), so
+       the newest tab you open is always the one left running.
+     - Separately, ANY tab (old or new) that goes hidden (screen off,
+       app-switched-away, tab backgrounded) immediately cancels
+       speechSynthesis and stops recognition, since a backgrounded tab
+       has no business still holding the audio channel. It resumes
+       normally when you come back to it (unless it's also stale). */
+(function(){
+  const CHANNEL_NAME = 'laura42-instance-control';
+  const STORAGE_KEY = 'laura42-active-instance';
+  const instanceId = Math.random().toString(36).slice(2) + Date.now();
+  let isStale = false;
+
+  function stopAllAudio(){
+    try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
+    try{ stopRecognition(); }catch(e){}
+    try{ S.running = false; S.token++; }catch(e){}
+  }
+
+  function markStale(){
+    if(isStale) return; // only need to do this once
+    isStale = true;
+    stopAllAudio();
+    const el = document.getElementById('staleTabNotice');
+    if(el) el.classList.remove('hidden');
+  }
+
+  function claimActive(){
+    const payload = { instanceId, ts: Date.now() };
+    try{
+      if(window.BroadcastChannel){
+        (claimActive._bc = claimActive._bc || new BroadcastChannel(CHANNEL_NAME)).postMessage(payload);
+      }
+    }catch(e){}
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(payload)); }catch(e){}
+  }
+
+  function handleIncomingClaim(payload){
+    if(!payload || payload.instanceId===instanceId) return; // our own claim, ignore
+    markStale(); // someone else (necessarily newer) just claimed -- we're old
+  }
+
+  // Listen for other tabs' claims.
+  try{
+    if(window.BroadcastChannel){
+      const bc = new BroadcastChannel(CHANNEL_NAME);
+      bc.onmessage = (e)=> handleIncomingClaim(e.data);
+    }
+  }catch(e){}
+  window.addEventListener('storage', (e)=>{
+    if(e.key!==STORAGE_KEY || !e.newValue) return;
+    try{ handleIncomingClaim(JSON.parse(e.newValue)); }catch(err){}
+  });
+
+  // Announce ourselves as the active tab once the page is ready. A tiny
+  // delay avoids a race where two tabs opened in the same instant both
+  // read "no claim yet" before either has written one.
+  document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(claimActive, 150); });
+
+  // Any tab, stale or not, stops holding the audio channel while hidden.
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.hidden) stopAllAudio();
+  });
+})();
 /* ============================================================
    TEMPLATE INSTRUCTIONS — READ BEFORE ADAPTING THIS FILE
    ============================================================
@@ -1182,6 +1301,7 @@ function switchCourse(idx){
   populateVoicesForOSHelp();
   updateListenNote();
   renderVoiceCoverageWarning(currentCourse());
+  renderGenderCoverageWarning(currentCourse());
 }
 
 function fillLangOptions(selectEl, course, allowNone){
@@ -1319,6 +1439,10 @@ function updateLessonNavButtons(){
   document.getElementById('nextLessonBtn').disabled = S.sheetIdx>=course.sheets.length-1;
 }
 
+// startAt: optional -- 'last' lands on the lesson's final line instead
+// of its first. Used by the media-session previous-track rollover
+// below, so skipping "back" over a lesson boundary lands next to the
+// boundary you crossed rather than back at the very start.
 function goToLesson(newIdx){
   const course = currentCourse();
   if(newIdx<0 || newIdx>=course.sheets.length) return;
@@ -1343,6 +1467,69 @@ function goToLesson(newIdx){
 }
 document.getElementById('prevLessonBtn').addEventListener('click', ()=> goToLesson(S.sheetIdx-1));
 document.getElementById('nextLessonBtn').addEventListener('click', ()=> goToLesson(S.sheetIdx+1));
+
+/* ============================================================
+   MEDIA SESSION -- lets a phone's lock screen and any Bluetooth-
+   connected car controls (steering-wheel / head-unit buttons) drive
+   this player. AVRCP only exposes a handful of standard actions to
+   the phone, and those map here as:
+     play / pause             -> the existing play/pause button
+     previoustrack / nexttrack -> previous / next LESSON (reuses the
+                                   same goToLesson() the on-screen
+                                   lesson-nav arrows use)
+     seekbackward / seekforward -> previous / next sentence, only if
+                                   the car/phone actually exposes a
+                                   fast-forward/rewind action -- most
+                                   don't, in which case these are
+                                   simply never called
+   Deliberately kept to whole lessons for previous/next: a listener
+   should only be working through one lesson at a time, and this
+   keeps sentence-level looping/repeat behavior completely separate
+   from what the car's buttons do.
+   NOTE: some mobile browsers only keep a page's Media Session
+   "armed" while an actual <audio>/<video> element is playing --
+   speechSynthesis-only audio with no such element can fail to
+   register with the OS on some phones/versions. If the car controls
+   turn out not to fire reliably, the standard workaround is looping
+   a silent, near-empty <audio> element alongside the speech just to
+   anchor the session; not added here since it needs testing on your
+   actual phone/car first.
+   ============================================================ */
+function updateMediaSessionMetadata(){
+  if(!('mediaSession' in navigator)) return;
+  const course = currentCourse();
+  const sh = course.sheets[S.sheetIdx];
+  try{
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: sh ? sh.name : course.title,
+      artist: course.title,
+      album: `Lesson ${S.sheetIdx+1} of ${course.sheets.length}`,
+    });
+  }catch(e){ /* MediaMetadata unsupported -- safe to ignore */ }
+}
+function setupMediaSession(){
+  if(!('mediaSession' in navigator)) return;
+  navigator.mediaSession.setActionHandler('play', ()=> document.getElementById('playPauseBtn').click());
+  navigator.mediaSession.setActionHandler('pause', ()=> document.getElementById('playPauseBtn').click());
+  navigator.mediaSession.setActionHandler('previoustrack', ()=> goToLesson(S.sheetIdx-1));
+  navigator.mediaSession.setActionHandler('nexttrack', ()=> goToLesson(S.sheetIdx+1));
+  // Fast-forward/rewind, sentence-level, only wired if the platform
+  // actually supports these two actions -- wrapped separately so an
+  // unsupported action here can't prevent the four handlers above
+  // from registering.
+  try{
+    navigator.mediaSession.setActionHandler('seekbackward', ()=>{
+      speechSynthesis.cancel(); stopRecognition();
+      S.token++;
+      runLine(Math.max(0, S.idx-1));
+    });
+    navigator.mediaSession.setActionHandler('seekforward', ()=>{
+      speechSynthesis.cancel(); stopRecognition();
+      S.token++;
+      runLine(Math.min(S.order.length-1, S.idx+1));
+    });
+  }catch(e){ /* seekbackward/seekforward unsupported -- safe to ignore */ }
+}
 
 /* Shared dropdown renderer — builds a list of lesson entries into any
    dropdown-list element, highlighting the current lesson, and calling
@@ -1393,6 +1580,7 @@ function selectHomeLesson(i){
   updateListenNote();
   populateSheetSelect();
   renderVoiceCoverageWarning(currentCourse());
+  renderGenderCoverageWarning(currentCourse());
 }
 function renderHomeLessonDropdown(){
   renderLessonDropdownInto(document.getElementById('homeLessonDropdownList'), selectHomeLesson);
@@ -1539,6 +1727,7 @@ function updateSheetMeta(){
   const sh = course.sheets[S.sheetIdx];
   document.getElementById('sheetMeta').textContent = `${sh.desc}  ·  ${S.activeLines.length} lines`;
   updateHero();
+  updateMediaSessionMetadata();
 }
 
 function buildActiveLines(){
@@ -2162,6 +2351,30 @@ function renderVoiceCoverageWarning(course){
   const names = problems.map(p=>p.label||p.code).join(', ');
   console.error('[voice coverage] These languages have no fallback to a widely-available TTS voice and will likely play SILENTLY: '+names+'. Add a CODE_TO_REGION_KEY / REGION_PROFILES entry for each (see "VOICE COVERAGE CHECK" comment above resolveRegionProfile) before shipping.');
   el.innerHTML = `<b>Voice setup incomplete</b><br>${escapeHtml(names)} — no fallback voice configured. These will likely play silently until a CODE_TO_REGION_KEY / REGION_PROFILES entry is added. See console for details.`;
+  el.classList.remove('hidden');
+}
+/* ============================================================
+   GENDER COVERAGE CHECK — mirrors VOICE COVERAGE CHECK above. The
+   reverse-direction gender reminder (search "GENDER REMINDER") reads
+   each character's explicit `gender` field; guessCharGender() only
+   guesses from the name as a last resort, and a wrong guess shows the
+   wrong gender on every line. This runs on every course load/switch
+   and surfaces a hard-to-miss banner (plus a console.error) naming any
+   character with no explicit 'male'/'female' gender set, so a new
+   course can't ship with that silently unset — same guarantee the
+   voice check gives for missing TTS coverage.
+   ============================================================ */
+function findUnsetGenders(course){
+  return (course.characters||[]).filter(ch=>ch.gender!=='male' && ch.gender!=='female');
+}
+function renderGenderCoverageWarning(course){
+  const el = document.getElementById('genderCoverageWarning');
+  if(!el) return;
+  const problems = findUnsetGenders(course);
+  if(!problems.length){ el.classList.add('hidden'); el.innerHTML=''; return; }
+  const names = problems.map(c=>c.name||c.code).join(', ');
+  console.error('[gender coverage] These characters have no explicit gender set: '+names+'. Set gender:\'male\' or gender:\'female\' on each in the course\'s `characters:` list (see "NEW COURSE SETUP" comment above BUILT_IN_COURSE.characters) before shipping — the reverse-direction gender reminder needs it to be accurate.');
+  el.innerHTML = `<b>Character gender not set</b><br>${escapeHtml(names)} — add an explicit gender:'male'/'female' for each. See console for details.`;
   el.classList.remove('hidden');
 }
 function preferExactNamesFirst(list, profile){
@@ -2997,6 +3210,34 @@ function updateMilestone(){
   document.getElementById('roadFill').style.width = Math.round((cur/total)*100)+'%';
   document.getElementById('capLeft').textContent = `Line ${cur} of ${total}`;
   document.getElementById('capRight').textContent = S.style==='judge' ? (S.attempt===2 ? 'attempt 2 of 2' : '') : '';
+  updateGenderReminder();
+}
+
+/* ============================================================
+   GENDER REMINDER — reverse-direction only (English chosen as the
+   source/known language, i.e. S.srcCode==='en', not the primary
+   ESL target->English direction). Many target languages mark verb
+   or noun forms by who's speaking, so this keeps a short, standing
+   reminder of the current speaker's gender under the progress bar —
+   it updates every line, it does not repeat the full explanation
+   each time, and it's hidden entirely outside reverse direction.
+   Reads the character's explicit `gender` field via guessCharGender()
+   (see the "NEW COURSE SETUP" note above `characters:`) rather than
+   guessing from the name, so a new course must set that field.
+   ============================================================ */
+function updateGenderReminder(){
+  const el = document.getElementById('genderReminder');
+  if(!el) return;
+  const reverse = S.srcCode === 'en' && S.srcCode !== S.tgtCode;
+  const entry = S.activeLines[S.order[S.idx]];
+  if(!reverse || !entry){ el.classList.remove('show'); el.textContent=''; return; }
+  const course = currentCourse();
+  const ch = course.characters && course.characters.find(c=>c.code===entry.speaker);
+  const gender = guessCharGender(ch);
+  const genderLabel = gender==='female' ? 'female speech' : gender==='male' ? 'male speech' : 'gender unknown';
+  const displayName = (ch && ch.name) || entry.speaker || 'speaker';
+  el.textContent = `Gendered speech — ${displayName}: ${genderLabel}`;
+  el.classList.add('show');
 }
 
 async function runLine(i){
@@ -3014,7 +3255,8 @@ async function runLine(i){
   const entry = S.activeLines[S.order[i]];
   updateMilestone();
 
-  document.getElementById('speakerTag').textContent = entry.speaker || '\u00A0';
+  const speakerCh = currentCourse().characters && currentCourse().characters.find(c=>c.code===entry.speaker);
+  document.getElementById('speakerTag').textContent = (speakerCh && speakerCh.name) || entry.speaker || '\u00A0';
   document.getElementById('toneTag').textContent = entry.tone || '\u00A0';
   document.getElementById('sourceLineEl').textContent = entry.source || '';
   document.getElementById('targetLineEl').textContent = '';
@@ -3231,7 +3473,10 @@ updateSheetMeta();
 populateVoicesForOSHelp();
 updateListenNote();
 renderVoiceCoverageWarning(currentCourse());
+renderGenderCoverageWarning(currentCourse());
 renderLangTiles();
+setupMediaSession();
+updateMediaSessionMetadata();
 </script>
 </body>
 </html>
