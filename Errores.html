@@ -21,8 +21,9 @@ you at runtime.
 -->
 <!-- build:JysnMlnrMthd -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" translate="no" class="notranslate">
 <head>
+<meta name="google" content="notranslate"> <!-- prevents iOS Safari auto-translate from stripping page content -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Practice — Mini Player</title>
@@ -498,7 +499,7 @@ you at runtime.
      through the setup drawer's own gaps the same way it does on the main
      screen. Sits above the drawer's solid page-color background but below
      the drawer-head/drawer-body content, mirroring .brand-arch-bg's
-     relationship to <body>. */
+     relationship to <body translate="no" class="notranslate">. */
   .drawer-arch-bg{
     position:absolute; left:0; bottom:0; width:100%;
     z-index:-1; pointer-events:none;
@@ -550,6 +551,17 @@ you at runtime.
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
   </button>
 </header>
+
+<!-- In-app-browser notice: Messenger's built-in browser, Claude's own file
+     preview, and similar embedded WebViews often don't wire up the full
+     system text-to-speech bridge (or block it outright), so audio can be
+     silent or error out there even though the page itself is fine. Shown
+     only when detectRestrictedWebview() (below) thinks that's likely, and
+     dismissible so it doesn't nag anyone in a real browser. -->
+<div id="webviewNotice" class="hidden" style="background:#fff3cd;color:#664d03;border-bottom:1px solid #ffe69c;padding:10px 16px;font-size:14px;line-height:1.4;display:flex;gap:10px;align-items:center;justify-content:space-between;">
+  <span>For sound to work, open this in your browser (tap <strong>⋮</strong> or <strong>Share</strong> and choose <strong>Open in Chrome</strong>), not this app's built-in viewer.</span>
+  <button type="button" id="webviewNoticeDismiss" style="background:none;border:none;color:#664d03;font-size:18px;line-height:1;cursor:pointer;flex-shrink:0;" aria-label="Dismiss">&times;</button>
+</div>
 
 <div class="wrap">
 
@@ -724,6 +736,74 @@ you at runtime.
 <script>
 // build:JysnMlnrMthd
 /* ============================================================
+   TTS PLAYBACK FIX STATUS — READ THIS FIRST IF PICKING THIS FILE
+   UP COLD (updated 2026-09-16)
+   ============================================================
+   Long-running bug: some lines' TTS playback starts truncated -- the
+   front of the sentence (sometimes the whole short line) is missing,
+   even though the callback chain looks completely normal. The fix lives
+   in speak() (search "function speak(" below). History, so a new
+   session doesn't re-derive or re-break this from scratch:
+
+     v1 (ABANDONED) — unconditional cancel() + fixed 150ms delay before
+       every utterance. Didn't fix it.
+     v2 (ABANDONED) — poll until the engine reports genuinely idle, then
+       a fixed 350ms delay, instead of blindly canceling. Also didn't
+       fix it.
+     v3/v4 (KEPT) — prime each voice ONCE per session with a silent
+       (volume 0) throwaway utterance before its first real use --
+       Android switching TTS engines/voices seemed to need real warm-up
+       time that speaking/pending never exposed to JS. Confirmed via
+       real device testing to be holding up well (lesson 2 clean,
+       including a specific line that used to clip every time).
+     v5 (KEPT, layered on top of v3/v4) — detect-and-retry: after each
+       utterance, check its first word-boundary event and/or total
+       speaking duration for signs the front got cut off; if so,
+       automatically re-speak that exact line once before moving on.
+       This is the safety net for whatever priming alone doesn't catch.
+     v6 (REVERTED — DO NOT REDO) — briefly removed priming entirely
+       after a report of total silence in plain Chrome. Turned out to be
+       an unrelated DEVICE VOLUME drop, not a code bug -- confirmed by
+       re-testing the priming version afterward and finding it solid.
+       If a future report is "total silence," not just clipping, check
+       device volume / other apps' audio FIRST, before suspecting or
+       pulling priming again.
+
+   Also in this file, UNRELATED to the clipping bug above (leave alone
+   when working on that): detectRestrictedWebview() shows a dismissible
+   banner when the page is likely opened inside Messenger's/Instagram's/
+   a generic Android WebView's built-in browser, since those can silently
+   fail or error on TTS where real Chrome works; checkAudioActuallyPlaying()
+   shows a runtime message if no audio starts within 6s of pressing Start,
+   for the same underlying reason.
+
+   Architecture: each drill line is 3 sequential utterances (source,
+   target, target again) -- see runExposureLine()/runJudgedLine() -- each
+   going through the single shared speak() function above.
+   ============================================================ */
+// IN-APP-BROWSER DETECTION (2026-09): flags embedded WebViews (Messenger's
+// built-in browser, Instagram's, generic Android WebView, and similar) that
+// commonly lack the full system TTS bridge real Chrome has. UA-sniffing is
+// inherently a best-effort heuristic -- it can't catch every embedded
+// browser and shouldn't be trusted for anything except "should we show a
+// friendly heads-up," which is all it's used for here.
+function detectRestrictedWebview(){
+  const ua = navigator.userAgent || '';
+  // FBAN/FBAV/FB_IAB: Facebook/Messenger's in-app browser. Instagram: its
+  // own in-app browser. Line/MicroMessenger: other common in-app browsers.
+  // "; wv)" is the token Android's WebView itself adds to its UA string
+  // when a native app embeds a generic (non-Chrome) WebView.
+  if(/FBAN|FBAV|FB_IAB|Instagram|Line\/|MicroMessenger|; ?wv\)/i.test(ua)) return true;
+  if(!window.speechSynthesis) return true;
+  return false;
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  const notice = document.getElementById('webviewNotice');
+  if(notice && detectRestrictedWebview()) notice.classList.remove('hidden');
+  const dismiss = document.getElementById('webviewNoticeDismiss');
+  if(dismiss) dismiss.addEventListener('click', ()=>{ notice.classList.add('hidden'); });
+});
+/* ============================================================
    TEMPLATE INSTRUCTIONS — READ BEFORE ADAPTING THIS FILE
    ============================================================
    This file is a reusable template. When applying it to a new
@@ -841,6 +921,14 @@ const S = {
   paused: false,
   linesCompleted: 0,
   sessionStart: null,
+  warmedVoiceKeys: new Set(),  // voiceURI+langCode combos primed at least once
+                                // this session. A voice only needs its one-
+                                // time warm-up (see speak()) the FIRST time
+                                // it's used -- with just two languages
+                                // alternating every sentence, that's two
+                                // small delays total per session, not one
+                                // per switch, since Android keeps a locale's
+                                // TTS engine loaded once it's been used.
 };
 
 function shuffleOrder(){
@@ -2208,15 +2296,106 @@ function previewVoice(uri, langCode, btn, pitch){
   u.onerror = reset;
   speechSynthesis.speak(u);
 }
-function speak(text, langCode, token, voiceURI, pitch){
+function speak(text, langCode, token, voiceURI, pitch, retryCount){
+  retryCount = retryCount || 0;
   return new Promise(resolve=>{
     if(!text || !window.speechSynthesis){ resolve(); return; }
+    // PERMANENT FIX v5 (2026-09): v3/v4 assumed the corruption was tied to
+    // switching voices -- true source: first Portuguese line after English
+    // was always the one that clipped. But once priming made THAT line
+    // play clean, the failure didn't disappear, it moved to the very next
+    // line: the immediate repeat, same voice, no switch at all. That rules
+    // out a voice/engine-switch cause entirely -- this device just
+    // sometimes starts an utterance corrupted, roughly at random, and no
+    // amount of guessing the right pre-delay reliably prevents it; it just
+    // shuffles which line in the sequence gets unlucky.
+    // v5 changes strategy: stop trying to PREVENT a bad start and instead
+    // DETECT one after the fact and automatically redo that exact line
+    // before moving on, so whichever line gets unlucky gets caught rather
+    // than reaching the listener. Two independent signals, checked at
+    // onend:
+    //   1. Word-boundary events, where the engine supports them: the FIRST
+    //      one should land at or near the start of the text (charIndex
+    //      ~0). If it lands well past the start, the front was eaten even
+    //      though the callback chain looks totally normal.
+    //   2. Wall-clock duration: if the engine doesn't fire boundary events
+    //      at all, a multi-word line that finishes in a small fraction of
+    //      its expected speaking time is the same symptom by another
+    //      route -- it didn't actually say the whole thing.
+    // Either signal triggers exactly one automatic retry of the same line
+    // (not the whole sequence) before resolving, so a corrupted start
+    // self-heals instead of playing.
+    // v6 tried removing priming entirely (see below) after a report of
+    // TOTAL silence in plain Chrome that survived a refresh. That turned
+    // out to be an unrelated device volume change, NOT caused by this
+    // code -- confirmed by the user re-testing THIS priming version
+    // afterward and finding it solid through lesson 2, including the
+    // specific line that had clipped before. Restored v5's priming as the
+    // kept version; the v6 silence scare is noted here so a future editor
+    // doesn't rediscover the same false lead and rip this back out again.
+    const voiceKey = (voiceURI||'') + '|' + (langCode||'');
+    const needsPriming = !S.warmedVoiceKeys.has(voiceKey);
+    function afterIdle(cb){
+      let waited = 0;
+      const poll = setInterval(()=>{
+        waited += 40;
+        if(token!==S.token){ clearInterval(poll); resolve(); return; }
+        if(!speechSynthesis.speaking && !speechSynthesis.pending){
+          clearInterval(poll);
+          cb();
+          return;
+        }
+        if(waited >= 1200){
+          clearInterval(poll);
+          speechSynthesis.cancel();
+          setTimeout(cb, 350);
+        }
+      }, 40);
+    }
+    function primeVoice(cb){
+      const p = new SpeechSynthesisUtterance('a');
+      p.volume = 0;
+      p.rate = S.rate;
+      const v = pickVoiceByURI(voiceURI);
+      if(v){ p.voice = v; p.lang = v.lang; } else { p.lang = langCode; }
+      let primed = false;
+      const done = ()=>{ if(primed) return; primed = true; cb(); };
+      p.onstart = done;
+      p.onend = done;
+      p.onerror = done;
+      speechSynthesis.speak(p);
+      // Safety valve: some engines never fire onstart/onend for a silent
+      // utterance at all. Don't wait forever -- move on after a generous
+      // fixed window either way.
+      setTimeout(done, 900);
+    }
+    afterIdle(()=>{
+      if(token!==S.token){ resolve(); return; }
+      if(needsPriming){
+        primeVoice(()=>{
+          S.warmedVoiceKeys.add(voiceKey);
+          if(token!==S.token){ resolve(); return; }
+          setTimeout(()=>{
+            if(token!==S.token){ resolve(); return; }
+            startUtterance();
+          }, 350);
+        });
+      } else {
+        setTimeout(()=>{
+          if(token!==S.token){ resolve(); return; }
+          startUtterance();
+        }, 350);
+      }
+    });
+    function startUtterance(){
     const u = new SpeechSynthesisUtterance(text);
     u.rate = S.rate;
     u.pitch = pitch || 1;
     const v = pickVoiceByURI(voiceURI);
     if(v){ u.voice = v; u.lang = v.lang; } else { u.lang = langCode; }
     let done = false, check, hardCeiling, started = false, missCount = 0;
+    let startedAt = 0, firstBoundaryIdx = null;
+    const wordCount = (text||'').trim().split(/\s+/).filter(Boolean).length;
     const finish = ()=>{
       if(done) return;
       done = true;
@@ -2224,8 +2403,39 @@ function speak(text, langCode, token, voiceURI, pitch){
       clearTimeout(hardCeiling);
       resolve();
     };
-    u.onstart = ()=>{ started = true; };
-    u.onend = finish;
+    const retryThisLine = (reason)=>{
+      if(done) return;
+      done = true;
+      clearInterval(check);
+      clearTimeout(hardCeiling);
+      console.warn('[speech] suspected truncated playback, retrying line', {langCode, voiceURI, text, reason});
+      setTimeout(()=>{
+        if(token!==S.token){ resolve(); return; }
+        speak(text, langCode, token, voiceURI, pitch, retryCount+1).then(resolve);
+      }, 300);
+    };
+    const finishOrRetry = ()=>{
+      if(done) return;
+      // Only ever retry once per line, and only for lines with enough
+      // words that "most of it got skipped" is even a meaningful idea --
+      // a genuinely one-word line has no "front" to lose.
+      if(retryCount < 1 && wordCount >= 2){
+        if(firstBoundaryIdx !== null && firstBoundaryIdx > 3){
+          retryThisLine('first boundary at charIndex '+firstBoundaryIdx);
+          return;
+        }
+        const elapsed = startedAt ? Date.now()-startedAt : 0;
+        const expected = estimateMs(text);
+        if(started && elapsed>0 && elapsed < expected*0.45){
+          retryThisLine('elapsed '+elapsed+'ms vs expected '+Math.round(expected)+'ms');
+          return;
+        }
+      }
+      finish();
+    };
+    u.onstart = ()=>{ started = true; startedAt = Date.now(); S.anyAudioStarted = true; };
+    u.onboundary = (e)=>{ if(firstBoundaryIdx===null) firstBoundaryIdx = e.charIndex; };
+    u.onend = finishOrRetry;
     u.onerror = (e)=>{ console.warn('[speech] utterance error', {langCode, voiceURI, error: e && e.error}); finish(); };
     speechSynthesis.speak(u);
     check = setInterval(()=>{
@@ -2268,7 +2478,7 @@ function speak(text, langCode, token, voiceURI, pitch){
       if(!started) return;
       if(!speechSynthesis.speaking){
         missCount++;
-        if(missCount>=2) finish();
+        if(missCount>=2) finishOrRetry();
       } else {
         missCount = 0;
       }
@@ -2305,6 +2515,7 @@ function speak(text, langCode, token, voiceURI, pitch){
       }, ms);
     };
     scheduleCeiling(Math.min(15000, estimateMs(text)*3 + 4000));
+    } // end startUtterance
   });
 }
 function estimateMs(text){
@@ -2358,6 +2569,30 @@ function voicesForEntry(entry){
 /* ============================================================
    DRILL ENGINE
    ============================================================ */
+// RUNTIME NO-AUDIO FALLBACK (2026-09): the webview banner above is a
+// heuristic guess made before Start is even pressed. This is the real
+// check -- after Start, did any utterance actually fire onstart within a
+// generous window? If not, whatever's hosting this page isn't producing
+// sound at all (silently, no JS error), which is exactly what happened
+// testing inside an in-app viewer. Tell the person plainly instead of
+// leaving them tapping around a session that will never make a sound.
+function checkAudioActuallyPlaying(){
+  const myToken = S.token;
+  setTimeout(()=>{
+    if(S.token!==myToken || !S.running) return; // moved on / left the drill already
+    if(!S.anyAudioStarted){
+      let el = document.getElementById('noAudioNotice');
+      if(!el){
+        el = document.createElement('div');
+        el.id = 'noAudioNotice';
+        el.style.cssText = 'background:#f8d7da;color:#58151c;border:1px solid #f1aeb5;border-radius:8px;padding:12px 14px;margin:12px 0;font-size:14px;line-height:1.4;';
+        el.textContent = "No audio detected. This viewer likely doesn't support text-to-speech — try opening this page in Chrome (tap ⋮ or Share → Open in Chrome).";
+        const drillCard = document.getElementById('drillScreen');
+        if(drillCard) drillCard.prepend(el);
+      }
+    }
+  }, 6000);
+}
 function romanize(n){
   if(n<=0) return '';
   const map = [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
@@ -2372,6 +2607,8 @@ document.getElementById('startBtn').addEventListener('click', async ()=>{
   updateLessonNavButtons();
   S.order = S.activeLines.map((_,i)=>i);
   if(S.random) shuffleOrder();
+  S.anyAudioStarted = false;
+  checkAudioActuallyPlaying();
   S.idx = 0;
   S.attempt = 1;
   S.running = true;

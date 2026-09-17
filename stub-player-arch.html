@@ -29,6 +29,7 @@ you at runtime.
 <title>New Hire Floor English</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Code+Pro:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{
     /* ---- Practice brand system: orange / white / black ----
@@ -510,7 +511,8 @@ you at runtime.
   /* ---- lesson picker pill (home screen) — now a real button that opens
      a working dropdown of lessons, using the same list/item styling as
      the player screen's lesson dropdown ---- */
-  .home-lesson-picker-wrap{ position:relative; margin-bottom:16px; }
+  .home-lesson-picker-row{ display:flex; align-items:center; gap:8px; margin-bottom:16px; }
+  .home-lesson-picker-wrap{ position:relative; flex:1; min-width:0; }
   .lesson-picker-pill{
     display:flex; align-items:center; gap:10px; width:100%;
     background:var(--card); border:1.5px solid #000;
@@ -681,14 +683,21 @@ you at runtime.
 
   <!-- ===================== START PRACTICE (lesson picker + language launcher) ===================== -->
   <section class="setup-card" id="homeScreen">
-    <div class="home-lesson-picker-wrap" id="homeLessonPickerWrap">
-      <button type="button" class="lesson-picker-pill" id="homeLessonPickerBtn" title="Choose lesson">
-        <span class="lesson-picker-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4.5A2.5 2.5 0 0 1 4.5 2H9a2 2 0 0 1 2 2v16a1.5 1.5 0 0 0-1.5-1.5H2z"></path><path d="M22 4.5A2.5 2.5 0 0 0 19.5 2H15a2 2 0 0 0-2 2v16a1.5 1.5 0 0 1 1.5-1.5H22z"></path></svg></span>
-        <span class="lesson-picker-text" id="lessonPickerText">Lesson 1 of 20</span>
-        <span class="lesson-picker-chev"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span>
+    <div class="home-lesson-picker-row">
+      <div class="home-lesson-picker-wrap" id="homeLessonPickerWrap">
+        <button type="button" class="lesson-picker-pill" id="homeLessonPickerBtn" title="Choose lesson">
+          <span class="lesson-picker-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4.5A2.5 2.5 0 0 1 4.5 2H9a2 2 0 0 1 2 2v16a1.5 1.5 0 0 0-1.5-1.5H2z"></path><path d="M22 4.5A2.5 2.5 0 0 0 19.5 2H15a2 2 0 0 0-2 2v16a1.5 1.5 0 0 1 1.5-1.5H22z"></path></svg></span>
+          <span class="lesson-picker-text" id="lessonPickerText">Lesson 1 of 20</span>
+          <span class="lesson-picker-chev"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span>
+        </button>
+        <div class="home-dropdown-list wide hidden" id="homeLessonDropdownList"><!-- populated by renderLessonDropdownInto() --></div>
+      </div>
+      <button type="button" class="icon-btn small" id="loadCourseBtn" title="Load a different course (.xlsx)">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
       </button>
-      <div class="home-dropdown-list wide hidden" id="homeLessonDropdownList"><!-- populated by renderLessonDropdownInto() --></div>
+      <input type="file" id="courseFileInput" accept=".xlsx,.xls" class="hidden">
     </div>
+    <div class="note" id="courseLoadNote"></div>
 
     <div class="lang-tile-list" id="langTileList"><!-- populated by renderLangTiles() from the course's actual languages --></div>
 
@@ -701,7 +710,6 @@ you at runtime.
       <span id="heroStats"></span>
       <select id="courseSelect"></select>
       <div id="sheetMeta"></div>
-      <div id="courseLoadNote"></div>
       <div class="lessons-grid hero-lessons-grid" id="lessonsGrid"></div>
     </div>
   </section>
@@ -845,6 +853,49 @@ you at runtime.
   <span id="rateVal">0.92×</span>
 </div>
 
+<div class="modal-overlay" id="columnPickerModal">
+  <div class="modal-card">
+    <h2>Which column has the characters?</h2>
+    <p class="modal-sub" id="columnPickerSheetInfo"></p>
+    <button class="btn colopt-confirm-btn colopt-confirm-top" id="columnPickerConfirmTop" disabled>Use this column</button>
+    <div class="colopt-list" id="columnPickerOptions"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="columnPickerCancel">Cancel</button>
+      <button class="btn colopt-confirm-btn" id="columnPickerConfirm" disabled>Use this column</button>
+    </div>
+  </div>
+</div>
+
+<!-- Shown every time a new course is loaded from a spreadsheet — asks for
+     the default source/target language and confirms each character's
+     gender before the course is added, since voice + pitch defaults
+     throughout the app key off both. -->
+<div class="modal-overlay" id="courseSetupModal">
+  <div class="modal-card wide">
+    <h2>Set up this course</h2>
+    <p class="modal-sub">Confirm the default languages and each character's gender — these drive voice and pitch defaults everywhere else in the app.</p>
+    <div class="setup-modal-body">
+      <div class="lang-grid" style="margin-top:0; padding-top:0; border-top:none;">
+        <div class="lang-col src">
+          <div class="eyebrow-label src">Default source</div>
+          <select id="setupSrcLangSelect"></select>
+        </div>
+        <div style="width:34px; flex:none;"></div>
+        <div class="lang-col tgt">
+          <div class="eyebrow-label tgt">Default target</div>
+          <select id="setupTgtLangSelect"></select>
+        </div>
+      </div>
+      <div class="eyebrow-label" style="margin-top:14px;">Character genders</div>
+      <div class="gender-list" id="courseSetupGenderList"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="courseSetupCancel">Cancel</button>
+      <button class="btn" id="courseSetupConfirm">Start</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // build:JysnMlnrMthd
 /* ============================================================
@@ -950,76 +1001,30 @@ document.addEventListener('DOMContentLoaded', ()=>{
    explicitly. Don't ship a course with that banner showing.
    ============================================================ */
 /* ============================================================
-   BUILT-IN COURSE — New Hire Floor English (Laura/Priya/Marcus/Lynn)
-   Row shape: [SPEAKER, es, en, pt-BR, fr-AFR, vi, sw, ar]
-   NOTE: African French (fr-AFR) translations are not yet available
-   for T2-08, T3-00, T3-01, and T3-02 (per source spreadsheet's TODO
-   tracker) -- those rows carry an empty string in the fr-AFR slot,
-   which the player already treats as "nothing to speak" for that slot.
+   BUILT-IN COURSE — placeholder only.
+   This build of the template ships with no baked-in spreadsheet: use
+   the "+" button next to the lesson picker on the home screen to load
+   any course workbook (.xlsx/.xls) at runtime. Everything below this
+   comment (BASE_LANGS, BASE_ROWS, BUILT_IN_COURSE) exists only so the
+   player has something valid to show before a real course is loaded —
+   it is replaced the moment a spreadsheet is loaded and confirmed via
+   the course-setup modal (see COURSE LOADING FROM .XLSX further down).
    ============================================================ */
 const BASE_LANGS = [
-  {code:'es',     label:'Spanish',                         voiceLang:'es-ES'},
-  {code:'en',     label:'English',                         voiceLang:'en-US'},
-  {code:'pt-BR',  label:'Portuguese (BR)',                 voiceLang:'pt-BR'},
-  {code:'fr-AFR', label:'French (AFR)',                    voiceLang:'fr-FR'},
-  {code:'vi',     label:'Vietnamese',                      voiceLang:'vi-VN'},
-  {code:'sw',     label:'Swahili',                         voiceLang:'sw-KE'},
-  {code:'ar',     label:'Modern Standard Arabic',          voiceLang:'ar-SA'},
+  {code:'en', label:'English', voiceLang:'en-US'},
+  {code:'es', label:'Spanish', voiceLang:'es-ES'},
 ];
 
-const ROWS_0 = [["Laura","Así es como funciona: vas a escuchar cada frase en tu idioma, con una pausa.","Here's how this works: you'll hear each phrase in your language, with a pause.","É assim que funciona: você vai ouvir cada frase no seu idioma, com uma pausa.","Voici comment ça marche : tu vas entendre chaque phrase dans ta langue, avec une pause.","Cách hoạt động là vầy: bạn sẽ nghe từng câu bằng ngôn ngữ của mình, có khoảng dừng.","Hivi ndivyo somo linavyofanya kazi: utasikia kila sentensi kwa lugha yako, kukiwa na kituo.","هكذا يعمل الأمر: ستسمع كل عبارة بلغتك، مع وقفة."],["Laura","Luego en tu idioma de destino, con una pausa. Y una vez más en tu idioma de destino, con una pausa.","Then in your target language, with a pause. And once more in your target language, with a pause.","Depois no seu idioma de destino, com uma pausa. E mais uma vez no seu idioma de destino, com uma pausa.","Puis dans ta langue cible, avec une pause. Et encore une fois dans ta langue cible, avec une pause.","Rồi đến ngôn ngữ bạn đang học, có khoảng dừng. Rồi thêm một lần nữa bằng ngôn ngữ bạn đang học, có khoảng dừng.","Kisha kwa lugha unayojifunza, kukiwa na kituo. Na tena kwa lugha unayojifunza, kukiwa na kituo.","ثم بلغتك الهدف، مع وقفة. ومرة أخرى بلغتك الهدف، مع وقفة."],["Laura","Las últimas dos pausas son para repetir en voz alta -- eso te ayuda a empezar a memorizar el idioma.","The last two pauses are for repeating out loud -- that helps you start memorizing the language.","As últimas duas pausas são para repetir em voz alta -- isso ajuda você a começar a memorizar o idioma.","Les deux dernières pauses servent à répéter à voix haute -- ça t'aide à commencer à mémoriser la langue.","Hai khoảng dừng cuối là để lặp lại thành tiếng -- việc này giúp bạn bắt đầu nhớ ngôn ngữ đó.","Vituo viwili vya mwisho ni kwa ajili ya kurudia kwa sauti -- hilo linakusaidia kuanza kukariri lugha.","الوقفتان الأخيرتان لتكرار الجملة بصوت عالٍ -- وهذا يساعدك على البدء في حفظ اللغة."],["Laura","La primera pausa es para pensar en lo que está por decirse en tu idioma de destino. Adivínalo en voz alta, en tu idioma de destino -- no importa si te equivocas, eso te ayudará a memorizar la respuesta correcta mucho mejor.","The first pause is for thinking about what's about to be said in your target language. Guess it out loud, in your target language -- it doesn't matter if you're wrong, that's what helps you memorize the correct answer that much better.","A primeira pausa é para você pensar no que está prestes a ser dito no seu idioma de destino. Adivinhe em voz alta, no seu idioma de destino -- não importa se você errar, isso vai te ajudar a memorizar a resposta certa muito melhor.","La première pause sert à réfléchir à ce qui va être dit dans ta langue cible. Devine-le à voix haute, dans ta langue cible -- peu importe si tu te trompes, c'est justement ça qui t'aide à mieux mémoriser la bonne réponse.","Khoảng dừng đầu tiên là để bạn nghĩ xem sắp phải nói gì bằng ngôn ngữ đang học. Cứ đoán to lên bằng ngôn ngữ đó -- sai cũng không sao, chính điều đó giúp bạn nhớ câu trả lời đúng tốt hơn nhiều.","Kituo cha kwanza ni cha kufikiria kitakachosemwa kwa lugha unayojifunza. Kisia kwa sauti, kwa lugha unayojifunza -- haijalishi ukikosea, hilo ndilo linalokusaidia kukumbuka jibu sahihi vizuri zaidi.","الوقفة الأولى للتفكير فيما سيُقال بلغتك الهدف. خمّنه بصوت عالٍ، بلغتك الهدف -- لا يهم إن أخطأت، فهذا ما يساعدك على حفظ الإجابة الصحيحة بشكل أفضل."]];
-const ROWS_2 = [["Priya","[warm] ¡Hola!","[warm] Hi!","[warm] Oi!","[warm] Bonjour !","[warm] Chào em!","[warm] Habari!","[warm] مرحباً!"],["Priya","[warm] Bienvenida a la línea.","[warm] Welcome to the line.","[warm] Bem-vinda à linha.","[warm] Bienvenue sur la ligne.","[warm] Chào mừng em đến với dây chuyền nhé.","[warm] Karibu kwenye laini.","[warm] أهلاً بك في خط الإنتاج."],["Priya","[friendly] Soy Priya.","[friendly] I'm Priya.","[friendly] Sou a Priya.","[friendly] Je suis Priya.","[friendly] Chị là Priya.","[friendly] Mimi ni Priya.","[friendly] أنا بريا."],["Priya","[curious] ¿Cómo te llamas?","[curious] What's your name?","[curious] Qual é o seu nome?","[curious] Comment vous appelez-vous ?","[curious] Em tên gì vậy?","[curious] Unaitwa nani?","[curious] ما اسمك؟"]];
-const ROWS_3 = [["Priya","[warm] ¡Hola, Laura!","[warm] Hi, Laura!","[warm] Oi, Laura!","[warm] Bonjour, Laura !","[warm] Chào Laura!","[warm] Habari, Laura!","[warm] مرحباً يا لورا!"],["Laura","[friendly] Hola, Priya.","[friendly] Hi, Priya.","[friendly] Oi, Priya.","[friendly] Bonjour, Priya.","[friendly] Chào chị Priya.","[friendly] Habari, Priya.","[friendly] مرحباً يا بريا."],["Priya","[encouraging] ¿Estás lista?","[encouraging] Are you ready?","[encouraging] Tá pronta?","[encouraging] Tu es prête ?","[encouraging] Em sẵn sàng chưa?","[encouraging] Uko tayari?","[encouraging] هل أنتِ مستعدة؟"],["Laura","[confident] Sí.","[confident] Yes.","[confident] Sim.","[confident] Oui.","[confident] Dạ rồi.","[confident] Ndiyo.","[confident] نعم."]];
-const ROWS_4 = [["Priya","[warm] Hola de nuevo, Laura.","[warm] Hi again, Laura.","[warm] Oi de novo, Laura.","[warm] Rebonjour, Laura.","[warm] Chào em lần nữa, Laura.","[warm] Habari tena, Laura.","[warm] مرحباً من جديد يا لورا."],["Laura","[friendly] Hola, Priya.","[friendly] Hi, Priya.","[friendly] Oi, Priya.","[friendly] Bonjour, Priya.","[friendly] Chào chị Priya.","[friendly] Habari, Priya.","[friendly] مرحباً يا بريا."],["Priya","[instructive] Ven aquí, por favor.","[instructive] Come here, please.","[instructive] Vem aqui, por favor.","[instructive] Viens ici, s'il te plaît.","[instructive] Em lại đây giúp chị nhé.","[instructive] Njoo hapa, tafadhali.","[instructive] تعالي هنا، من فضلك."],["Laura","[compliant] Bien.","[compliant] Okay.","[compliant] Tá bom.","[compliant] D'accord.","[compliant] Dạ.","[compliant] Sawa.","[compliant] حسناً."]];
-const ROWS_5 = [["Priya","[instructive] Ven aquí, Laura.","[instructive] Come here, Laura.","[instructive] Vem aqui, Laura.","[instructive] Viens ici, Laura.","[instructive] Lại đây, Laura.","[instructive] Njoo hapa, Laura.","[instructive] تعالي هنا يا لورا."],["Laura","[compliant] Bien.","[compliant] Okay.","[compliant] Tá bom.","[compliant] D'accord.","[compliant] Dạ.","[compliant] Sawa.","[compliant] حسناً."],["Priya","[alarmed] ¡Alto!","[alarmed] Stop!","[alarmed] Para!","[alarmed] Arrête !","[alarmed] Dừng lại!","[alarmed] Simama!","[alarmed] قفي!"],["Priya","[cautious] Espera un segundo.","[cautious] Wait a second.","[cautious] Espera um segundo.","[cautious] Attends une seconde.","[cautious] Đợi chút đã.","[cautious] Ngoja kidogo.","[cautious] انتظري لحظة."]];
-const ROWS_6 = [["Priya","[warm] ¡Oye, Laura!","[warm] Hey, Laura!","[warm] Oi, Laura!","[warm] Bonjour, Laura !","[warm] Ê, Laura!","[warm] Habari, Laura!","[warm] أهلاً يا لورا!"],["Laura","[friendly] ¡Hola, Priya!","[friendly] Hi, Priya!","[friendly] Oi, Priya!","[friendly] Bonjour, Priya !","[friendly] Chào chị Priya!","[friendly] Habari, Priya!","[friendly] مرحباً يا بريا!"],["Priya","[curious] ¿Cómo va tu primer día?","[curious] How's your first day going?","[curious] Como tá indo seu primeiro dia?","[curious] Comment se passe ta première journée ?","[curious] Ngày đầu tiên của em sao rồi?","[curious] Siku yako ya kwanza inaendaje?","[curious] كيف يسير يومك الأول؟"],["Laura","[content] Bastante bien hasta ahora.","[content] Pretty good so far.","[content] Bem bom até agora.","[content] Plutôt bien jusqu'ici.","[content] Dạ, tạm ổn ạ.","[content] Nzuri kiasi mpaka sasa.","[content] جيد جداً حتى الآن."]];
-const ROWS_7 = [["Priya","[friendly] Sígueme al área de suministros.","[friendly] Follow me to the supply area.","[friendly] Vem comigo pra área de suprimentos.","[friendly] Suis-moi jusqu'à la réserve.","[friendly] Đi theo chị tới khu vật tư.","[friendly] Nifuate mpaka eneo la vifaa.","[friendly] اتبعيني إلى منطقة المستلزمات."],["Laura","[compliant] Bien.","[compliant] Okay.","[compliant] Tá bom.","[compliant] D'accord.","[compliant] Dạ.","[compliant] Sawa.","[compliant] حسناً."],["Priya","[informative] Aquí es donde guardamos las cajas.","[informative] This is where we keep the boxes.","[informative] Aqui é onde a gente guarda as caixas.","[informative] C'est ici qu'on garde les boîtes.","[informative] Đây là chỗ để thùng giấy.","[informative] Hapa ndipo tunapohifadhi masanduku.","[informative] هنا نحتفظ بالصناديق."],["Laura","[confident] Entendido.","[confident] Got it.","[confident] Entendido.","[confident] Compris.","[confident] Dạ, em nhớ rồi.","[confident] Nimeelewa.","[confident] فهمت."]];
-const ROWS_8 = [["Priya","[worried] Laura, ¿cómo está funcionando la máquina?","[concerned] Laura, how's the machine running?","[worried] Laura, como a máquina tá funcionando?","[worried] Laura, comment la machine fonctionne ?","[concerned] Laura, máy chạy sao rồi?","[concerned] Laura, mashine inafanyaje kazi?","[concerned] لورا، كيف تعمل الآلة؟"],["Laura","[uneasy] Um, algo está mal.","[worried] Um, something's wrong.","[uneasy] Hmm, tem algo errado.","[uneasy] Euh, il y a un problème.","[worried] Dạ, hình như có gì đó không ổn.","[worried] Ee, kuna tatizo.","[worried] حسناً، هناك خطب ما."],["Priya","[worried] ¿Qué está mal?","[concerned] What's wrong?","[worried] O que tá errado?","[worried] Qu'est-ce qui ne va pas ?","[concerned] Có chuyện gì vậy?","[concerned] Kuna nini?","[concerned] ما الخطب؟"],["Laura","[uneasy] La máquina no funciona.","[worried] The machine isn't working.","[uneasy] A máquina não funciona.","[uneasy] La machine ne fonctionne pas.","[worried] Máy không chạy.","[worried] Mashine haifanyi kazi.","[worried] الآلة لا تعمل."]];
-const ROWS_9 = [["Priya","[warm] Buenos días, Laura.","[warm] Good morning, Laura.","[warm] Bom dia, Laura.","[warm] Bonjour, Laura.","[warm] Chào buổi sáng, Laura.","[warm] Habari za asubuhi, Laura.","[warm] صباح الخير يا لورا."],["Laura","[friendly] Buenos días, Priya.","[friendly] Good morning, Priya.","[friendly] Bom dia, Priya.","[friendly] Bonjour, Priya.","[friendly] Dạ, chào chị Priya.","[friendly] Habari za asubuhi, Priya.","[friendly] صباح الخير يا بريا."],["Priya","[attentive] ¿Cómo estás hoy?","[caring] How are you today?","[attentive] Como você tá hoje?","[attentive] Comment vas-tu aujourd'hui ?","[caring] Hôm nay em thế nào?","[caring] Uhali gani leo?","[caring] كيف حالك اليوم؟"],["Laura","[content] Estoy bien, gracias.","[content] I'm good, thanks.","[content] Tô bem, obrigada.","[content] Ça va bien, merci.","[content] Dạ, em khỏe, cảm ơn chị.","[content] Niko poa, asante.","[content] أنا بخير، شكراً."]];
-const ROWS_10 = [["Priya","[warm] ¡Buenos días, Laura!","[warm] Morning, Laura!","[warm] Bom dia, Laura!","[warm] Bonjour, Laura !","[warm] Chào buổi sáng, Laura!","[warm] Habari za asubuhi, Laura!","[warm] صباح الخير يا لورا!"],["Priya","[warm] ¿Lista para la semana dos?","[warm] Ready for week two?","[warm] Pronta pra semana dois?","[warm] Prête pour la semaine deux ?","[warm] Sẵn sàng cho tuần hai chưa?","[warm] Uko tayari kwa wiki ya pili?","[warm] مستعدة للأسبوع الثاني؟"],["Laura","[eager] Sí.","[eager] Yes.","[eager] Sim.","[eager] Oui.","[eager] Dạ có.","[eager] Ndiyo.","[eager] نعم."],["Laura","[eager] Estoy lista.","[eager] I'm ready.","[eager] Tô pronta.","[eager] Je suis prête.","[eager] Em sẵn sàng rồi.","[eager] Niko tayari.","[eager] أنا مستعدة."]];
-const ROWS_11 = [["Priya","[casual] Laura, ¿me puedes ayudar un segundo?","[casual] Laura, can you help me for a second?","[casual] Laura, você pode me ajudar um segundo?","[casual] Laura, tu peux m'aider une seconde ?","[casual] Laura, giúp chị chút được không?","[casual] Laura, unaweza kunisaidia kidogo?","[casual] لورا، هل يمكنكِ مساعدتي للحظة؟"],["Laura","[willing] Claro, ¿qué necesitas?","[willing] Sure, what do you need?","[willing] Claro, o que você precisa?","[willing] Bien sûr, qu'est-ce qu'il te faut ?","[willing] Dạ được, chị cần gì?","[willing] Sawa, unahitaji nini?","[willing] بالتأكيد، ماذا تحتاجين؟"],["Priya","[matter-of-fact] ¿Puedes sostener esta caja?","[matter-of-fact] Can you hold this box?","[matter-of-fact] Você pode segurar essa caixa?","[matter-of-fact] Tu peux tenir cette boîte ?","[matter-of-fact] Em giữ cái thùng này giúp chị nhé.","[matter-of-fact] Unaweza kushikilia sanduku hili?","[matter-of-fact] هل يمكنكِ حمل هذا الصندوق؟"],["Laura","[matter-of-fact] Sí, ya la tengo.","[matter-of-fact] Yes, I've got it.","[matter-of-fact] Sim, já peguei.","[matter-of-fact] Oui, je l'ai.","[matter-of-fact] Dạ, em giữ được rồi.","[matter-of-fact] Ndiyo, nimeshika.","[matter-of-fact] نعم، أمسكته."]];
-const ROWS_12 = [["Priya","[casual] ¿Sabes tu horario para esta semana?","[casual] Do you know your schedule for this week?","[casual] Você sabe seu horário dessa semana?","[casual] Tu connais ton horaire pour cette semaine ?","[casual] Em biết lịch làm tuần này chưa?","[casual] Unajua ratiba yako ya wiki hii?","[casual] هل تعرفين جدولك لهذا الأسبوع؟"],["Laura","[unsure] La verdad, no.","[unsure] Not really.","[unsure] Na verdade, não.","[unsure] Pas vraiment.","[unsure] Dạ, chưa rõ lắm.","[unsure] Sio kabisa.","[unsure] ليس تماماً."],["Laura","[unsure] ¿Dónde lo reviso?","[unsure] Where do I check?","[unsure] Onde eu confiro isso?","[unsure] Où est-ce que je vérifie ?","[unsure] Em coi ở đâu ạ?","[unsure] Naangalia wapi?","[unsure] أين أتحقق منه؟"],["Priya","[helpful] El tablero de horarios, justo junto a la sala de descanso.","[helpful] The schedule board, right by the break room.","[helpful] O quadro de horários, bem do lado da sala de descanso.","[helpful] Le tableau des horaires, juste à côté de la salle de pause.","[helpful] Bảng lịch làm, ngay cạnh phòng nghỉ đó.","[helpful] Ubao wa ratiba, karibu na chumba cha mapumziko.","[helpful] لوحة الجدول، بجانب غرفة الاستراحة مباشرة."]];
-const ROWS_13 = [["Priya","[matter-of-fact] Esta semana vas a empezar a hacer controles de calidad.","[matter-of-fact] This week, you're going to start doing quality checks.","[matter-of-fact] Essa semana você vai começar a fazer os controles de qualidade.","[matter-of-fact] Cette semaine, tu vas commencer à faire des contrôles de qualité.","[matter-of-fact] Tuần này em sẽ bắt đầu kiểm tra chất lượng.","[matter-of-fact] Wiki hii, utaanza kufanya ukaguzi wa ubora.","[matter-of-fact] هذا الأسبوع، ستبدئين في إجراء فحوصات الجودة."],["Laura","[nervous] Bien.","[nervous] Okay.","[nervous] Tá bom.","[nervous] D'accord.","[nervous] Dạ.","[nervous] Sawa.","[nervous] حسناً."],["Laura","[nervous] ¿Qué debo revisar?","[nervous] What do I check for?","[nervous] O que eu devo verificar?","[nervous] Qu'est-ce que je dois vérifier ?","[nervous] Em phải kiểm tra cái gì ạ?","[nervous] Nakagua nini?","[nervous] عن ماذا أبحث؟"],["Priya","[instructive] Inspeccionas cada pieza antes de que avance.","[instructive] You inspect each part before it moves on.","[instructive] Você inspeciona cada peça antes de ela seguir em frente.","[instructive] Tu inspectes chaque pièce avant qu'elle continue.","[instructive] Em kiểm tra từng linh kiện trước khi nó đi tiếp.","[instructive] Unakagua kila kipande kabla hakijaendelea.","[instructive] تفحصين كل قطعة قبل أن تنتقل."]];
-const ROWS_14 = [["Priya","[warm] Oye, Laura.","[warm] Hey, Laura.","[warm] Oi, Laura.","[warm] Hé, Laura.","[warm] Ê, Laura.","[warm] Habari, Laura.","[warm] أهلاً يا لورا."],["Priya","[warm] Chequeo de mediodía — ¿cómo va tu segunda semana?","[warm] Midday check-in — how's your second week going?","[warm] Check-in do meio-dia -- como tá indo sua segunda semana?","[warm] Point du midi -- comment se passe ta deuxième semaine ?","[warm] Kiểm tra giữa ngày nè -- tuần hai của em sao rồi?","[warm] Ukaguzi wa mchana -- wiki yako ya pili inaendaje?","[warm] تفقّد منتصف اليوم -- كيف يسير أسبوعك الثاني؟"],["Laura","[confident] La verdad, muy bien.","[confident] Really good, actually.","[confident] Na verdade, muito bem.","[confident] En fait, très bien.","[confident] Dạ, thật ra là rất tốt.","[confident] Nzuri sana, kwa kweli.","[confident] جيد جداً في الحقيقة."],["Priya","[casual] Bien.","[casual] Good.","[casual] Que bom.","[casual] Bien.","[casual] Tốt.","[casual] Vizuri.","[casual] جيد."]];
-const ROWS_15 = [["Priya","[casual] Casi es el fin del turno.","[casual] Almost end of shift.","[casual] Tá quase acabando o turno.","[casual] Le service est presque fini.","[casual] Sắp hết ca rồi.","[casual] Karibu mwisho wa zamu.","[casual] اقتربت نهاية المناوبة."],["Priya","[casual] Vamos a cerrar.","[casual] Let's wrap up.","[casual] Vamos fechar tudo.","[casual] Terminons.","[casual] Mình tổng kết lại nhé.","[casual] Tumalizie.","[casual] لننهِ العمل."],["Laura","[matter-of-fact] Bien.","[matter-of-fact] Okay.","[matter-of-fact] Tá.","[matter-of-fact] D'accord.","[matter-of-fact] Dạ.","[matter-of-fact] Sawa.","[matter-of-fact] حسناً."],["Laura","[matter-of-fact] ¿Qué necesito hacer?","[matter-of-fact] What do I need to do?","[matter-of-fact] O que eu preciso fazer?","[matter-of-fact] Qu'est-ce que je dois faire ?","[matter-of-fact] Em cần làm gì ạ?","[matter-of-fact] Ninahitaji kufanya nini?","[matter-of-fact] ماذا يجب أن أفعل؟"]];
-const ROWS_16 = [["Priya","[casual] Laura, tenemos un nuevo empleado que empieza hoy.","[casual] Laura, we've got a new hire starting today.","[casual] Laura, a gente tem um funcionário novo começando hoje.","[casual] Laura, on a un nouvel employé qui commence aujourd'hui.","[casual] Laura, hôm nay có người mới vào làm.","[casual] Laura, tuna mfanyakazi mpya anaanza leo.","[casual] لورا، لدينا موظف جديد يبدأ اليوم."],["Laura","[curious] ¿De verdad?","[curious] Really?","[curious] Sério?","[curious] Vraiment ?","[curious] Thật hả chị?","[curious] Kweli?","[curious] حقاً؟"],["Laura","[curious] ¿Cómo se llama?","[curious] What's his name?","[curious] Qual é o nome dele?","[curious] Comment s'appelle-t-il ?","[curious] Ảnh tên gì vậy chị?","[curious] Jina lake ni nani?","[curious] ما اسمه؟"],["Priya","[matter-of-fact] Jordan.","[matter-of-fact] Jordan.","[matter-of-fact] Jordan.","[matter-of-fact] Jordan.","[matter-of-fact] Jordan.","[matter-of-fact] Jordan.","[matter-of-fact] جوردان."]];
-const ROWS_17 = [["Priya","[warm] Fin de semana, Laura.","[warm] End of the week, Laura.","[warm] Fim de semana, Laura.","[warm] Fin de la semaine, Laura.","[warm] Cuối tuần rồi, Laura.","[warm] Mwisho wa wiki, Laura.","[warm] نهاية الأسبوع يا لورا."],["Priya","[warm] ¿Cómo te fue?","[warm] How'd it go?","[warm] Como foi?","[warm] Comment ça s'est passé ?","[warm] Tuần này sao rồi?","[warm] Ilikuwaje?","[warm] كيف سار الأسبوع؟"],["Laura","[confident] Muy bien.","[confident] Really good.","[confident] Muito bem.","[confident] Vraiment bien.","[confident] Dạ, rất tốt.","[confident] Nzuri sana.","[confident] جيد جداً."],["Laura","[confident] Ocupado, pero bien.","[confident] Busy, but good.","[confident] Ocupado, mas bem.","[confident] Occupée, mais bien.","[confident] Bận, nhưng mà tốt.","[confident] Yenye shughuli nyingi, lakini nzuri.","[confident] مزدحم، لكن جيد."]];
-const ROWS_18 = [["Priya","[warm] Laura, hoy es mi último día antes de la licencia.","[warm] Laura, today's my last day before leave.","[warm] Laura, hoje é meu último dia antes da licença.","[warm] Laura, aujourd'hui c'est mon dernier jour avant mon congé.","[warm] Laura, hôm nay là ngày cuối trước khi chị nghỉ phép.","[warm] Laura, leo ni siku yangu ya mwisho kabla ya likizo.","[warm] لورا، اليوم آخر يوم لي قبل إجازتي."],["Laura","[confident] Lo sé, yo me encargo.","[confident] I know, I've got this.","[confident] Eu sei, pode deixar comigo.","[confident] Je sais, je gère.","[confident] Dạ em biết, em lo được.","[confident] Najua, nitaweza.","[confident] أعرف، سأتولى الأمر."],["Priya","[proud] Estás lista para cubrir la línea.","[proud] You're ready to cover the line.","[proud] Você tá pronta pra cobrir a linha.","[proud] Tu es prête à prendre en charge la ligne.","[proud] Em sẵn sàng quản dây chuyền rồi.","[proud] Uko tayari kusimamia laini.","[proud] أنتِ مستعدة لتغطية الخط."],["Laura","[grateful] Gracias por entrenarme.","[grateful] Thanks for training me.","[grateful] Obrigada por me treinar.","[grateful] Merci de m'avoir formée.","[grateful] Cảm ơn chị đã đào tạo em.","[grateful] Asante kwa kunifunza.","[grateful] شكراً لتدريبي."]];
-const ROWS_19 = [["Lynn","[worried] Laura, la cámara está rechazando demasiado producto.","[concerned] Laura, the camera's rejecting too much product.","[worried] Laura, a câmera tá rejeitando produto demais.","[concerned] Laura, la caméra rejette trop de produits.","[concerned] Chị Laura, camera đang loại quá nhiều sản phẩm.","[concerned] Laura, kamera inakataa bidhaa nyingi mno.","[concerned] لورا، الكاميرا ترفض منتجاً كثيراً جداً."],["Laura","[thinking] Revisemos la cámara primero.","[thinking] Let's check the camera first.","[thinking] Vamos checar a câmera primeiro.","[thinking] Vérifions d'abord la caméra.","[thinking] Mình kiểm tra camera trước đã.","[thinking] Tuangalie kamera kwanza.","[thinking] لنتحقق من الكاميرا أولاً."],["Laura","[matter-of-fact] Lynn, ¿puedes probarla?","[matter-of-fact] Lynn, can you test it?","[matter-of-fact] Lynn, você pode testar ela?","[matter-of-fact] Lynn, tu peux la tester ?","[matter-of-fact] Lynn, em test thử được không?","[matter-of-fact] Lynn, unaweza kuipima?","[matter-of-fact] لين، هل يمكنكِ اختبارها؟"],["Lynn","[willing] Claro.","[willing] Sure.","[willing] Claro.","[willing] Bien sûr.","[willing] Dạ được.","[willing] Sawa.","[willing] بالتأكيد."]];
-const ROWS_20 = [["Lynn","[worried] Laura, la velocidad de la línea sigue despareja.","[concerned] Laura, line speed's still uneven.","[worried] Laura, a velocidade da linha continua irregular.","[concerned] Laura, la vitesse de la ligne est encore irrégulière.","[concerned] Chị Laura, tốc độ dây chuyền vẫn chưa đều.","[concerned] Laura, kasi ya laini bado haiko sawa.","[concerned] لورا، سرعة الخط لا تزال غير منتظمة."],["Laura","[thinking] Revisemos la planta primero.","[thinking] Let's check the floor first.","[thinking] Vamos checar a fábrica primeiro.","[thinking] Allons d'abord voir sur le terrain.","[thinking] Mình ra xưởng coi thử trước đã.","[thinking] Tuangalie eneo la kazi kwanza.","[thinking] لنتفقد أرضية العمل أولاً."],["Laura","[observing] Lynn, ¿qué ves ahí afuera?","[watching] Lynn, what do you see out there?","[observing] Lynn, o que você tá vendo lá fora?","[watching] Lynn, qu'est-ce que tu vois là-bas ?","[watching] Lynn, em thấy gì ngoài đó?","[watching] Lynn, unaona nini huko nje?","[watching] لين، ماذا ترين هناك؟"],["Lynn","[observing] La gente está trabajando por lotes, no de uno en uno.","[observing] People are batching, not going one by one.","[observing] As pessoas tão trabalhando em lotes, não um por um.","[observing] Les gens travaillent par lots, pas un par un.","[observing] Mọi người đang làm theo lô, chứ không làm từng cái một.","[observing] Watu wanafanya kwa makundi, sio moja moja.","[observing] الناس يعملون بالدفعات، وليس واحداً تلو الآخر."]];
+const BASE_ROWS = [["NARRATOR","No course loaded yet.","Aún no se ha cargado ningún curso."],["NARRATOR","Use the + button above to load a spreadsheet.","Usa el botón + de arriba para cargar una hoja de cálculo."]];
 
 const BUILT_IN_COURSE = {
-  id: 'newhire_floor_english',
-  title: 'New Hire Floor English',
+  id: 'stub_placeholder',
+  title: 'No course loaded — click + to load a spreadsheet',
   langs: BASE_LANGS,
   characters: [
-    {code:'Laura',  name:'Laura',  role:'new hire', gender:'female'},
-    {code:'Priya',  name:'Priya',  role:'line lead', gender:'female'},
-    {code:'Marcus', name:'Marcus', role:'team lead', gender:'male'},
-    {code:'Lynn',   name:'Lynn',   role:'line worker', gender:'female'},
+    {code:'NARRATOR', name:'Narrator', role:'placeholder'},
   ],
-  sheets: [
-    { name: 'HOW TO USE THIS COURSE', mode: 'narration', rows: ROWS_0 },
-    { name: 'T1-01 Welcome', rows: ROWS_2 },
-    { name: 'T1-02 Numbers', rows: ROWS_3 },
-    { name: 'T1-03 Directions', rows: ROWS_4 },
-    { name: 'T1-04 Safety', rows: ROWS_5 },
-    { name: 'T1-05 Mid-Tier Review', rows: ROWS_6 },
-    { name: 'T1-06 Materials', rows: ROWS_7 },
-    { name: 'T1-07 Reporting a Problem', rows: ROWS_8 },
-    { name: 'T1-08 Capstone', rows: ROWS_9 },
-    { name: 'T2-01', rows: ROWS_10 },
-    { name: 'T2-02', rows: ROWS_11 },
-    { name: 'T2-03', rows: ROWS_12 },
-    { name: 'T2-04', rows: ROWS_13 },
-    { name: 'T2-05', rows: ROWS_14 },
-    { name: 'T2-06', rows: ROWS_15 },
-    { name: 'T2-07', rows: ROWS_16 },
-    { name: 'T2-08', rows: ROWS_17 },
-    { name: 'T3-00 New Assignment', rows: ROWS_18 },
-    { name: 'T3-01', rows: ROWS_19 },
-    { name: 'T3-02', rows: ROWS_20 },
-  ],
+  sheets: [{ name:'Placeholder', desc:"Load a spreadsheet to replace this.", rows: BASE_ROWS }],
 };
 
 /* ============================================================
@@ -3128,6 +3133,456 @@ document.getElementById('restartSameBtn').addEventListener('click', ()=>{
 document.getElementById('newSetupBtn').addEventListener('click', ()=>{
   hide('doneScreen');
   document.querySelectorAll('.setup-card').forEach(c=>c.classList.remove('hidden'));
+});
+
+/* ============================================================
+   COURSE LOADING FROM .XLSX
+   Expected layout (matches the studio's Preview Track sheets):
+     row  0: title (optionally "PREVIEW TRACK — <title>")
+     row  1: setting / description
+     row  2: character legend, e.g. "MAN — friendly, local.   WOMAN — warm, from far away."
+     ...
+     header row: col A = SPEAKER, col B = base/English line, col C.. = "Label (code)"
+     data rows follow until the sheet ends
+   ============================================================ */
+const KNOWN_VOICE_LANG = {
+  en:'en-US', ro:'ro-RO', it:'it-IT', es:'es-ES', 'es-ES':'es-ES',
+  'pt-BR':'pt-BR', 'pt-PT':'pt-PT', 'pt-AFR':'pt-PT', pt:'pt-PT',
+  'fr-FR':'fr-FR', 'fr-AFR':'fr-FR', fr:'fr-FR',
+  'la-CI':'la', 'la-VA':'la', 'la-HV':'la', la:'la',
+  de:'de-DE', ru:'ru-RU', sw:'sw-KE', el:'el-GR', ja:'ja-JP', zh:'zh-CN',
+  ko:'ko-KR', ar:'ar-SA', hi:'hi-IN', nl:'nl-NL', pl:'pl-PL', tr:'tr-TR',
+  vi:'vi-VN', km:'km-KH', lo:'lo-LA', ln:'ln-CD', ha:'ha-NG', yo:'yo-NG',
+  zu:'zu-ZA', xh:'xh-ZA', ig:'ig-NG', am:'am-ET',
+  haw:'haw-US', mi:'mi-NZ', sm:'sm-WS', to:'to-TO', sus:'sus-GN',
+};
+function guessVoiceLang(code){
+  if(KNOWN_VOICE_LANG[code]) return KNOWN_VOICE_LANG[code];
+  if(code.toLowerCase().startsWith('la')) return 'la';
+  if(code.includes('-')) return code;
+  return code+'-'+code.toUpperCase();
+}
+
+/* Production notes (scene-break dividers, seed notes for future episodes,
+   freeform production commentary, etc.) live in the same speaker column as
+   real dialogue but aren't lines anyone speaks — they must never become a
+   "character" or a drill line. */
+function isProductionNoteRow(row){
+  if(!row) return true;
+  const s = String(row[0]||'').trim();
+  if(!s) return true;
+  if(/^[—–\-\s]+$/.test(s)) return true;           // a row that's just dashes
+  if(/scene break/i.test(s)) return true;
+  if(/seed note/i.test(s)) return true;
+  if(/production note/i.test(s)) return true;
+  // A "speaker" cell with nothing in the other columns has no line to
+  // speak — it's a structural marker (section divider like "DIALOGUE" or
+  // "FRAME DRILLS — ..."), not a character, regardless of how short it is.
+  const restEmpty = row.slice(1).every(c=>!String(c||'').trim());
+  if(restEmpty) return true;
+  const norm = s.replace(/:\s*$/,'').trim();
+  // Drill-frame label rows (e.g. "DRILL 1 FRAME:") hold a pattern template,
+  // not a character's line — never a real speaker.
+  if(/frame$/i.test(norm)) return true;
+  // A speaker cell combining multiple names ("ROSA: / LEO:") or a
+  // placeholder ("n/a", "tbd") isn't a single real character either.
+  if(s.includes('/')) return true;
+  if(/^(n\/?a|tbd|none)$/i.test(norm)) return true;
+  return false;
+}
+/* Normalizes a raw speaker-column value into a stable character code —
+   trims stray whitespace and a trailing colon (e.g. "COWORKER:" -> "COWORKER")
+   so the same code is used consistently for the character list, the voice
+   picker, and every line's speaker lookup. */
+function normalizeSpeakerCode(raw){
+  return String(raw||'').trim().replace(/:\s*$/,'');
+}
+
+/* ---- column-header detection (no guessing which column means "speaker" —
+   we find the header ROW, list its column labels, and let the person tell
+   us which one is the characters) ---- */
+function trimTrailingEmpty(arr){
+  let end = arr.length;
+  while(end>0 && !String(arr[end-1]||'').trim()) end--;
+  return arr.slice(0, end);
+}
+/* Finds the most likely "column header" row near the top of a sheet: a row
+   with at least 2 short, non-empty cells that don't look like "Label:
+   value" metadata (those end in a colon, e.g. "Lesson #:", "Scenario(s)
+   Covered:" — real column headers like "SPEAKER" or "Speaker" don't). */
+function findHeaderRow(rows){
+  for(let i=0;i<Math.min(rows.length,15);i++){
+    const row = rows[i]||[];
+    const cells = row.map(c=>String(c||'').trim());
+    const nonEmpty = cells.filter(c=>c);
+    if(nonEmpty.length<2) continue;
+    if(nonEmpty.some(c=>c.length>90)) continue;
+    if(nonEmpty.some(c=>/:\s*$/.test(c))) continue;
+    return {rowIdx:i, cells:trimTrailingEmpty(cells)};
+  }
+  return null;
+}
+/* Scans every sheet, finds each one's header row, and groups sheets that
+   share the exact same set of column labels — that's a "layout". A file's
+   real episodes almost always share one layout; other sheets (a QA log, a
+   schedule, notes) tend to have their own different column labels and end
+   up in their own smaller group instead of getting mixed in. */
+function analyzeWorkbookLayouts(workbook){
+  const groups = [];
+  for(const sheetName of workbook.SheetNames){
+    if(/template/i.test(sheetName)) continue;
+    const ws = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+    const hdr = findHeaderRow(rows);
+    if(!hdr || hdr.cells.length<1) continue;
+    const key = JSON.stringify(hdr.cells);
+    let g = groups.find(g=>g.headerKey===key);
+    if(!g){ g = {headerKey:key, headers:hdr.cells, sheets:[]}; groups.push(g); }
+    g.sheets.push({name:sheetName, rowIdx:hdr.rowIdx});
+  }
+  groups.sort((a,b)=>b.sheets.length-a.sheets.length);
+  return groups;
+}
+
+/* Builds a course from one layout group, once the person has said which
+   column (by position within that layout's header row) holds the
+   character/speaker names. Only sheets in this exact layout are used. */
+// Detects a course-language `code` from a spreadsheet header cell's text
+// (e.g. "English (US)", "LÍNEA EN ESPAÑOL", "Español (EE. UU.)", "Portuguese
+// (Brazilian)"). Real-world workbooks are inconsistent: some put a real
+// language code in parentheses, some put a *region* label there instead
+// ("US", "EE. UU." — not language codes at all), and some have no
+// parenthetical at all and only say the language's name in the header text.
+// So this tries the language's actual NAME first — matched against the
+// languages this template already knows about — and only falls back to
+// treating a "(...)" as a literal code when the name-match fails and that
+// parenthetical content is actually a recognized code (not a bare region
+// abbreviation like "US").
+const LANG_NAME_PATTERNS = [
+  {code:'fr-AFR', re:/african\s*french|fran[cç]ais\s*africain/},
+  {code:'fr-FR',  re:/\bfrench\b|\bfran[cç]ais\b|\bfrances?\b/},
+  {code:'pt-AFR', re:/african\s*portuguese|portugu[eê]s\s*africano/},
+  {code:'pt-BR',  re:/brazilian\s*portuguese|portuguese\s*brazilian|portugu[eê]s\s*brasileiro|portuguese\s*\(?\s*brazil|portugu[eê]s\s*do\s*brasil/},
+  {code:'pt-PT',  re:/european\s*portuguese|portuguese\s*european|portugu[eê]s\s*europeu|portuguese\s*\(?\s*portugal/},
+  {code:'pt-BR',  re:/\bportuguese\b|\bportugu[eê]s\b/},
+  {code:'la-VA',  re:/ecclesiastical\s*latin|vatican\s*latin|lat[ií]n\s*eclesi[aá]stico|lat[ií]n\s*vaticano/},
+  {code:'la-HV',  re:/hispania\s*vulgaris/},
+  {code:'la-CI',  re:/classical\s*latin|latin\s*classical|lat[ií]n\s*cl[aá]sico|\blatin\b|\blat[ií]n\b/},
+  {code:'es',     re:/\bspanish\b|\bespa[nñ]ol\b|\bcastellano\b/},
+  {code:'en',     re:/\benglish\b|\bingl[eé]s\b/},
+  {code:'de',     re:/\bgerman\b|\bdeutsch\b|\balem[aá]n\b/},
+  {code:'ru',     re:/\brussian\b|\bruso\b|русск/},
+  {code:'ro',     re:/\bromanian\b|\brom[aâ]n[aă]?\b/},
+  {code:'it',     re:/\bitalian\b|\bitaliano\b/},
+  {code:'ja',     re:/\bjapanese\b|\bjapon[eé]s\b|\bnihongo\b/},
+  {code:'vi',     re:/\bvietnamese\b|\bvietnamita\b/},
+  {code:'km',     re:/\bkhmer\b|\bcambodian\b/},
+  {code:'lo',     re:/\blao\b|\blaotian\b/},
+  {code:'sw',     re:/\bswahili\b/},
+  {code:'ln',     re:/\blingala\b/},
+  {code:'ha',     re:/\bhausa\b/},
+  {code:'yo',     re:/\byoruba\b/},
+  {code:'zu',     re:/\bisizulu\b|\bzulu\b/},
+  {code:'xh',     re:/\bisixhosa\b|\bxhosa\b/},
+  {code:'ig',     re:/\bigbo\b/},
+  {code:'am',     re:/\bamharic\b/},
+  {code:'haw',    re:/\bhawaiian\b/},
+  {code:'mi',     re:/\bm[aā]ori\b|\bte\s*reo\b/},
+  {code:'sm',     re:/\bsamoan\b/},
+  {code:'to',     re:/\btongan\b/},
+  {code:'nv',     re:/\bnavajo\b|\bdin[eé]\b/},
+  {code:'nah-hua',re:/\bnahuatl\b/},
+  {code:'quz',    re:/\bquechua\b/},
+  {code:'sus',    re:/\bsusu\b/},
+  {code:'tlh',    re:/\bklingon\b/},
+];
+// Bare/legacy codes this template already recognizes elsewhere (via
+// KNOWN_VOICE_LANG / CODE_TO_REGION_KEY / REGION_PROFILES). A "(...)"
+// parenthetical is only trusted as a literal code if it's in this list —
+// which excludes things like "(US)" or "(EE. UU.)" that are region labels,
+// not language codes, and would otherwise silently produce a phantom
+// unmatched code.
+const KNOWN_HEADER_CODES = new Set([
+  'en','es','de','ru','ro','it','ja','vi','km','el','zh','ko','ar','hi','nl','pl','tr',
+  'pt','pt-br','pt-pt','pt-afr','fr','fr-fr','fr-afr','la','la-ci','la-va','la-hv',
+  'lo','ln','sw','ha','yo','zu','xh','ig','am','haw','mi','sm','to','nv','nah-hua','quz','sus','tlh',
+]);
+function detectLangFromHeader(raw, colIndex){
+  const norm = raw.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  for(const {code, re} of LANG_NAME_PATTERNS){
+    if(re.test(norm)) return code;
+  }
+  const m = raw.match(/^(.*)\(([a-zA-Z-]+)\)\s*$/);
+  if(m){
+    const candidate = normalizeLangCode(m[2].trim());
+    if(KNOWN_HEADER_CODES.has(candidate.toLowerCase())) return candidate;
+  }
+  return colIndex===1 ? 'en' : null;
+}
+function buildCourseFromLayout(workbook, filename, layout, speakerColIdx){
+  const sheetsOut = [];
+  const langsMap = {};
+  const charRoleByCode = {};
+  const charOrder = [];
+  let courseTitle = null;
+
+  for(const {name:sheetName, rowIdx:headerRowIdx} of layout.sheets){
+    const ws = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+    const headerRow = (rows[headerRowIdx]||[]).slice(speakerColIdx);
+    let sheetHasLangs = false;
+    for(let c=1;c<headerRow.length;c++){
+      const raw = String(headerRow[c]||'').trim();
+      if(!raw) continue;
+      sheetHasLangs = true;
+      const code = detectLangFromHeader(raw, c);
+      let lang;
+      if(code){
+        // A column that resolves to English (whether its header literally
+        // says "English" or it was only assumed to be English by column
+        // position — e.g. "SOURCE", "Source Language Line" — must always
+        // be *labeled* "English" too. Otherwise the language picker never
+        // shows the word "English" anywhere, and there is no way to
+        // knowingly select it as source or target.
+        let label;
+        if(code==='en'){
+          label = 'English';
+        } else {
+          label = raw.replace(/\s*\([^)]*\)\s*$/,'').replace(/\+.*$/,'').trim();
+          if(!label) label = raw;
+        }
+        lang = {code, label, voiceLang:guessVoiceLang(code)};
+      } else {
+        // "REPEAT CUE" (and close variants) is a known structural column
+        // from this template's own header spec — it holds a "[REPEAT]"
+        // marker, never a translation — so it must still occupy a slot in
+        // langsMap (later columns' positions are found by counting entries
+        // in this map, so skipping it would misalign every language after
+        // it), but it must NOT be offered as a pickable language: mark it
+        // `selectable:false` so the language dropdowns and the voice-
+        // coverage check both skip it.
+        const isStructural = /^repeat\s*cue$/i.test(raw);
+        lang = {code:'col'+c, label:raw, voiceLang:'en-US', selectable:!isStructural};
+      }
+      if(!langsMap[lang.code]) langsMap[lang.code] = lang;
+    }
+    if(!sheetHasLangs) continue;
+
+    const dataRows = [];
+    for(let i=headerRowIdx+1;i<rows.length;i++){
+      const rawRow = rows[i];
+      const r = rawRow ? rawRow.slice(speakerColIdx) : null;
+      if(isProductionNoteRow(r)) continue;
+      dataRows.push(r.map(x=>x===undefined?'':x));
+    }
+    if(!dataRows.length) continue;
+
+    const sheetCharMap = {};
+    for(let i=0;i<headerRowIdx;i++){
+      const line = (rows[i]||[]).map(x=>String(x||'')).join(' ');
+      line.split(/\s{2,}/).forEach(p=>{
+        const mm = p.match(/^([A-Za-z][A-Za-z0-9_' -]*?)\s*[—–-]\s*(.+?)\.?\s*$/);
+        if(mm && mm[1].length<24) sheetCharMap[mm[1].trim().toUpperCase()] = mm[2].trim();
+      });
+    }
+    dataRows.forEach(r=>{
+      const sp = normalizeSpeakerCode(r[0]);
+      if(!sp) return;
+      r[0] = sp;
+      const key = sp.toUpperCase();
+      if(charOrder.indexOf(sp)===-1) charOrder.push(sp);
+      if(!charRoleByCode[key] && sheetCharMap[key]) charRoleByCode[key] = sheetCharMap[key];
+    });
+
+    if(courseTitle===null){
+      courseTitle = String((rows[0]||[])[0] || filename).replace(/^PREVIEW TRACK\s*[—–-]\s*/i,'').trim() || filename;
+    }
+    const desc = String((rows[1]||[])[0] || '').trim();
+    sheetsOut.push({ name: sheetName, desc, rows: dataRows });
+  }
+
+  if(!sheetsOut.length) return null;
+
+  const characters = charOrder.map(code=>({
+    code,
+    name: titleCase(code),
+    role: charRoleByCode[code.toUpperCase()] || '',
+  }));
+
+  return {
+    id: 'loaded_'+Date.now(),
+    title: courseTitle || filename,
+    langs: Object.values(langsMap),
+    characters,
+    sheets: sheetsOut,
+  };
+}
+
+document.getElementById('loadCourseBtn').addEventListener('click', ()=>{
+  document.getElementById('courseFileInput').click();
+});
+
+let pendingWorkbook=null, pendingFilename=null, pendingLayouts=null, pendingCourse=null;
+
+document.getElementById('courseFileInput').addEventListener('change', async e=>{
+  const file = e.target.files[0];
+  const noteEl = document.getElementById('courseLoadNote');
+  if(!file) return;
+  noteEl.style.color = 'var(--ink-soft)';
+  noteEl.textContent = 'Reading '+file.name+'…';
+  try{
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, {type:'array'});
+    const layouts = analyzeWorkbookLayouts(wb);
+    if(!layouts.length){
+      noteEl.style.color = 'var(--danger)';
+      noteEl.textContent = 'Couldn\u2019t find any sheet with a clear column-header row in that file.';
+      return;
+    }
+    pendingWorkbook = wb;
+    pendingFilename = file.name.replace(/\.[^.]+$/,'');
+    pendingLayouts = layouts;
+    openColumnPickerModal(layouts);
+    noteEl.textContent = '';
+  }catch(err){
+    noteEl.style.color = 'var(--danger)';
+    noteEl.textContent = 'Could not read that file: '+(err.message||err);
+  }
+  e.target.value = '';
+});
+
+function openModal(id){ document.getElementById(id).classList.add('show'); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+
+function openColumnPickerModal(layouts){
+  const top = layouts[0];
+  const otherCount = layouts.slice(1).reduce((n,g)=>n+g.sheets.length,0);
+  const listEl = document.getElementById('columnPickerOptions');
+  listEl.innerHTML = '';
+  top.headers.forEach((h,i)=>{
+    if(!h) return;
+    const optId = 'colopt_'+i;
+    const row = document.createElement('label');
+    row.className = 'colopt-row';
+    row.setAttribute('for', optId);
+    const input = document.createElement('input');
+    input.type = 'radio'; input.name = 'colopt'; input.value = String(i); input.id = optId;
+    const span = document.createElement('span');
+    span.textContent = h;
+    row.appendChild(input); row.appendChild(span);
+    listEl.appendChild(row);
+  });
+  document.getElementById('columnPickerSheetInfo').textContent =
+    `${top.sheets.length} sheet${top.sheets.length===1?'':'s'} use this column layout`+
+    (otherCount ? ` — ${otherCount} other sheet${otherCount===1?'':'s'} with different columns will be skipped.` : '.');
+  document.getElementById('columnPickerConfirm').disabled = true;
+  document.getElementById('columnPickerConfirmTop').disabled = true;
+  openModal('columnPickerModal');
+}
+document.getElementById('columnPickerOptions').addEventListener('change', ()=>{
+  document.getElementById('columnPickerConfirm').disabled = false;
+  document.getElementById('columnPickerConfirmTop').disabled = false;
+});
+document.getElementById('columnPickerCancel').addEventListener('click', ()=>{
+  closeModal('columnPickerModal');
+  pendingWorkbook=null; pendingFilename=null; pendingLayouts=null;
+});
+function confirmColumnPick(){
+  const sel = document.querySelector('input[name=colopt]:checked');
+  const noteEl = document.getElementById('courseLoadNote');
+  if(!sel || !pendingWorkbook) return;
+  const colIdx = parseInt(sel.value, 10);
+  const layout = pendingLayouts[0];
+  const course = buildCourseFromLayout(pendingWorkbook, pendingFilename, layout, colIdx);
+  closeModal('columnPickerModal');
+  pendingWorkbook=null; pendingFilename=null; pendingLayouts=null;
+  if(!course){
+    noteEl.style.color = 'var(--danger)';
+    noteEl.textContent = 'That column didn\u2019t have any usable dialogue rows under it.';
+    return;
+  }
+  // Don't add the course to COURSES yet — first confirm default languages
+  // and each character's gender via the setup modal below.
+  pendingCourse = course;
+  openCourseSetupModal(course);
+}
+document.getElementById('columnPickerConfirm').addEventListener('click', confirmColumnPick);
+document.getElementById('columnPickerConfirmTop').addEventListener('click', confirmColumnPick);
+
+/* ============================================================
+   NEW-COURSE SETUP MODAL — default languages + gender confirmation.
+   Runs every time a course is loaded from a spreadsheet (never for the
+   built-in demo course, which ships with sensible constants already).
+   Gender guesses come from guessCharGender() and are pre-selected, but the
+   user must still confirm or correct them — nothing here is skippable by
+   leaving the modal's guessed state untouched, since "Not sure" is only
+   pre-checked when there was no guess to begin with.
+   ============================================================ */
+function openCourseSetupModal(course){
+  const srcSel = document.getElementById('setupSrcLangSelect');
+  const tgtSel = document.getElementById('setupTgtLangSelect');
+  srcSel.innerHTML = '<option value="">— none (target only) —</option>';
+  tgtSel.innerHTML = '';
+  course.langs.forEach(l=>{
+    if(l.selectable===false) return;
+    const o1 = document.createElement('option'); o1.value=l.code; o1.textContent=l.label; srcSel.appendChild(o1);
+    const o2 = document.createElement('option'); o2.value=l.code; o2.textContent=l.label; tgtSel.appendChild(o2);
+  });
+  const selectableLangs = course.langs.filter(l=>l.selectable!==false);
+  const preferredTgt = langByCode(course,'en') ? 'en' : (selectableLangs[0]||course.langs[0]).code;
+  tgtSel.value = preferredTgt;
+  const altSrc = selectableLangs.find(l=>l.code!==preferredTgt);
+  srcSel.value = altSrc ? altSrc.code : '';
+
+  const listEl = document.getElementById('courseSetupGenderList');
+  listEl.innerHTML = '';
+  course.characters.forEach(ch=>{
+    const guess = guessCharGender(ch); // 'male' | 'female' | 'unknown'
+    const groupName = 'gender_'+sanitizeId(ch.code);
+    const row = document.createElement('div');
+    row.className = 'gender-row';
+    row.innerHTML = `
+      <div class="gender-row-name">${escapeHtml(ch.name)}
+        <span class="char-role-tag">${escapeHtml(ch.code)}</span>
+        <span class="gender-guess-note">${guess==='unknown' ? 'no guess — please pick' : 'guessed — please confirm'}</span>
+      </div>
+      <div class="gender-options">
+        <label><input type="radio" name="${groupName}" value="female" ${guess==='female'?'checked':''}> Female</label>
+        <label><input type="radio" name="${groupName}" value="male" ${guess==='male'?'checked':''}> Male</label>
+        <label><input type="radio" name="${groupName}" value="" ${guess==='unknown'?'checked':''}> Not sure</label>
+      </div>`;
+    listEl.appendChild(row);
+  });
+  openModal('courseSetupModal');
+}
+document.getElementById('courseSetupCancel').addEventListener('click', ()=>{
+  closeModal('courseSetupModal');
+  const noteEl = document.getElementById('courseLoadNote');
+  noteEl.style.color = 'var(--ink-soft)';
+  noteEl.textContent = 'Course load cancelled.';
+  pendingCourse = null;
+});
+document.getElementById('courseSetupConfirm').addEventListener('click', ()=>{
+  const course = pendingCourse;
+  if(!course) return;
+  course.defaultSrc = document.getElementById('setupSrcLangSelect').value; // '' = target-only
+  course.defaultTgt = document.getElementById('setupTgtLangSelect').value;
+  course.characters.forEach(ch=>{
+    const picked = document.querySelector(`input[name="gender_${sanitizeId(ch.code)}"]:checked`);
+    const val = picked ? picked.value : '';
+    if(val==='male' || val==='female') ch.gender = val;
+    else delete ch.gender; // "Not sure" — leave the best-effort guess logic in charge
+  });
+  closeModal('courseSetupModal');
+  COURSES.push(course);
+  populateCourseSelect();
+  document.getElementById('courseSelect').value = COURSES.length-1;
+  switchCourse(COURSES.length-1);
+  renderLangTiles(); // refresh the home screen's "I speak X" tiles for the new course's languages
+  const noteEl = document.getElementById('courseLoadNote');
+  noteEl.style.color = 'var(--ok)';
+  noteEl.textContent = `Loaded "${course.title}" — ${course.characters.length} character${course.characters.length===1?'':'s'}, ${course.langs.length} language${course.langs.length===1?'':'s'}, ${course.sheets[0].rows.length} lines.`;
+  pendingCourse = null;
 });
 
 /* keyboard shortcuts during judged 'your turn' */

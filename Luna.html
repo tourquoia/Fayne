@@ -1,7 +1,8 @@
 <!-- build:JysnMlnrMthd -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" translate="no" class="notranslate">
 <head>
+<meta name="google" content="notranslate"> <!-- prevents iOS Safari auto-translate from stripping page content -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Luna</title>
@@ -171,7 +172,18 @@
   .back-link:hover{ color:var(--ink-soft); }
 </style>
 </head>
-<body>
+<body translate="no" class="notranslate">
+
+<!-- In-app-browser notice: Messenger's built-in browser, Claude's own file
+     preview, and similar embedded WebViews often don't wire up the full
+     system text-to-speech bridge (or block it outright), so audio can be
+     silent or error out there even though the page itself is fine. Shown
+     only when detectRestrictedWebview() (below) thinks that's likely, and
+     dismissible so it doesn't nag anyone in a real browser. -->
+<div id="webviewNotice" class="hidden" style="background:#fff3cd;color:#664d03;border-bottom:1px solid #ffe69c;padding:10px 16px;font-size:14px;line-height:1.4;display:flex;gap:10px;align-items:center;justify-content:space-between;">
+  <span>For sound to work, open this in your browser (tap <strong>⋮</strong> or <strong>Share</strong> and choose <strong>Open in Chrome</strong>), not this app's built-in viewer.</span>
+  <button type="button" id="webviewNoticeDismiss" style="background:none;border:none;color:#664d03;font-size:18px;line-height:1;cursor:pointer;flex-shrink:0;" aria-label="Dismiss">&times;</button>
+</div>
 
 <div class="moon-field">
   <div class="moon-glow"></div>
@@ -394,6 +406,29 @@ function stopAllAudio(){
 
 /* ---- speech ---- */
 function pickVoice(uri){ return voices.find(v=>v.voiceURI===uri) || null; }
+// IN-APP-BROWSER DETECTION (2026-09): flags embedded WebViews (Messenger's
+// built-in browser, Instagram's, generic Android WebView, and similar) that
+// commonly lack the full system TTS bridge real Chrome has. UA-sniffing is
+// inherently a best-effort heuristic -- it can't catch every embedded
+// browser and shouldn't be trusted for anything except "should we show a
+// friendly heads-up," which is all it's used for here.
+function detectRestrictedWebview(){
+  const ua = navigator.userAgent || '';
+  // FBAN/FBAV/FB_IAB: Facebook/Messenger's in-app browser. Instagram: its
+  // own in-app browser. Line/MicroMessenger: other common in-app browsers.
+  // "; wv)" is the token Android's WebView itself adds to its UA string
+  // when a native app embeds a generic (non-Chrome) WebView.
+  if(/FBAN|FBAV|FB_IAB|Instagram|Line\/|MicroMessenger|; ?wv\)/i.test(ua)) return true;
+  if(!window.speechSynthesis) return true;
+  return false;
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  const notice = document.getElementById('webviewNotice');
+  if(notice && detectRestrictedWebview()) notice.classList.remove('hidden');
+  const dismiss = document.getElementById('webviewNoticeDismiss');
+  if(dismiss) dismiss.addEventListener('click', ()=>{ notice.classList.add('hidden'); });
+});
+
 function speak(text, token){
   if(!text) return Promise.resolve();
   if(S.voiceURI && S.voiceURI.startsWith('piper:')){
