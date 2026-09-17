@@ -2782,6 +2782,14 @@ function speak(text, langCode, token, voiceURI, pitch, retryCount){
     u.onend = finishOrRetry;
     u.onerror = (e)=>{ console.warn('[speech] utterance error', {langCode, voiceURI, error: e && e.error}); finish(); };
     speechSynthesis.speak(u);
+    // See "WATCHDOG BUGFIX v2" below for why these are computed instead of
+    // using fixed 120ms/240ms: poll faster at higher rates so a short
+    // utterance still gets several ticks, and size the confirmation window
+    // as a fraction of this line's own estimated duration (floored/capped)
+    // so it can't outlast the line itself.
+    const pollMs = Math.min(120, Math.max(40, 120 / S.rate));
+    const missWindowMs = Math.min(240, Math.max(80, estimateMs(text) * 0.25));
+    const missesNeeded = Math.max(1, Math.round(missWindowMs / pollMs));
     check = setInterval(()=>{
       if(token!==S.token){
         // BUGFIX (2026-09): don't cancel() here. Every caller that bumps
@@ -2819,14 +2827,28 @@ function speak(text, langCode, token, voiceURI, pitch, retryCount){
       // onstart event has fired (kills the start-cutoff case), and require
       // two consecutive false readings -- 240ms apart -- before treating it
       // as genuinely finished (kills the mid-utterance blip / end-cutoff case).
+      //
+      // WATCHDOG BUGFIX v2 (2026-09): that 240ms confirmation window was a
+      // fixed number, and it doesn't scale -- a short line played at 2x
+      // speed can finish speaking in well under 240ms, so the window ends
+      // up bigger than the whole utterance. Any normal end-of-speech blip
+      // in `speaking` then has nowhere to go but through the "still counts
+      // as truncated" path, which fires a retry (itself a brief stop/
+      // restart of audio that reads to the listener as a cutoff). Faster
+      // rate + shorter line made this worse, matching "cuts off more when
+      // I speed it up." Fix: size the poll tick and the confirmation
+      // window off S.rate and this line's own estimated duration instead
+      // of fixed numbers, so short/fast lines get a proportionally short
+      // confirmation window while normal-length lines at normal rate keep
+      // the original 120ms/240ms behavior unchanged.
       if(!started) return;
       if(!speechSynthesis.speaking){
         missCount++;
-        if(missCount>=2) finishOrRetry();
+        if(missCount>=missesNeeded) finishOrRetry();
       } else {
         missCount = 0;
       }
-    }, 120);
+    }, pollMs);
     // Hard ceiling as a last resort, scoped to just THIS one utterance --
     // unlike a global pause()/resume() nudge (tried and reverted: it wedged
     // the whole speechSynthesis queue permanently during testing), cancel()
