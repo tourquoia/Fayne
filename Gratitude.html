@@ -109,26 +109,38 @@
   select option{ background:#FFFFFF; color:var(--ink); }
   select:disabled{ opacity:.4; }
 
-  /* ---- language + voice split card (this card keeps its own shape:      ---- */
-  /* ---- numbered 1-10 down the left for language, 1-10 down the right    ---- */
-  /* ---- for voice — two parallel numbered columns, not paired rows.      ---- */
-  .split-card{ display:flex; gap:14px; margin-top:2px; }
-  .split-col{ flex:1 1 50%; min-width:0; }
-  .split-col-head{
-    font-family:'Source Code Pro', monospace; font-size:10px; letter-spacing:.1em;
-    text-transform:uppercase; color:var(--ink-dim); margin:0 0 6px; padding-left:22px;
+  /* ---- language + voice combined rows: one row per slot, a heart-shaped
+     preview button sits between the language and voice dropdowns so both
+     narrow down to make room for it. ---- */
+  .split-card{ margin-top:2px; }
+  .combo-head{ display:flex; align-items:center; gap:6px; margin:0 0 6px; padding-left:22px; }
+  .combo-head span{
+    flex:1; min-width:0; font-family:'Source Code Pro', monospace; font-size:10px;
+    letter-spacing:.1em; text-transform:uppercase; color:var(--ink-dim);
   }
-  .split-col.tgt .split-col-head{ color:var(--teal-bright); }
-  .split-col.src .split-col-head{ color:var(--amber-bright); }
+  .combo-head span.lang-head{ color:var(--amber-bright); }
+  .combo-head span.voice-head{ color:var(--teal-bright); }
+  .combo-head .spacer{ flex:none; width:28px; }
   .split-list{ display:flex; flex-direction:column; gap:6px; }
-  .split-row{ display:flex; align-items:center; gap:6px; }
-  .split-row .slot-num{
+  .combo-row{ display:flex; align-items:center; gap:6px; }
+  .combo-row .slot-num{
     font-family:'Source Code Pro', monospace; font-size:10px; color:var(--ink-dim);
     width:16px; flex:none; text-align:right;
   }
-  .split-row select{ flex:1; min-width:0; font-size:12.5px; padding:7px 8px; }
-  .split-row.active .slot-num{ color:var(--amber-bright); }
-  .split-row.active select{ border-color:var(--border-soft); }
+  .combo-row select{ flex:1; min-width:0; font-size:12px; padding:7px 6px; }
+  .combo-row.active .slot-num{ color:var(--amber-bright); }
+  .combo-row.active select{ border-color:var(--border-soft); }
+  .heart-test-btn{
+    flex:none; width:28px; height:28px; padding:0; margin:0;
+    border:1.5px solid var(--border-soft); border-radius:50%;
+    background:#FFFFFF; color:var(--amber-dim);
+    font-size:13px; line-height:1;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+  }
+  .heart-test-btn:hover:not(:disabled){ color:var(--amber-bright); border-color:var(--amber-dim); }
+  .heart-test-btn.testing{ color:#FFFFFF; background:var(--amber); border-color:var(--amber); }
+  .heart-test-btn:disabled{ opacity:.3; cursor:default; }
 
   .course-row{ display:flex; gap:8px; align-items:flex-end; }
   .btn{
@@ -316,14 +328,8 @@
     <h2 class="section-title">Languages &amp; accents</h2>
     <div class="eyebrow-label">Up to 10 slots · plays in slot order, each line spoken twice per language</div>
     <div class="split-card">
-      <div class="split-col src">
-        <div class="split-col-head">Language</div>
-        <div class="split-list" id="langList"></div>
-      </div>
-      <div class="split-col tgt">
-        <div class="split-col-head">Voice</div>
-        <div class="split-list" id="voiceList"></div>
-      </div>
+      <div class="combo-head"><span class="lang-head">Language</span><span class="spacer"></span><span class="voice-head">Voice</span></div>
+      <div class="split-list" id="slotRows"></div>
     </div>
     <div class="note" id="voiceLoadNote"></div>
   </section>
@@ -426,6 +432,7 @@ const S = {
   loop: true,
   sessionStart: null,
   linesCompleted: 0,
+  warmedVoiceKeys: new Set(),
 };
 
 document.getElementById('sheetSelect').addEventListener('change', e=>{
@@ -659,23 +666,39 @@ function matchingVoicesForCode(code){
    SETUP UI — 10 language + accent slot rows
    ============================================================ */
 function buildSlotRows(){
-  const langWrap = document.getElementById('langList');
-  const voiceWrap = document.getElementById('voiceList');
-  langWrap.innerHTML = '';
-  voiceWrap.innerHTML = '';
+  const wrap = document.getElementById('slotRows');
+  wrap.innerHTML = '';
   for(let i=0;i<NUM_SLOTS;i++){
-    const langRow = document.createElement('div');
-    langRow.className = 'split-row';
-    langRow.id = 'langRow'+i;
-    langRow.innerHTML = `<span class="slot-num">${i+1}</span><select id="slotLang${i}"></select>`;
-    langWrap.appendChild(langRow);
-
-    const voiceRow = document.createElement('div');
-    voiceRow.className = 'split-row';
-    voiceRow.id = 'voiceRow'+i;
-    voiceRow.innerHTML = `<span class="slot-num">${i+1}</span><select id="slotVoice${i}"></select>`;
-    voiceWrap.appendChild(voiceRow);
+    const row = document.createElement('div');
+    row.className = 'combo-row';
+    row.id = 'comboRow'+i;
+    row.innerHTML = `<span class="slot-num">${i+1}</span><select id="slotLang${i}"></select><button type="button" class="heart-test-btn" id="testBtn${i}" title="Preview this language &amp; voice" disabled>🤍</button><select id="slotVoice${i}"></select>`;
+    wrap.appendChild(row);
+    document.getElementById('testBtn'+i).addEventListener('click', ()=>testSlot(i));
   }
+}
+
+// Plays a short sample line through whichever language + voice is currently
+// picked for this slot, independent of the main drill's state/token, so a
+// preview never gets caught up in the drill loop's own playback.
+function testSlot(i){
+  const code = S.slotLang[i];
+  if(!code || !SPEECH_SUPPORTED) return;
+  const lang = langByCode(code);
+  const text = textForSlot(LINES[0], i);
+  const voiceURI = S.slotVoiceURI[i];
+  const btn = document.getElementById('testBtn'+i);
+  safeCancel();
+  S.token++;
+  const token = S.token;
+  if(btn){ btn.disabled = true; btn.classList.add('testing'); btn.textContent = '❤️'; }
+  const reset = ()=>{
+    if(!btn) return;
+    btn.disabled = !S.slotLang[i];
+    btn.classList.remove('testing');
+    btn.textContent = '🤍';
+  };
+  speak(text, lang.voiceLang, voiceURI, token).then(reset).catch(reset);
 }
 
 function populateSlotLangOptions(i){
@@ -689,8 +712,8 @@ function populateSlotLangOptions(i){
   sel.value = S.slotLang[i] || '';
   sel.onchange = ()=>{
     S.slotLang[i] = sel.value;
-    document.getElementById('langRow'+i).classList.toggle('active', !!sel.value);
-    document.getElementById('voiceRow'+i).classList.toggle('active', !!sel.value);
+    document.getElementById('comboRow'+i).classList.toggle('active', !!sel.value);
+    document.getElementById('testBtn'+i).disabled = !sel.value;
     populateSlotVoiceOptions(i);
     updateStartState();
   };
@@ -762,8 +785,8 @@ function populateSlotVoiceOptions(i){
 function populateAllSlotRows(){
   for(let i=0;i<NUM_SLOTS;i++){
     populateSlotLangOptions(i);
-    document.getElementById('langRow'+i).classList.toggle('active', !!S.slotLang[i]);
-    document.getElementById('voiceRow'+i).classList.toggle('active', !!S.slotLang[i]);
+    document.getElementById('comboRow'+i).classList.toggle('active', !!S.slotLang[i]);
+    document.getElementById('testBtn'+i).disabled = !S.slotLang[i];
     populateSlotVoiceOptions(i);
   }
   updateStartState();
@@ -819,9 +842,85 @@ function safeCancel(){
   if(SPEECH_SUPPORTED) speechSynthesis.cancel();
 }
 
-function speak(text, voiceLang, voiceURI, token){
+// Shared duration estimate used both to size the watchdog window and to
+// judge whether an utterance that ended suspiciously fast was truncated.
+function estimateMs(text){
+  const words = (text||'').trim().split(/\s+/).filter(Boolean).length || 1;
+  const secs = words / (2.3 * (S.rate||1));
+  return Math.max(500, Math.min(4200, secs*1000));
+}
+function speak(text, voiceLang, voiceURI, token, retryCount){
+  retryCount = retryCount || 0;
   return new Promise(resolve=>{
     if(!text || !SPEECH_SUPPORTED){ resolve(); return; }
+    // PORTED FROM SHARED PLAYER TEMPLATE (2026-09), v3-v5 anti-clipping fix:
+    // some engines occasionally start an utterance corrupted -- the front
+    // (sometimes the whole short line) gets eaten even though the callback
+    // chain looks normal. Two layers fix this:
+    //   1. PRIMING: the first time a given voice is used this session, warm
+    //      it up with a silent (volume 0) throwaway utterance first. Some
+    //      engines need real warm-up time that speaking/pending never
+    //      exposes to JS.
+    //   2. DETECT-AND-RETRY: after each utterance, check its first
+    //      word-boundary event and/or total speaking duration for signs the
+    //      front got cut off; if so, automatically re-speak that exact line
+    //      once before moving on.
+    if(token!==S.token){ resolve(); return; }
+    const voiceKey = voiceURI || voiceLang || '';
+    const needsPriming = !S.warmedVoiceKeys.has(voiceKey);
+    function afterIdle(cb){
+      let waited = 0;
+      const poll = setInterval(()=>{
+        waited += 40;
+        if(token!==S.token){ clearInterval(poll); resolve(); return; }
+        if(!speechSynthesis.speaking && !speechSynthesis.pending){
+          clearInterval(poll);
+          cb();
+          return;
+        }
+        if(waited >= 1200){
+          clearInterval(poll);
+          speechSynthesis.cancel();
+          setTimeout(cb, 350);
+        }
+      }, 40);
+    }
+    function primeVoice(cb){
+      const p = new SpeechSynthesisUtterance('a');
+      p.volume = 0;
+      p.rate = S.rate;
+      const v = S.voices.find(vv=>vv.voiceURI===voiceURI);
+      if(v){ p.voice = v; p.lang = v.lang; } else { p.lang = voiceLang; }
+      let primed = false;
+      const done = ()=>{ if(primed) return; primed = true; cb(); };
+      p.onstart = done;
+      p.onend = done;
+      p.onerror = done;
+      speechSynthesis.speak(p);
+      // Safety valve: some engines never fire onstart/onend for a silent
+      // utterance at all. Don't wait forever -- move on after a generous
+      // fixed window either way.
+      setTimeout(done, 900);
+    }
+    afterIdle(()=>{
+      if(token!==S.token){ resolve(); return; }
+      if(needsPriming){
+        primeVoice(()=>{
+          S.warmedVoiceKeys.add(voiceKey);
+          if(token!==S.token){ resolve(); return; }
+          setTimeout(()=>{
+            if(token!==S.token){ resolve(); return; }
+            startUtterance();
+          }, 350);
+        });
+      } else {
+        setTimeout(()=>{
+          if(token!==S.token){ resolve(); return; }
+          startUtterance();
+        }, 350);
+      }
+    });
+    function startUtterance(){
     const u = new SpeechSynthesisUtterance(text);
     u.rate = S.rate;
     const v = S.voices.find(vv=>vv.voiceURI===voiceURI);
@@ -830,6 +929,8 @@ function speak(text, voiceLang, voiceURI, token){
     // actual voice can cause some engines to ignore the voice entirely.
     if(v){ u.voice = v; u.lang = v.lang; } else { u.lang = voiceLang; }
     let done = false, check, hardCeiling, started = false, missCount = 0;
+    let startedAt = 0, firstBoundaryIdx = null;
+    const wordCount = (text||'').trim().split(/\s+/).filter(Boolean).length;
     const finish = ()=>{
       if(done) return;
       done = true;
@@ -837,14 +938,53 @@ function speak(text, voiceLang, voiceURI, token){
       clearTimeout(hardCeiling);
       resolve();
     };
-    u.onstart = ()=>{ started = true; };
-    u.onend = finish;
+    const retryThisLine = (reason)=>{
+      if(done) return;
+      done = true;
+      clearInterval(check);
+      clearTimeout(hardCeiling);
+      console.warn('[speech] suspected truncated playback, retrying line', {voiceLang, voiceURI, text, reason});
+      setTimeout(()=>{
+        if(token!==S.token){ resolve(); return; }
+        speak(text, voiceLang, voiceURI, token, retryCount+1).then(resolve);
+      }, 300);
+    };
+    const finishOrRetry = ()=>{
+      if(done) return;
+      // Only ever retry once per line, and only for lines with enough words
+      // that "most of it got skipped" is even a meaningful idea -- a
+      // genuinely one-word line has no "front" to lose.
+      if(retryCount < 1 && wordCount >= 2){
+        if(firstBoundaryIdx !== null && firstBoundaryIdx > 3){
+          retryThisLine('first boundary at charIndex '+firstBoundaryIdx);
+          return;
+        }
+        const elapsed = startedAt ? Date.now()-startedAt : 0;
+        const expected = estimateMs(text);
+        if(started && elapsed>0 && elapsed < expected*0.45){
+          retryThisLine('elapsed '+elapsed+'ms vs expected '+Math.round(expected)+'ms');
+          return;
+        }
+      }
+      finish();
+    };
+    u.onstart = ()=>{ started = true; startedAt = Date.now(); };
+    u.onboundary = (e)=>{ if(firstBoundaryIdx===null) firstBoundaryIdx = e.charIndex; };
+    u.onend = finishOrRetry;
     u.onerror = finish;
     if(token!==S.token){ finish(); return; }
     speechSynthesis.speak(u);
     // Backup to onend: some engines never fire it for a given utterance,
     // which would otherwise hang playback indefinitely. Also lets a
     // mid-utterance token change (skip/stop/pause) cut speech short.
+    // See "WATCHDOG BUGFIX v2" below for why these are computed instead of
+    // using fixed 120ms/240ms: poll faster at higher rates so a short
+    // utterance still gets several ticks, and size the confirmation window
+    // as a fraction of this line's own estimated duration (floored/capped)
+    // so it can't outlast the line itself.
+    const pollMs = Math.min(120, Math.max(40, 120 / (S.rate||1)));
+    const missWindowMs = Math.min(240, Math.max(80, estimateMs(text) * 0.25));
+    const missesNeeded = Math.max(1, Math.round(missWindowMs / pollMs));
     check = setInterval(()=>{
       if(token!==S.token){
         // BUGFIX (2026-09): don't cancel() here. Every caller that bumps
@@ -856,38 +996,27 @@ function speak(text, voiceLang, voiceURI, token){
         // few ms into speaking the NEW utterance under the new token. Calling
         // cancel() again here is a stale double-cancel that can silently wipe
         // out that brand-new utterance instead of the one this poll was
-        // actually tracking. Network voices (e.g. Arabic) take longer to spin
-        // up than local ones, so they're the most likely to still be starting
-        // when this stale tick lands -- which is why this showed up as
-        // "Arabic source line gets skipped on the first line after changing
-        // lessons." Just stop polling and resolve; don't touch the engine.
+        // actually tracking. Just stop polling and resolve; don't touch the
+        // engine.
         finish();
         return;
       }
-      // WATCHDOG BUGFIX (2026-09): same fix as the shared player template's
-      // speak() (see Laura.html etc.) -- speechSynthesis.speaking is not a
-      // reliable instant signal. A false reading right after speak() is
-      // called (before the engine has actually started) skipped lines
-      // entirely, and a transient blip mid-utterance chopped off the tail.
-      // Fix: don't trust the poll until the real onstart event has fired,
-      // and require two consecutive false readings -- 240ms apart -- before
-      // treating it as really finished.
+      // WATCHDOG BUGFIX v2 (2026-09): a fixed 240ms confirmation window
+      // doesn't scale -- a short line played at 2x speed can finish
+      // speaking in well under 240ms, so the window ends up bigger than the
+      // whole utterance and a normal end-of-speech blip in `speaking` reads
+      // as truncation. Fix: size the poll tick and the confirmation window
+      // off S.rate and this line's own estimated duration instead of fixed
+      // numbers.
       if(!started) return;
       if(!speechSynthesis.speaking){
         missCount++;
-        if(missCount>=2) finish();
+        if(missCount>=missesNeeded) finishOrRetry();
       } else {
         missCount = 0;
       }
-    }, 120);
-    // Bounded hard-ceiling fallback. This file had no such backstop before;
-    // adding the `started` gate above means an utterance that never fires
-    // onstart (a real glitch some engines have under rapid back-to-back
-    // speak() calls) would otherwise poll forever with no way out. Estimate
-    // is a local, self-contained version of the same formula used in the
-    // shared template (this file has no estimateMs() of its own).
-    const words = (text||'').trim().split(/\s+/).filter(Boolean).length || 1;
-    const estimate = Math.max(500, Math.min(4200, (words/2.3/(S.rate||1))*1000));
+    }, pollMs);
+    // Bounded hard-ceiling fallback, scoped to just this one utterance.
     let ceilingExtensions = 0;
     const scheduleCeiling = (ms)=>{
       hardCeiling = setTimeout(()=>{
@@ -897,12 +1026,13 @@ function speak(text, voiceLang, voiceURI, token){
           scheduleCeiling(2500);
           return;
         }
-        console.warn('[speech] watchdog: utterance never finished, cancelling', {voiceLang, voiceURI});
+        console.warn('[speech] watchdog: utterance never finished, cancelling', {voiceLang, voiceURI, started});
         speechSynthesis.cancel();
         finish();
       }, ms);
     };
-    scheduleCeiling(Math.min(15000, estimate*3 + 4000));
+    scheduleCeiling(Math.min(15000, estimateMs(text)*3 + 4000));
+    } // end startUtterance
   });
 }
 
