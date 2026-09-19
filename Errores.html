@@ -2,28 +2,6 @@
 =====================================================================
 INSTRUCTIONS FOR CLAUDE (any session, any user)
 =====================================================================
-THIS FILE IS THE ERRORES BUILD (2026-09-18): a narrator-format
-error-correction course for Spanish speakers learning English, built from
-Course_Template_MASTER_audited.xlsx (15 sheets). What differs from the
-plain template below:
-  - New session style 'narrator' (the default): Spanish explanation once,
-    a short pause, then the English demonstration twice with repeat pauses.
-    English alt rows (blank Spanish cell) are grouped onto the row above
-    them, so a group plays e.g. lend / borrow / lend / borrow. Spanish-only
-    rows (framing lines) play once. Exposure and judged styles remain in
-    Advanced, untouched.
-  - Pipe syntax "displayed |spoken" in any cell (see stripTags()). The
-    comma-pause line "It's difficult,,,, It's hard." is converted at build
-    time to a displayed version with periods and a spoken version that keeps
-    the commas.
-  - Mispronunciation (Source Voice) column, 4th cell of every row, blank
-    except on Pronunciacion's s-cluster rows. When present it is spoken by
-    the SOURCE (Spanish) voice between the teaching line and the English
-    line, and is never shown on screen (the screen keeps the correct
-    English spelling, so the contrast is heard, not read).
-  - BASE_LANGS trimmed to es + en; course.fixedPair hides the English hub
-    tile and the language swap.
-=====================================================================
 This is a locked-down variant of the reusable player template: the
 runtime "＋" spreadsheet loader (button, file input, column-picker
 modal, course-setup modal, and their supporting XLSX-parsing code)
@@ -32,30 +10,31 @@ course(s) already baked into it at build time — do not re-add any
 file-upload / "load a different course" capability unless the person
 explicitly asks for it back.
 
-THIS SPECIFIC FILE IS THE ALL-LANGUAGES TEMPLATE, not a real product:
-BASE_LANGS is deliberately the full RULES_GLOBAL language list (44
-languages/registers), every one of the 20 sheets has been stripped
-down to a single placeholder line of dialogue, and only 2-3 characters
-remain. It exists purely so a new build can start from one file that
-already has every language wired up correctly (home-screen order,
-voice fallback, hub-language click behavior) instead of re-deriving
-that setup from scratch each time. See the "ALL-LANGUAGES TEMPLATE"
-comment block above BASE_LANGS, and the "HOME-SCREEN LANGUAGE-TILE
-CLICK BEHAVIOR" comment block above COURSES, for the full rules.
-
-If the person hands you a new spreadsheet and asks for a new
-standalone build from this template, treat it the same as any other
-from-scratch build request: ask them for DEFAULT SOURCE LANGUAGE,
-DEFAULT TARGET LANGUAGE, each character's GENDER, the NAME to use
-for this specific build's <title> and on-screen header, and WHETHER
-THERE WILL BE AN INSTRUCTIONAL PAGE (a source-language-only sheet
-that explains the course rather than being a real dialogue lesson),
-before wiring the spreadsheet's data into the COURSES array, since
-none of that detection/setup machinery exists in this file anymore
-to do it for you at runtime. Never assume the name -- not "Laura",
-not any other prior build's name -- ask for it fresh every time;
-this template file itself keeps its own <title> ("All-Languages
-Template") and does not need a name of its own.
+THIS SPECIFIC FILE IS THE "ERRORES COMUNES" BUILD (title and topbar:
+Errores Comunes), made from Errores_final_version_audited.xlsx. That
+workbook stays the source of truth -- fix content there, then rebuild
+from the template. Shape of this build:
+  - Narrator format: every row is spoken by ONE narrator (Heather or
+    Roger, per sheet). Spanish column = short explanation of an English
+    trap; English column = the correct demonstration. Playback (session
+    style 'narrator', the default): Spanish once, a brief pause, then
+    English twice with repeat pauses (1.4 s floor). Spanish-only rows
+    play once. An English-only row directly after a row is an "alt" row,
+    grouped with it (A, B, A, B). Exposure and judge modes are still in
+    the code but are not reachable from the UI.
+  - English-only learning: BASE_LANGS is just Spanish + English. The home
+    screen shows ONE language tile ("Yo hablo español"); the English hub
+    tile is intentionally omitted (course.hideHubTile) and the
+    source/target swap controls are hidden, since this course only ever
+    teaches English to Spanish speakers.
+  - Lesson 0 is the instructional page (Instrucciones, narration mode);
+    Lessons 1-15 follow in workbook tab order.
+  - Pipe syntax: "displayed |spoken" in any cell (see stripTags()).
+If the person hands you a new spreadsheet and asks for a new standalone
+build from this template, ask them for DEFAULT SOURCE LANGUAGE, DEFAULT
+TARGET LANGUAGE, each character's GENDER, the NAME to use for that
+build's <title> and on-screen header, and WHETHER THERE WILL BE AN
+INSTRUCTIONAL PAGE, before wiring the data in. Never assume the name.
 
 LESSON NUMBERING / INSTRUCTIONAL PAGE ROUTING: this template's own
 sheets array demonstrates the pattern (see the "LESSON NUMBERING"
@@ -96,7 +75,7 @@ list to copy entries from.
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Errores</title>
+<title>Errores Comunes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Code+Pro:wght@500;600&display=swap" rel="stylesheet">
 <style>
@@ -773,15 +752,10 @@ list to copy entries from.
 <div class="brand-arch-bg" aria-hidden="true"><img src="arch.png" alt=""></div>
 
 <!-- ===================== TOP BAR ===================== -->
-<!-- HEADER TEXT: intentionally left blank in this template. This is the
-     on-screen title shown in the orange bar at the top of every screen.
-     When building a new player from this template + a spreadsheet, ASK
-     THE PERSON what they want this text to say — do not assume or reuse
-     a prior build's name (not "Laura", not any other prior build's
-     title). Once they answer, put that text inside the
-     <span class="topbar-word"> below and also update <title> above. -->
+<!-- HEADER TEXT: the on-screen title shown in the orange bar at the top of
+     every screen. Keep in sync with <title> above. -->
 <header class="topbar">
-  <span class="topbar-word">Errores</span>
+  <span class="topbar-word">Errores Comunes</span>
 </header>
 
 <!-- In-app-browser notice: Messenger's built-in browser, Claude's own file
@@ -811,7 +785,7 @@ list to copy entries from.
     <div class="home-lesson-picker-wrap" id="homeLessonPickerWrap">
       <button type="button" class="lesson-picker-pill" id="homeLessonPickerBtn" title="Choose lesson">
         <span class="lesson-picker-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4.5A2.5 2.5 0 0 1 4.5 2H9a2 2 0 0 1 2 2v16a1.5 1.5 0 0 0-1.5-1.5H2z"></path><path d="M22 4.5A2.5 2.5 0 0 0 19.5 2H15a2 2 0 0 0-2 2v16a1.5 1.5 0 0 1 1.5-1.5H22z"></path></svg></span>
-        <span class="lesson-picker-text" id="lessonPickerText">Lesson 0 of 20</span>
+        <span class="lesson-picker-text" id="lessonPickerText">Lesson 0 of 15</span>
         <span class="lesson-picker-chev"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span>
       </button>
       <div class="home-dropdown-list wide hidden" id="homeLessonDropdownList"><!-- populated by renderLessonDropdownInto() --></div>
@@ -824,7 +798,7 @@ list to copy entries from.
     <!-- + language tile launcher above, not the old scrolling lesson strip. -->
     <div class="hidden">
       <button id="startBtn"></button>
-      <span id="heroLessonTitle">Lesson 0: SHEET 0 (narration)</span>
+      <span id="heroLessonTitle">Lesson 0: Instrucciones</span>
       <span id="heroStats"></span>
       <select id="courseSelect"></select>
       <div id="sheetMeta"></div>
@@ -842,7 +816,7 @@ list to copy entries from.
       </button>
       <div class="home-pill-wrap">
         <button class="nav-btn nav-home-pill" id="lessonDropdownBtn" title="Choose lesson">
-          <span id="playerHomeLabel">Lesson 0 of 20</span>
+          <span id="playerHomeLabel">Lesson 0 of 15</span>
           <span class="chev"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span>
         </button>
         <div class="home-dropdown-list hidden" id="homeDropdownList"><!-- populated by renderLessonDropdownInto() --></div>
@@ -915,9 +889,13 @@ list to copy entries from.
          "Target language" labels used to sit stacked above their own
          select, spread across the row; now they're one shared caption
          line, side by side, above the whole pair. -->
-    <div class="card" style="margin-top:10px;">
-      <div class="lang-pair-caption"><span class="src">Source language</span><span>→</span><span class="tgt">Target language</span></div>
-      <div class="lang-grid" style="margin-top:0; padding-top:0; border-top:none;">
+    <!-- English-only course: the source/target caption, selects and swap button stay in the
+         DOM (JS binds to them) but are hidden, so nobody can flip to English -> Spanish.
+         The voice/gender warning notes below still show when needed; the card itself
+         is hidden while none of them are visible (see langPairCard script). -->
+    <div class="card hidden" id="langPairCard" style="margin-top:10px;">
+      <div class="lang-pair-caption hidden"><span class="src">Source language</span><span>→</span><span class="tgt">Target language</span></div>
+      <div class="lang-grid hidden" style="margin-top:0; padding-top:0; border-top:none;">
         <div class="lang-col src">
           <select id="srcLangSelect"></select>
         </div>
@@ -939,13 +917,16 @@ list to copy entries from.
           <div class="subgroup-label">Characters &amp; voices</div>
           <div id="charactersList"></div>
 
-          <div class="subgroup-label">Session style</div>
-          <div class="toggle-row" id="drillStyleRow">
-            <button class="toggle-pill on" data-val="narrator">Narrator</button>
-            <button class="toggle-pill" data-val="exposure">Hands-free</button>
-            <button class="toggle-pill" data-val="judge">Slow practice</button>
+          <!-- Session style is fixed to 'narrator' in this build; the old
+               Hands-free / Slow practice toggle is kept hidden so JS bindings resolve. -->
+          <div class="hidden">
+            <div class="subgroup-label">Session style</div>
+            <div class="toggle-row" id="drillStyleRow">
+              <button class="toggle-pill on" data-val="exposure">Hands-free</button>
+              <button class="toggle-pill" data-val="judge">Slow practice</button>
+            </div>
+            <div class="note hidden" id="drillListenNote"></div>
           </div>
-          <div class="note hidden" id="drillListenNote"></div>
 
         </div>
       </details>
@@ -975,8 +956,7 @@ list to copy entries from.
 <!-- directly on the drill screen (the standalone setup drawer is gone)   -->
 <div class="hidden">
   <div class="toggle-row" id="styleRow">
-    <button class="toggle-pill on" data-val="narrator">Narrator</button>
-    <button class="toggle-pill" data-val="exposure">Hands-free</button>
+    <button class="toggle-pill on" data-val="exposure">Hands-free</button>
     <button class="toggle-pill" data-val="judge">Slow practice</button>
   </div>
   <div id="listenNote"></div>
@@ -1181,110 +1161,75 @@ document.addEventListener('DOMContentLoaded', ()=>{
    languages nobody has selected yet.
    ============================================================ */
 /* ============================================================
-   ALL-LANGUAGES TEMPLATE — this build is NOT a real product. It is a
-   from-scratch base for future course files, kept as small as possible
-   while proving that every language in RULES_GLOBAL's Language -> File
-   Index is wired up and playable end to end (loads, shows on the home
-   screen in the right order, and speaks without a silent-voice failure).
+   ERRORES COMUNES — course data, baked in at build time from
+   Errores_final_version_audited.xlsx (the workbook stays the source of
+   truth: fix content there, then rebuild).
 
-   To keep this template small:
-     - Only 2-3 placeholder characters remain (see `characters` in
-       BUILT_IN_COURSE below) -- rename/re-gender/add more when starting
-       a real course.
-     - Every sheet has been stripped down to exactly ONE line of
-       dialogue (see ROWS_0..ROWS_19 below). The 20 sheets themselves
-       were kept only so the lesson-picker/progress UI has something to
-       page through -- collapse or expand that list freely for a real
-       course.
-     - The dummy line IS the same simple greeting ("Hello") translated
-       into all 44 languages/registers -- e.g. "Hola", "Bonjour",
-       "こんにちは". It must stay the SAME meaning in every column:
-       earlier this line was each language's own
-       self-referential "I speak ___" phrase, which broke the moment
-       someone picked two different languages to test against each other
-       (the source line and target line said different things). Don't
-       reintroduce that pattern -- if you add a language or edit this
-       line, keep every column a translation of the same one phrase.
-
-   BASE_LANGS below therefore equals the FULL MASTER_LANGUAGE_CATALOG
-   (all 44 languages/registers currently documented in RULES_GLOBAL,
-   English included) rather than a small per-course subset. When
-   starting a real course from this template, trim BASE_LANGS (and the
-   matching columns in every ROWS_N row) down to just the languages
-   that course actually needs -- MASTER_LANGUAGE_CATALOG stays below as
-   the master list to copy entries back out of later.
-
-   Row shape: [SPEAKER, <one cell per BASE_LANGS entry, in the exact
-   same order as BASE_LANGS>]. BASE_LANGS' order is: Spanish (South
-   American) first, Portuguese (Brazilian) second, every other language
-   alphabetical by label, English last -- this is the SAME fixed order
-   sortLangTiles()/renderLangTiles() use for the home-screen language
-   tiles (search "sortLangTiles" below), so BASE_LANGS' column order and
-   the tile order on screen always match.
+   Only two languages exist in this build: Spanish (the explanation
+   the learner hears/reads) and English (the demonstration they repeat).
+   Row shape: [SPEAKER, Spanish, English]. Blank spacer rows from the
+   workbook are dropped. A row with Spanish only is a framing/teaching
+   line (plays once); a row with no Spanish directly after another row
+   is an "alt" row and is grouped with the row above it (see
+   buildActiveLines' narrator branch). Tone tags stay inline, in English.
+   Pipe syntax ("displayed |spoken") is supported in any cell.
    ============================================================ */
-// ERRORES: trimmed from the full 44-language template list to just Spanish
-// (source/explanation) and English (target/demonstration). The full list
-// lives on in MASTER_LANGUAGE_CATALOG below.
 const BASE_LANGS = [
   {code:'es', label:'Spanish (South American)', voiceLang:'es-419'},
   {code:'en', label:'English', voiceLang:'en-US'},
 ];
 
-
-const ROWS_1 = [["Roger", "[matter-of-fact] Vamos a practicar sonidos del inglés que el español no tiene o trata distinto — empezando por 's' más consonante, donde solemos añadir una 'e' delante. |Vamos a practicar sonidos del inglés que el español no tiene o trata distinto — empezando por ese más consonante, donde solemos añadir una e delante.", "", ""], ["Roger", "[matter-of-fact] En esta lección vas a escuchar tres cosas: una palabra en español, esa palabra mal pronunciada en inglés con el mismo acento del español, y por último la versión correcta con voz en inglés.", "", ""], ["Roger", "[matter-of-fact] Ahora con la pasta larga y delgada.", "[matter-of-fact] Spaghetti.", "espaguetis"], ["Roger", "[matter-of-fact] Ahora con la palabra 'estudiante'.", "[matter-of-fact] Student.", "estudent"], ["Roger", "[matter-of-fact] Ahora con 'espacio'.", "[matter-of-fact] Space.", "espeis"], ["Roger", "[matter-of-fact] Ahora con el país 'España'.", "[matter-of-fact] Spain.", "espein"], ["Roger", "[matter-of-fact] Sigamos con 'especial'.", "[matter-of-fact] Special.", "espeshal"], ["Roger", "[matter-of-fact] Ahora con el verbo 'parar'.", "[matter-of-fact] Stop.", "estop"], ["Roger", "[matter-of-fact] Y por último, con 'hablar'.", "[matter-of-fact] Speak.", "espik"], ["Roger", "[matter-of-fact] Escucha la diferencia.", "", ""], ["Roger", "", "[matter-of-fact] Ship.", ""], ["Roger", "", "[matter-of-fact] Sheep.", ""], ["Roger", "[matter-of-fact] Escucha la diferencia.", "", ""], ["Roger", "", "[matter-of-fact] This.", ""], ["Roger", "", "[matter-of-fact] These.", ""], ["Roger", "[matter-of-fact] Escucha la diferencia.", "", ""], ["Roger", "", "[matter-of-fact] Sit.", ""], ["Roger", "", "[matter-of-fact] Seat.", ""], ["Roger", "[matter-of-fact] Escucha la diferencia entre la 'b' y la 'v'. |Escucha la diferencia entre la be y la ve.", "", ""], ["Roger", "", "[matter-of-fact] Berry.", ""], ["Roger", "", "[matter-of-fact] Very.", ""], ["Roger", "[matter-of-fact] Escucha la diferencia — este sonido no existe en el español de Latinoamérica.", "", ""], ["Roger", "", "[matter-of-fact] Think.", ""], ["Roger", "", "[matter-of-fact] Sink.", ""], ["Roger", "[matter-of-fact] Mira cómo suena — la 'h' es muda en las dos. |Mira cómo suena — la hache es muda en las dos.", "", ""], ["Roger", "", "[matter-of-fact] Hour.", ""], ["Roger", "", "[matter-of-fact] Honest.", ""]];
-const ROWS_2 = [["Heather", "[matter-of-fact] Hay palabras en español que se parecen mucho a palabras en inglés pero significan algo distinto — se llaman 'falsos amigos' y causan muchos malentendidos.", "", ""], ["Heather", "[matter-of-fact] En inglés, 'embarazada' es 'pregnant', no 'embarrassed'.", "[matter-of-fact] I'm pregnant — not embarrassed.", ""], ["Heather", "[matter-of-fact] 'Molestar' es 'to bother', no 'to molest' — ten cuidado con esa palabra.", "[matter-of-fact] Please don't bother me.", ""], ["Heather", "[matter-of-fact] 'Actualmente' significa 'currently', no 'actually'.", "[matter-of-fact] I currently live in Boston.", ""], ["Heather", "[matter-of-fact] 'Asistir' es 'to attend', no 'to assist'.", "[matter-of-fact] I need to attend the meeting.", ""], ["Heather", "[matter-of-fact] 'Realizar' significa 'to carry out', no 'to realize'.", "[matter-of-fact] We finished the plan.", ""], ["Heather", "[casual] 'Carpeta' es 'folder', no 'carpet'.", "[casual] Put it in the folder.", ""], ["Heather", "[matter-of-fact] 'Éxito' significa 'success', no 'exit'.", "[matter-of-fact] The project was a success.", ""], ["Heather", "[matter-of-fact] 'Librería' es 'bookstore', no 'library'.", "[matter-of-fact] Let's go to the bookstore.", ""], ["Heather", "[matter-of-fact] 'Fábrica' es 'factory', no 'fabric'.", "[matter-of-fact] He works at the factory.", ""], ["Heather", "[casual] 'Sopa' es 'soup', no 'soap'.", "[casual] I want some soup.", ""]];
-const ROWS_3 = [["Heather", "[matter-of-fact] Para la edad y para muchas sensaciones — hambre, sed, miedo, frío, calor — el español usa 'tener', pero el inglés usa 'to be'.", "", ""], ["Heather", "[matter-of-fact] En español decimos 'tengo 30 años', pero en inglés se usa 'to be'.", "[matter-of-fact] I'm 30.", ""], ["Heather", "[matter-of-fact] 'Tengo hambre' en inglés es 'I'm hungry', no 'I have hunger'.", "[matter-of-fact] I'm hungry.", ""], ["Heather", "[matter-of-fact] 'Tengo sed' se dice 'I'm thirsty'.", "[matter-of-fact] I'm thirsty.", ""], ["Heather", "[matter-of-fact] 'Tengo miedo' se dice 'I'm scared'.", "[matter-of-fact] I'm scared.", ""], ["Heather", "[matter-of-fact] 'Tengo frío' se dice 'I'm cold'.", "[matter-of-fact] I'm cold.", ""], ["Heather", "[matter-of-fact] 'Tengo calor' se dice 'I'm hot'.", "[matter-of-fact] I'm hot.", ""], ["Heather", "[matter-of-fact] 'Tengo razón' se dice 'I'm right'.", "[matter-of-fact] I'm right.", ""], ["Heather", "[matter-of-fact] Ojo: 'estoy de acuerdo' no es 'I am agree' — se dice 'I agree'.", "[matter-of-fact] I agree with you.", ""]];
-const ROWS_4 = [["Heather", "[matter-of-fact] En español 'hacer' cubre 'make' y 'do', y a veces se esconde detrás de sinónimos como 'tomar' o 'ganar' — pero el inglés igual tiene que elegir entre 'make' y 'do'.", "", ""], ["Heather", "[matter-of-fact] 'Hacer la tarea' es 'do homework', no 'make homework'.", "[matter-of-fact] I need to do my homework.", ""], ["Heather", "[matter-of-fact] 'Tomar una decisión' se dice 'to make a decision' — no 'take'.", "[matter-of-fact] I have to make a decision.", ""], ["Heather", "[matter-of-fact] 'Hacer ejercicio' es 'do exercise'.", "[matter-of-fact] I do exercise every morning.", ""], ["Heather", "[matter-of-fact] 'Hacer un esfuerzo' es 'make an effort'.", "[matter-of-fact] Please make an effort.", ""], ["Heather", "[matter-of-fact] 'Hacer las camas' es 'make the beds'.", "[matter-of-fact] I make the beds every day.", ""], ["Heather", "[matter-of-fact] 'Hacer las compras' es 'do the shopping'.", "[matter-of-fact] I do the shopping on Fridays.", ""], ["Heather", "[matter-of-fact] 'Ganar dinero' es 'to make money' en inglés.", "[matter-of-fact] She makes good money.", ""], ["Heather", "[matter-of-fact] 'Hacer la cena' es 'make dinner'.", "[matter-of-fact] I'll make dinner tonight.", ""]];
-const ROWS_5 = [["Roger", "[matter-of-fact] Este error es de orden — sin darnos cuenta, colocamos el adjetivo como en español — así que vamos a practicar el orden del inglés.", "", ""], ["Roger", "[matter-of-fact] En español el adjetivo va después del sustantivo — en inglés, antes.", "[matter-of-fact] A red car.", ""], ["Roger", "[matter-of-fact] 'Una casa grande' es 'a big house'.", "[matter-of-fact] A big house.", ""], ["Roger", "[matter-of-fact] 'Una buena idea' es 'a good idea' — aquí el adjetivo va antes en los dos idiomas.", "[matter-of-fact] A good idea.", ""], ["Roger", "[matter-of-fact] 'Un libro interesante' es 'an interesting book'.", "[matter-of-fact] An interesting book.", ""], ["Roger", "[matter-of-fact] 'Ojos bonitos' es 'pretty eyes'.", "[matter-of-fact] Pretty eyes.", ""], ["Roger", "[matter-of-fact] 'Ropa nueva' es 'new clothes'.", "[matter-of-fact] New clothes.", ""], ["Roger", "[matter-of-fact] 'Un edificio alto' es 'a tall building'.", "[matter-of-fact] A tall building.", ""], ["Roger", "[matter-of-fact] 'Una camisa nueva' es 'a new shirt' — nunca 'a shirt new'.", "[matter-of-fact] A new shirt.", ""], ["Roger", "[matter-of-fact] Con más de un adjetivo, el inglés también tiene un orden fijo: tamaño antes que color.", "[matter-of-fact] A small red car.", ""], ["Roger", "[matter-of-fact] Tamaño antes que origen.", "[matter-of-fact] A small French house.", ""]];
-const ROWS_6 = [["Heather", "[matter-of-fact] En español es normal poner dos negativos en la misma oración, como 'no sé nada', pero en inglés solo puede haber un negativo.", "", ""], ["Heather", "[matter-of-fact] En español se acumulan negativos — en inglés, no.", "[matter-of-fact] I don't know anything.", ""], ["Heather", "[matter-of-fact] 'No conozco a nadie' es 'I don't know anyone'.", "[matter-of-fact] I don't know anyone.", ""], ["Heather", "[matter-of-fact] 'No quiero nada' es 'I don't want anything'.", "[matter-of-fact] I don't want anything.", ""], ["Heather", "[matter-of-fact] 'No dijo nada' es 'she didn't say anything'.", "[matter-of-fact] She didn't say anything.", ""], ["Heather", "[matter-of-fact] 'No voy nunca' es 'I never go'.", "[matter-of-fact] I never go.", ""], ["Heather", "[matter-of-fact] 'No hay nada que hacer' es 'there's nothing to do' — el negativo va en 'nothing', no en el verbo.", "[matter-of-fact] There's nothing to do.", ""], ["Heather", "[matter-of-fact] 'No vi a nadie' es 'I didn't see anyone'.", "[matter-of-fact] I didn't see anyone.", ""], ["Heather", "[matter-of-fact] 'Tampoco' se dice 'either' o 'neither', según la oración.", "[matter-of-fact] I don't like it either.", ""], ["Heather", "[matter-of-fact] 'Ni... ni' se dice 'neither... nor'.", "[matter-of-fact] I like neither coffee nor tea.", ""], ["Heather", "[matter-of-fact] 'Ningún/ninguna' no es un negativo extra — sigue siendo un solo 'not/any'.", "[matter-of-fact] I don't have any problems.", ""]];
-const ROWS_7 = [["Roger", "[matter-of-fact] Las preposiciones casi nunca se corresponden una a una entre los dos idiomas, así que aquí no hay una regla fija — solo patrones para escuchar y repetir.", "", ""], ["Roger", "[matter-of-fact] 'En la mesa' es 'on the table' — 'en' cubre varias preposiciones en inglés.", "[matter-of-fact] On the table.", ""], ["Roger", "[matter-of-fact] 'En la pared' es 'on the wall'.", "[matter-of-fact] On the wall.", ""], ["Roger", "[matter-of-fact] 'En el cielo' es 'in the sky'.", "[matter-of-fact] In the sky.", ""], ["Roger", "[matter-of-fact] 'En casa' es 'at home'.", "[matter-of-fact] At home.", ""], ["Roger", "[matter-of-fact] Ahora un tipo distinto: verbos en español que llevan una preposición fija, diferente a la del inglés.", "", ""], ["Roger", "[matter-of-fact] 'Pensar en' es 'think about', no 'think in'.", "[matter-of-fact] I think about it a lot.", ""], ["Roger", "[matter-of-fact] 'Depender de' es 'depend on'.", "[matter-of-fact] It depends on you.", ""], ["Roger", "[matter-of-fact] 'Casarse con' no lleva preposición en inglés.", "[matter-of-fact] She married him.", ""], ["Roger", "[matter-of-fact] 'Soñar con' es 'dream about'.", "[matter-of-fact] I dream about it.", ""], ["Roger", "[matter-of-fact] 'Enamorarse de' es 'fall in love with'.", "[matter-of-fact] I fell in love with her.", ""]];
-const ROWS_8 = [["Heather", "[matter-of-fact] En español una sola palabra, 'su', sirve para muchos dueños distintos, pero el inglés tiene una palabra diferente para cada uno.", "", ""], ["Heather", "[matter-of-fact] 'Su libro' puede ser 'his book', 'her book', 'their book' o 'your book' — depende del contexto.", "[matter-of-fact] His book.", ""], ["Heather", "", "[matter-of-fact] Her book.", ""], ["Heather", "", "[matter-of-fact] Their book.", ""], ["Heather", "", "[matter-of-fact] Your book.", ""], ["Heather", "[matter-of-fact] 'Ella hace su cama' — no la cama de él.", "[matter-of-fact] She makes her bed.", ""], ["Heather", "[matter-of-fact] 'Él llama a su mamá' — el sujeto aclara el posesivo.", "[matter-of-fact] He calls his mom.", ""], ["Heather", "[matter-of-fact] 'Le dije a ella' aclara que el pronombre es femenino.", "[matter-of-fact] I told her.", ""], ["Heather", "[matter-of-fact] 'Le dije a él' aclara que el pronombre es masculino.", "[matter-of-fact] I told him.", ""]];
-const ROWS_9 = [["Roger", "[matter-of-fact] Aquí van varios errores comunes de tiempos verbales y de orden de palabras, donde traducir directamente del español no funciona.", "", ""], ["Roger", "[matter-of-fact] 'Voy a ir' es 'I'm going to go' — nunca 'I go to go'.", "[matter-of-fact] I'm going to go.", ""], ["Roger", "[matter-of-fact] 'Estoy pensando que...' se dice 'I think', no 'I'm thinking'.", "[matter-of-fact] I think it's a good idea.", ""], ["Roger", "[matter-of-fact] 'La veo mañana' se dice con presente continuo, no 'I see her tomorrow'.", "[matter-of-fact] I'm seeing her tomorrow.", ""], ["Roger", "[matter-of-fact] Para algo temporal, 'trabajo desde casa' se dice con presente continuo.", "[matter-of-fact] I'm working from home.", ""], ["Roger", "[matter-of-fact] '¿Qué haces?' en este momento es 'what are you doing', no 'what do you do'.", "[matter-of-fact] What are you doing?", ""], ["Roger", "[matter-of-fact] 'Desde hace tres años' se dice 'for three years', con present perfect.", "[matter-of-fact] I've lived here for three years.", ""], ["Roger", "[matter-of-fact] El imperfecto de hábito ('jugaba todos los días') no siempre es 'was playing' — a veces es solo 'played'.", "[matter-of-fact] I played soccer every day as a kid.", ""], ["Roger", "[matter-of-fact] En español el adverbio puede ir después del verbo y el objeto — en inglés va antes del verbo principal.", "[matter-of-fact] I always eat breakfast at seven.", ""], ["Roger", "[matter-of-fact] Otra vez con 'ir a' — no se dice 'I go to eat', se dice 'I'm going to eat'.", "[matter-of-fact] I'm going to eat now.", ""]];
-const ROWS_10 = [["Roger", "[matter-of-fact] Este es uno de los errores más comunes: oraciones en inglés que suenan incompletas porque les falta el sujeto.", "", ""], ["Roger", "[matter-of-fact] En español se puede omitir el sujeto — en inglés, no.", "[matter-of-fact] It's important.", ""], ["Roger", "[matter-of-fact] 'Es tarde' necesita el sujeto 'it' en inglés.", "[matter-of-fact] It's late.", ""], ["Roger", "[matter-of-fact] Es difícil — con 'it' en inglés.", "[matter-of-fact] It's difficult. It's hard. |It's difficult,,,, It's hard.", ""], ["Roger", "[matter-of-fact] 'Llueve' no tiene sujeto en español, pero en inglés sí.", "[matter-of-fact] It's raining.", ""], ["Roger", "[matter-of-fact] 'Hace calor' se dice 'it's hot'.", "[matter-of-fact] It's hot.", ""], ["Roger", "[matter-of-fact] 'Hay un problema' usa 'there' en inglés, no 'it'.", "[matter-of-fact] There's a problem.", ""], ["Roger", "[matter-of-fact] 'Hay mucha gente' se dice 'there are'.", "[matter-of-fact] There are a lot of people.", ""], ["Roger", "[matter-of-fact] 'Se dice que es verdad' — el sujeto implícito es 'they'.", "[matter-of-fact] They say it's true.", ""], ["Roger", "[matter-of-fact] 'Se vende' se dice con 'it'.", "[matter-of-fact] It's for sale.", ""]];
-const ROWS_11 = [["Heather", "[matter-of-fact] En español, 'ser' y 'estar' cambian el significado de muchos adjetivos — la misma palabra, un significado distinto según el verbo.", "", ""], ["Heather", "[matter-of-fact] En inglés, los dos se traducen como 'to be', así que hay que aprender el significado de memoria.", "", ""], ["Heather", "[matter-of-fact] Escucha — la misma palabra, un verbo distinto.", "", ""], ["Heather", "[matter-of-fact] Soy aburrido.", "[matter-of-fact] I'm boring.", ""], ["Heather", "[matter-of-fact] Estoy aburrido.", "[matter-of-fact] I'm bored.", ""], ["Heather", "[matter-of-fact] Otra vez.", "", ""], ["Heather", "[matter-of-fact] Es listo.", "[matter-of-fact] He's smart.", ""], ["Heather", "[matter-of-fact] Está listo.", "[matter-of-fact] He's ready.", ""], ["Heather", "[matter-of-fact] Una más.", "", ""], ["Heather", "[matter-of-fact] Es malo.", "[matter-of-fact] He's a bad person.", ""], ["Heather", "[matter-of-fact] Está malo.", "[matter-of-fact] He's sick.", ""], ["Heather", "[matter-of-fact] Ahora con un color.", "", ""], ["Heather", "[matter-of-fact] Es verde.", "[matter-of-fact] It's green.", ""], ["Heather", "[matter-of-fact] Está verde.", "[matter-of-fact] It's not ripe yet.", ""], ["Heather", "[matter-of-fact] Sigamos.", "", ""], ["Heather", "[matter-of-fact] Es seguro.", "[matter-of-fact] It's safe.", ""], ["Heather", "[matter-of-fact] Está seguro.", "[matter-of-fact] He's sure.", ""], ["Heather", "[matter-of-fact] Escucha otra.", "", ""], ["Heather", "[matter-of-fact] Es cansado.", "[matter-of-fact] It's tiring.", ""], ["Heather", "[matter-of-fact] Está cansado.", "[matter-of-fact] He's tired.", ""], ["Heather", "[matter-of-fact] Otra más.", "", ""], ["Heather", "[matter-of-fact] Es frío.", "[matter-of-fact] He's cold-hearted.", ""], ["Heather", "[matter-of-fact] Está frío.", "[matter-of-fact] It's cold.", ""], ["Heather", "[matter-of-fact] Ahora con dos palabras distintas.", "", ""], ["Heather", "[matter-of-fact] Es interesante.", "[matter-of-fact] It's interesting.", ""], ["Heather", "[matter-of-fact] Estoy interesado.", "[matter-of-fact] I'm interested.", ""], ["Heather", "[matter-of-fact] Y la última.", "", ""], ["Heather", "[matter-of-fact] Es emocionante.", "[matter-of-fact] It's exciting.", ""], ["Heather", "[matter-of-fact] Estoy emocionado.", "[matter-of-fact] I'm excited.", ""]];
-const ROWS_12 = [["Roger", "[matter-of-fact] En español, 'por' y 'para' cubren ideas distintas — motivo, destinatario, dirección, tiempo — pero en inglés casi todo se traduce como 'for'.", "", ""], ["Roger", "[matter-of-fact] Vamos a escuchar oraciones casi idénticas donde solo cambia 'por' o 'para', y el significado cambia por completo.", "", ""], ["Roger", "[matter-of-fact] Escucha — la misma oración, una palabra distinta.", "", ""], ["Roger", "[matter-of-fact] Lo compré por ti.", "[matter-of-fact] I bought it because of you.", ""], ["Roger", "[matter-of-fact] Lo compré para ti.", "[matter-of-fact] I bought it for you.", ""], ["Roger", "[matter-of-fact] Otra vez — solo cambia una palabra.", "", ""], ["Roger", "[matter-of-fact] Trabajo por mi hermano.", "[matter-of-fact] I'm covering for my brother.", ""], ["Roger", "[matter-of-fact] Trabajo para mi hermano.", "[matter-of-fact] I work for my brother.", ""], ["Roger", "[matter-of-fact] Una vez más.", "", ""], ["Roger", "[matter-of-fact] Camino por el parque.", "[matter-of-fact] I'm walking through the park.", ""], ["Roger", "[matter-of-fact] Camino para el parque.", "[matter-of-fact] I'm walking to the park.", ""], ["Roger", "[matter-of-fact] 'Para' con una fecha significa una fecha límite.", "[matter-of-fact] I need this by tomorrow.", ""], ["Roger", "[matter-of-fact] 'Gracias por' agradece algo que ya pasó.", "[matter-of-fact] Thanks for coming.", ""], ["Roger", "[matter-of-fact] 'Por' también puede significar 'a cambio de'.", "[matter-of-fact] I paid ten dollars for it.", ""], ["Roger", "[matter-of-fact] 'Por la mañana' es una parte general del día, no una hora exacta.", "[matter-of-fact] I work in the morning.", ""], ["Roger", "[matter-of-fact] 'Para' más un verbo indica el propósito — en inglés se dice 'to'.", "[matter-of-fact] I'm saving money to travel.", ""], ["Roger", "[matter-of-fact] 'Por' también indica el medio, como 'por correo electrónico' o 'por teléfono'.", "[matter-of-fact] I'll send it by email.", ""], ["Roger", "[matter-of-fact] 'Para mí' se dice 'to me' cuando das tu opinión.", "[matter-of-fact] To me, it's easy.", ""], ["Roger", "[matter-of-fact] 'Por eso' se dice 'that's why'.", "[matter-of-fact] That's why I'm late.", ""], ["Roger", "[matter-of-fact] 'Por' con cantidades se dice 'per'.", "[matter-of-fact] It's five dollars per person.", ""]];
-const ROWS_13 = [["Heather", "[matter-of-fact] En español una sola palabra cubre dos ideas que el inglés separa en dos palabras — y si usamos la palabra equivocada, la oración suena rara.", "", ""], ["Heather", "[matter-of-fact] 'Prestar' es 'lend' cuando tú das y 'borrow' cuando tú recibes.", "[matter-of-fact] Can you lend me a pen?", ""], ["Heather", "", "[matter-of-fact] Can I borrow a pen?", ""], ["Heather", "[matter-of-fact] 'Mucho' se dice 'a lot of' en oraciones afirmativas — 'many' y 'much' se usan más en preguntas y negativos.", "[matter-of-fact] I have a lot of friends.", ""], ["Heather", "", "[matter-of-fact] How many friends do you have?", ""], ["Heather", "[matter-of-fact] 'Ver' cubre 'see' y 'watch' — con la tele y las películas se dice 'watch'.", "[matter-of-fact] I watch TV at night.", ""], ["Heather", "", "[matter-of-fact] I see a bird outside.", ""], ["Heather", "[matter-of-fact] 'Tocar' un instrumento es 'play', no 'touch'.", "[matter-of-fact] I play the guitar.", ""], ["Heather", "[matter-of-fact] 'Decir' cubre 'say' y 'tell'; 'tell' lleva a la persona sin 'to'.", "[matter-of-fact] He told me the truth.", ""], ["Heather", "", "[matter-of-fact] She said hello.", ""], ["Heather", "[matter-of-fact] 'Esperar' cubre 'wait for' y 'hope' — con un autobús se dice 'wait for'.", "[matter-of-fact] I'm waiting for the bus.", ""], ["Heather", "", "[matter-of-fact] I hope you feel better.", ""], ["Heather", "[matter-of-fact] 'Tiempo' es 'time' o 'weather'; para el clima se dice 'weather'.", "[matter-of-fact] How's the weather today?", ""], ["Heather", "", "[matter-of-fact] I don't have time.", ""], ["Heather", "[matter-of-fact] 'Pasar' cubre 'pass', 'spend' y 'happen'; con tiempo se dice 'spend'.", "[matter-of-fact] I spent two hours there.", ""]];
-const ROWS_14 = [["Heather", "[matter-of-fact] En español muchos verbos llevan 'me', 'te', 'se' — en inglés casi nunca se dice 'myself', 'himself', etc. para lo mismo.", "", ""], ["Heather", "[matter-of-fact] 'Me acuerdo de ti' es 'I remember you', no 'I remember myself of you'.", "[matter-of-fact] I remember you.", ""], ["Heather", "[matter-of-fact] 'Me voy' es 'I'm leaving'.", "[matter-of-fact] I'm leaving.", ""], ["Heather", "[matter-of-fact] 'Se despertó temprano' es 'he woke up early'.", "[matter-of-fact] He woke up early.", ""], ["Heather", "[matter-of-fact] 'Me siento mal' es 'I feel bad', no 'I feel myself bad'.", "[matter-of-fact] I feel bad.", ""], ["Heather", "[matter-of-fact] 'Nos vemos mañana' es simplemente 'see you tomorrow'.", "[matter-of-fact] See you tomorrow.", ""], ["Heather", "[matter-of-fact] 'Me equivoqué' es 'I made a mistake', no 'I mistook myself'.", "[matter-of-fact] I made a mistake.", ""], ["Heather", "[matter-of-fact] 'Se casó el año pasado' es 'he got married last year'.", "[matter-of-fact] He got married last year.", ""], ["Heather", "[matter-of-fact] 'Me quedé en casa' es 'I stayed home'.", "[matter-of-fact] I stayed home.", ""], ["Heather", "[matter-of-fact] 'Me levanto temprano' es 'I get up early', no 'I raise myself'.", "[matter-of-fact] I get up early.", ""], ["Heather", "[matter-of-fact] 'Me llamo Ana' es 'my name's Ana', no 'I call myself Ana'.", "[matter-of-fact] My name's Ana.", ""], ["Heather", "[matter-of-fact] 'Me divertí' es 'I had fun', no 'I amused myself'.", "[matter-of-fact] I had a lot of fun.", ""], ["Heather", "[matter-of-fact] 'Me olvidé' es 'I forgot', no 'I forgot myself'.", "[matter-of-fact] I forgot my keys.", ""]];
-const ROWS_15 = [["Roger", "[matter-of-fact] En español se usa mucho el pretérito simple donde el inglés necesita el present perfect — sobre todo con 'ya', 'nunca', 'desde' y 'todavía'.", "", ""], ["Roger", "[matter-of-fact] 'Nunca fui a España' es 'I've never been to Spain', no 'I never went'.", "[matter-of-fact] I've never been to Spain.", ""], ["Roger", "[matter-of-fact] '¿Ya terminaste?' es 'have you finished yet?'.", "[matter-of-fact] Have you finished yet?", ""], ["Roger", "[matter-of-fact] 'He vivido aquí tres años' es 'I've lived here for three years'.", "[matter-of-fact] I've lived here for three years.", ""], ["Roger", "[matter-of-fact] 'Trabajé aquí desde 2020' se dice 'I've worked here since 2020' — no 'I worked here since'.", "[matter-of-fact] I've worked here since 2020.", ""], ["Roger", "[matter-of-fact] 'Todavía no he terminado' es 'I haven't finished yet'.", "[matter-of-fact] I haven't finished yet.", ""], ["Roger", "[matter-of-fact] '¿Alguna vez has probado sushi?' es 'have you ever tried sushi?'.", "[matter-of-fact] Have you ever tried sushi?", ""], ["Roger", "[matter-of-fact] 'Ya comí' es 'I've already eaten'.", "[matter-of-fact] I've already eaten.", ""], ["Roger", "[matter-of-fact] 'Nunca he estado tan cansado' es 'I've never been this tired'.", "[matter-of-fact] I've never been this tired.", ""], ["Roger", "[matter-of-fact] '¿Viste mi teléfono?' es 'have you seen my phone?' cuando todavía lo estás buscando.", "[matter-of-fact] Have you seen my phone?", ""], ["Roger", "[matter-of-fact] 'Este año trabajé mucho' es 'I've worked a lot this year' — el año todavía no termina.", "[matter-of-fact] I've worked a lot this year.", ""], ["Roger", "[matter-of-fact] 'Acabo de terminar' es 'I've just finished'.", "[matter-of-fact] I've just finished.", ""], ["Roger", "[matter-of-fact] 'Perdí mis llaves' es 'I've lost my keys' cuando todavía no las encuentras.", "[matter-of-fact] I've lost my keys.", ""]];
+const ROWS_0 = [["Heather", "[matter-of-fact] Este minicurso se enfoca solo en los errores que cometen los hispanohablantes al aprender inglés, así que estas lecciones pueden ser un poco más difíciles que las de otros cursos. Tómate tu tiempo y repítelas las veces que haga falta.", null]];
+const ROWS_1 = [["Roger", "[matter-of-fact] Vamos a practicar sonidos del inglés que el español no tiene o trata distinto — empezando por 's' más consonante, donde solemos añadir una 'e' delante.", null], ["Roger", "[matter-of-fact] Ahora con los fideos — en español decimos 'espaguetis', con esa 'e' delante y la 's' al final, para marcar bien el sonido.", "[matter-of-fact] Spaghetti."], ["Roger", "[matter-of-fact] Ahora con la palabra 'estudiante'. Dicho mal: estudent.", "[matter-of-fact] Student."], ["Roger", "[matter-of-fact] Ahora con 'espacio'. Dicho mal: espeis.", "[matter-of-fact] Space."], ["Roger", "[matter-of-fact] Ahora con 'España'. Dicho mal: espein.", "[matter-of-fact] Spain."], ["Roger", "[matter-of-fact] Ahora con 'especial': espesial.", "[matter-of-fact] Special."], ["Roger", "[matter-of-fact] Ahora con 'parar': estop.", "[matter-of-fact] Stop."], ["Roger", "[matter-of-fact] Ahora con 'hablar': espik.", "[matter-of-fact] Speak."], ["Roger", "[matter-of-fact] Escuche la diferencia.", null], ["Roger", "[matter-of-fact] Barco.", "[matter-of-fact] Ship."], ["Roger", "[matter-of-fact] Oveja.", "[matter-of-fact] Sheep."], ["Roger", "[matter-of-fact] Esto.", "[matter-of-fact] This."], ["Roger", "[matter-of-fact] Estos.", "[matter-of-fact] These."], ["Roger", "[matter-of-fact] Sentarse.", "[matter-of-fact] Sit."], ["Roger", "[matter-of-fact] Asiento.", "[matter-of-fact] Seat."], ["Roger", "[matter-of-fact] Escucha la diferencia entre la 'b' y la 'v'.", null], ["Roger", "[matter-of-fact] Baya.", "[matter-of-fact] Berry."], ["Roger", "[matter-of-fact] Muy.", "[matter-of-fact] Very."], ["Roger", "[matter-of-fact] Escucha la diferencia — este sonido no existe en el español de Latinoamérica.", null], ["Roger", "[matter-of-fact] Pensar.", "[matter-of-fact] Think."], ["Roger", "[matter-of-fact] Fregadero.", "[matter-of-fact] Sink."], ["Roger", "[matter-of-fact] Mira cómo suena — la 'h' es muda en las dos.", null], ["Roger", "[matter-of-fact] Hora.", "[matter-of-fact] Hour."], ["Roger", "[matter-of-fact] Honesto.", "[matter-of-fact] Honest."]];
+const ROWS_2 = [["Heather", "[matter-of-fact] Hay palabras en español que se parecen mucho a palabras en inglés pero significan algo distinto — se llaman falsos amigos y causan muchos malentendidos.", null], ["Heather", "[matter-of-fact] Embarazada.", "[matter-of-fact] Pregnant."], ["Heather", "[matter-of-fact] Molestar no quiere decir lo mismo en inglés. Mejor no digamos la palabra en inglés que suena así. La palabra que buscan es—", "[matter-of-fact] Bother."], ["Heather", "[matter-of-fact] Igualmente, hay una palabra en inglés que suena parecida a otra en español — mejor evitarla por profesionalismo. La palabra que buscan es 'animado'.", "[matter-of-fact] Excited."], ["Heather", "[matter-of-fact] Actualmente.", "[matter-of-fact] Currently."], ["Heather", "[matter-of-fact] Asistir.", "[matter-of-fact] Attend."], ["Heather", "[matter-of-fact] Realizar.", "[matter-of-fact] Carry out."], ["Heather", "[casual] Carpeta.", "[casual] Folder."], ["Heather", "[matter-of-fact] Éxito.", "[matter-of-fact] Success."], ["Heather", "[matter-of-fact] Librería.", "[matter-of-fact] Bookstore."], ["Heather", "[matter-of-fact] Biblioteca.", "[matter-of-fact] Library."], ["Heather", "[matter-of-fact] Fábrica.", "[matter-of-fact] Factory."], ["Heather", "[casual] Sopa.", "[casual] Soup."]];
+const ROWS_3 = [["Heather", "[matter-of-fact] Para la edad y para muchas sensaciones — hambre, sed, miedo, frío, calor — el español usa tener, pero el inglés usa el verbo que significa ser y estar.", null], ["Heather", "[matter-of-fact] En inglés, no se dice tengo 30 años, se dice soy 30.", "[matter-of-fact] I'm 30."], ["Heather", "[matter-of-fact] En inglés, no se dice tengo hambre, se dice estoy hambriento.", "[matter-of-fact] I'm hungry."], ["Heather", "[matter-of-fact] Tengo sed. Estoy sediento.", "[matter-of-fact] I'm thirsty."], ["Heather", "[matter-of-fact] Tengo miedo. Estoy miedoso.", "[matter-of-fact] I'm scared."], ["Heather", "[matter-of-fact] Tengo frío. Estoy frío.", "[matter-of-fact] I'm cold."], ["Heather", "[matter-of-fact] Tengo calor. Estoy acalorado.", "[matter-of-fact] I'm hot."], ["Heather", "[matter-of-fact] Tengo razón. Estoy correcto.", "[matter-of-fact] I'm right."], ["Heather", "[matter-of-fact] Ojo: aquí el inglés no repite el patrón de ser y estar que acabamos de ver — el verbo va solo.", "[matter-of-fact] I agree with you."]];
+const ROWS_4 = [["Heather", "[matter-of-fact] En español, hacer cubre muchas acciones distintas, y a veces se esconde detrás de otra palabra, como tomar o ganar. En inglés hay que elegir el verbo correcto según el tipo de acción — vamos a escucharlas una por una.", null], ["Heather", "[matter-of-fact] Pon atención: en inglés, hacer se reparte entre varios verbos distintos, y parte de su trabajo pasa a otras palabras. Fíjate bien en los ejemplos que vienen.", null], ["Heather", "[matter-of-fact] Hacer la tarea.", "[matter-of-fact] Do the homework."], ["Heather", "[matter-of-fact] Tomar una decisión — aunque no lleve la palabra hacer, sigue la misma regla.", "[matter-of-fact] Make a decision."], ["Heather", "[matter-of-fact] Hacer ejercicio.", "[matter-of-fact] Do exercise."], ["Heather", "[matter-of-fact] Hacer un esfuerzo.", "[matter-of-fact] Make an effort."], ["Heather", "[matter-of-fact] Hacer las camas.", "[matter-of-fact] Make the beds."], ["Heather", "[matter-of-fact] Hacer las compras.", "[matter-of-fact] Do the shopping."], ["Heather", "[matter-of-fact] Ganar dinero — aunque no lleve la palabra hacer, sigue la misma regla.", "[matter-of-fact] Make money."], ["Heather", "[matter-of-fact] Hacer la cena.", "[matter-of-fact] Make dinner."]];
+const ROWS_5 = [["Roger", "[matter-of-fact] Este error es de orden — sin darnos cuenta, colocamos el adjetivo como en español — así que vamos a practicar el orden del inglés.", null], ["Roger", "[matter-of-fact] Un carro rojo se convierte en un rojo carro.", "[matter-of-fact] A red car."], ["Roger", "[matter-of-fact] Una casa grande.", "[matter-of-fact] A big house."], ["Roger", "[matter-of-fact] Una buena idea — aquí el adjetivo también va antes en los dos idiomas.", "[matter-of-fact] A good idea."], ["Roger", "[matter-of-fact] Un libro interesante.", "[matter-of-fact] An interesting book."], ["Roger", "[matter-of-fact] Ojos bonitos.", "[matter-of-fact] Pretty eyes."], ["Roger", "[matter-of-fact] Ropa nueva.", "[matter-of-fact] New clothes."], ["Roger", "[matter-of-fact] Un edificio alto.", "[matter-of-fact] A tall building."], ["Roger", "[matter-of-fact] Una camisa nueva.", "[matter-of-fact] A new shirt."], ["Roger", "[matter-of-fact] Un carro pequeño y rojo. Con más de un adjetivo, el inglés también tiene un orden fijo: tamaño antes que color.", "[matter-of-fact] A small red car."], ["Roger", "[matter-of-fact] Una casa pequeña y francesa. Tamaño antes que origen.", "[matter-of-fact] A small French house."]];
+const ROWS_6 = [["Heather", "[matter-of-fact] En español es normal poner dos negativos en la misma oración, como no sé nada, pero en inglés solo puede haber un negativo — dos negativos se anulan y el resultado es positivo, igual que en álgebra.", null], ["Heather", "[matter-of-fact] Nada.", "[matter-of-fact] Nothing."], ["Heather", "[matter-of-fact] Cualquier cosa.", "[matter-of-fact] Anything."], ["Heather", "[matter-of-fact] No sé nada.", "[matter-of-fact] I don't know anything."], ["Heather", "[matter-of-fact] Nadie.", "[matter-of-fact] Nobody."], ["Heather", "[matter-of-fact] Cualquiera.", "[matter-of-fact] Anyone."], ["Heather", "[matter-of-fact] No conozco a nadie.", "[matter-of-fact] I don't know anyone."], ["Heather", "[matter-of-fact] No quiero nada.", "[matter-of-fact] I don't want anything."], ["Heather", "[matter-of-fact] Ella no dijo nada.", "[matter-of-fact] She didn't say anything."], ["Heather", "[matter-of-fact] No voy nunca.", "[matter-of-fact] I never go."], ["Heather", "[matter-of-fact] Nunca voy.", "[matter-of-fact] I never go."], ["Heather", "[matter-of-fact] No hay nada que hacer. Aquí, el negativo se pega a la palabra siguiente, no al verbo.", "[matter-of-fact] There's nothing to do."], ["Heather", "[matter-of-fact] A nadie.", "[matter-of-fact] No one."], ["Heather", "[matter-of-fact] A cualquiera.", "[matter-of-fact] Anyone."], ["Heather", "[matter-of-fact] No vi a nadie.", "[matter-of-fact] I didn't see anyone."], ["Heather", "[matter-of-fact] También.", "[matter-of-fact] Too."], ["Heather", "[matter-of-fact] Tampoco.", "[matter-of-fact] Neither."], ["Heather", "[matter-of-fact] A mí tampoco me gusta.", "[matter-of-fact] I don't like it either."], ["Heather", "[matter-of-fact] No me gusta ni el café ni el té.", "[matter-of-fact] I don't like tea or coffee."], ["Heather", "[matter-of-fact] Ningún problema se convierte en 'no problem'.", "[matter-of-fact] No problem."], ["Heather", "[matter-of-fact] No tengo ningún problema.", "[matter-of-fact] I don't have any problems."]];
+const ROWS_7 = [["Roger", "[matter-of-fact] Las preposiciones casi nunca se corresponden una a una entre los dos idiomas, así que aquí no hay una regla fija — solo patrones para escuchar y repetir.", null], ["Roger", "[matter-of-fact] En la mesa se convierte a encima la mesa.", "[matter-of-fact] On the table."], ["Roger", "[matter-of-fact] En la pared se convierte a encima la pared.", "[matter-of-fact] On the wall."], ["Roger", "[matter-of-fact] En el cielo se convierte a adentro el cielo.", "[matter-of-fact] In the sky."], ["Roger", "[matter-of-fact] En casa se convierte a a casa.", "[matter-of-fact] At home."], ["Roger", "[matter-of-fact] Ahora un tipo distinto: verbos en español que llevan una preposición fija, diferente a la del inglés.", null], ["Roger", "[matter-of-fact] Pienso mucho en eso se convierte a pienso sobre eso mucho.", "[matter-of-fact] I think about it a lot."], ["Roger", "[matter-of-fact] Depende de ti se convierte a depende encima ti.", "[matter-of-fact] It depends on you."], ["Roger", "[matter-of-fact] Se casó con él se convierte a casó él — aquí el inglés no usa preposición.", "[matter-of-fact] She married him."], ["Roger", "[matter-of-fact] Sueño con eso se convierte a sueño sobre eso.", "[matter-of-fact] I dream about it."], ["Roger", "[matter-of-fact] Me enamoré de ella se convierte a yo caí en amor con ella.", "[matter-of-fact] I fell in love with her."]];
+const ROWS_8 = [["Heather", "[matter-of-fact] En español una sola palabra, su, sirve para muchos dueños distintos, pero el inglés tiene una palabra diferente para cada uno.", null], ["Heather", "[matter-of-fact] Su libro — puede ser de él, de ella, de ellos o de ti; depende del contexto.", null], ["Heather", "[matter-of-fact] Su libro de él.", "[matter-of-fact] His book."], ["Heather", "[matter-of-fact] Su libro de ella.", "[matter-of-fact] Her book."], ["Heather", "[matter-of-fact] Su libro de ellos.", "[matter-of-fact] Their book."], ["Heather", "[matter-of-fact] Su libro de ti.", "[matter-of-fact] Your book."], ["Heather", "[matter-of-fact] Ella hace su cama — no la cama de él.", "[matter-of-fact] She makes her bed."], ["Heather", "[matter-of-fact] Él llama a su mamá — el sujeto aclara el posesivo.", "[matter-of-fact] He calls his mom."], ["Heather", "[matter-of-fact] Le dije a ella — aclara que el pronombre es femenino.", "[matter-of-fact] I told her."], ["Heather", "[matter-of-fact] Le dije a él — aclara que el pronombre es masculino.", "[matter-of-fact] I told him."]];
+const ROWS_9 = [["Roger", "[matter-of-fact] Aquí van varios errores comunes de tiempos verbales y de orden de palabras, donde traducir directamente del español no funciona.", null], ["Roger", "[matter-of-fact] Voy a ir.", "[matter-of-fact] I'm going to go."], ["Roger", "[matter-of-fact] Estoy yendo a ir.", "[matter-of-fact] I'm going to go."], ["Roger", "[matter-of-fact] Yendo a frecuentemente toma el lugar de \"voy a\".", null], ["Roger", "[matter-of-fact] Estoy pensando que es una buena idea.,,,, o,,,, pienso que es una buena idea", "[matter-of-fact] I think it's a good idea."], ["Roger", "[matter-of-fact] La veo mañana — aquí el inglés usa el presente continuo, no el presente simple.", "[matter-of-fact] I'm seeing her tomorrow."], ["Roger", "[matter-of-fact] Para algo temporal, trabajo desde casa se dice con presente continuo.", "[matter-of-fact] I'm working from home."], ["Roger", "[matter-of-fact] ¿Qué haces? — en este momento, se necesita el presente continuo, no el simple.", "[matter-of-fact] What are you doing?"], ["Roger", "[matter-of-fact] Desde hace tres años — aquí se necesita el presente perfecto.", "[matter-of-fact] I've lived here for three years."], ["Roger", "[matter-of-fact] Jugaba fútbol todos los días de niño.", "[matter-of-fact] I played soccer every day as a kid."], ["Roger", "[matter-of-fact] Desayuno a las siete siempre — en español el adverbio puede ir después del verbo y el objeto; en inglés va antes del verbo principal.", "[matter-of-fact] I always eat breakfast at seven."], ["Roger", "[matter-of-fact] Otra vez con ir a.", "[matter-of-fact] I'm going to eat now."]];
+const ROWS_10 = [["Roger", "[matter-of-fact] Este es uno de los errores más comunes: oraciones en inglés que suenan incompletas porque les falta el sujeto.", null], ["Roger", "[matter-of-fact] Es importante se dice lo es importante.", "[matter-of-fact] It's important."], ["Roger", "[matter-of-fact] Es tarde se convierte a lo es tarde.", "[matter-of-fact] It's late."], ["Roger", "[matter-of-fact] Es difícil — vas a escuchar dos maneras de decirlo en inglés; no hace falta repetir las dos.", "[matter-of-fact] It's difficult,,,, It's hard."], ["Roger", "[matter-of-fact] Llueve se dice está lloviendo.", "[matter-of-fact] It's raining."], ["Roger", "[matter-of-fact] Hace calor hoy se dice está caliente hoy.", "[matter-of-fact] It's hot today."], ["Roger", "[matter-of-fact] Hay un problema.", "[matter-of-fact] There's a problem."], ["Roger", "[matter-of-fact] Hay mucha gente se dice hay un mucho de gente.", "[matter-of-fact] There are a lot of people."], ["Roger", "[matter-of-fact] Se dice que es verdad cambia a ellos dicen que es verdad.", "[matter-of-fact] They say it's true."], ["Roger", "[matter-of-fact] Se vende cambia a lo es por venta o lo está por venta — recuerda que es y está son lo mismo en inglés.", "[matter-of-fact] It's for sale."]];
+const ROWS_11 = [["Heather", "[matter-of-fact] En español, ser y estar cambian el significado de muchos adjetivos — la misma palabra, un significado distinto según el verbo.", null], ["Heather", "[matter-of-fact] En inglés, los dos se traducen con el verbo que significa ser y estar, así que hay que aprender el significado de memoria.", null], ["Heather", "[matter-of-fact] Pon atención: en inglés, ser y estar se manejan de forma completamente distinta, y parte de su trabajo pasa a otras palabras. Fíjate bien en los ejemplos que vienen.", null], ["Heather", "[matter-of-fact] Escucha — la misma palabra, un verbo distinto.", null], ["Heather", "[matter-of-fact] Soy aburrido.", "[matter-of-fact] I'm boring."], ["Heather", "[matter-of-fact] Estoy aburrido.", "[matter-of-fact] I'm bored."], ["Heather", "[matter-of-fact] Otra vez.", null], ["Heather", "[matter-of-fact] Es listo.", "[matter-of-fact] He's smart."], ["Heather", "[matter-of-fact] Está listo.", "[matter-of-fact] He's ready."], ["Heather", "[matter-of-fact] Una más.", null], ["Heather", "[matter-of-fact] Es malo.", "[matter-of-fact] He's a bad person."], ["Heather", "[matter-of-fact] Está malo.", "[matter-of-fact] He's sick."], ["Heather", "[matter-of-fact] Ahora con un color.", null], ["Heather", "[matter-of-fact] Es verde.", "[matter-of-fact] It's green."], ["Heather", "[matter-of-fact] Está verde.", "[matter-of-fact] It's not ripe yet."], ["Heather", "[matter-of-fact] Sigamos.", null], ["Heather", "[matter-of-fact] Es seguro.", "[matter-of-fact] It's safe."], ["Heather", "[matter-of-fact] Está seguro.", "[matter-of-fact] He's sure."], ["Heather", "[matter-of-fact] Escucha otra.", null], ["Heather", "[matter-of-fact] Es cansado.", "[matter-of-fact] It's tiring."], ["Heather", "[matter-of-fact] Está cansado.", "[matter-of-fact] He's tired."], ["Heather", "[matter-of-fact] Otra más.", null], ["Heather", "[matter-of-fact] Es frío — se dice: tiene corazón frío.", "[matter-of-fact] He's cold-hearted."], ["Heather", "[matter-of-fact] Está frío.", "[matter-of-fact] It's cold."], ["Heather", "[matter-of-fact] Ahora con dos palabras distintas.", null], ["Heather", "[matter-of-fact] Es interesante.", "[matter-of-fact] It's interesting."], ["Heather", "[matter-of-fact] Estoy interesado.", "[matter-of-fact] I'm interested."], ["Heather", "[matter-of-fact] Y la última.", null], ["Heather", "[matter-of-fact] Es emocionante.", "[matter-of-fact] It's exciting."], ["Heather", "[matter-of-fact] Estoy emocionado.", "[matter-of-fact] I'm excited."]];
+const ROWS_12 = [["Roger", "[matter-of-fact] En español, por y para cubren ideas distintas — motivo, destinatario, dirección, tiempo — pero el inglés casi siempre usa la misma palabra para todas ellas.", null], ["Roger", "[matter-of-fact] Vamos a escuchar oraciones casi idénticas donde solo cambia por o para, y el significado cambia por completo.", null], ["Roger", "[matter-of-fact] Escucha — la misma oración, una palabra distinta.", null], ["Roger", "[matter-of-fact] Lo compré por ti.", "[matter-of-fact] I bought it because of you."], ["Roger", "[matter-of-fact] Lo compré para ti.", "[matter-of-fact] I bought it for you."], ["Roger", "[matter-of-fact] Otra vez — solo cambia una palabra.", null], ["Roger", "[matter-of-fact] Trabajo por mi hermano.", "[matter-of-fact] I'm covering for my brother."], ["Roger", "[matter-of-fact] Trabajo para mi hermano.", "[matter-of-fact] I work for my brother."], ["Roger", "[matter-of-fact] Una vez más.", null], ["Roger", "[matter-of-fact] Camino por el parque.", "[matter-of-fact] I'm walking through the park."], ["Roger", "[matter-of-fact] Camino para el parque.", "[matter-of-fact] I'm walking to the park."], ["Roger", "[matter-of-fact] Ahora con la mañana — otra vez solo cambia una palabra.", null], ["Roger", "[matter-of-fact] Lo necesito por la mañana.", "[matter-of-fact] I need it in the morning."], ["Roger", "[matter-of-fact] Lo necesito para la mañana.", "[matter-of-fact] I need it by morning."], ["Roger", "[matter-of-fact] Y una última — otra vez solo cambia una palabra.", null], ["Roger", "[matter-of-fact] Por eso vine.", "[matter-of-fact] That's why I came."], ["Roger", "[matter-of-fact] Para eso vine.", "[matter-of-fact] That's what I came for."]];
+const ROWS_13 = [["Heather", "[matter-of-fact] En español una sola palabra cubre dos ideas que el inglés separa en dos palabras — y si usamos la palabra equivocada, la oración suena rara.", null], ["Heather", "[matter-of-fact] Préstame un lápiz.", "[matter-of-fact] Can you lend me a pencil?"], ["Heather", "[matter-of-fact] ¿Me prestas un lápiz?", "[matter-of-fact] Can I borrow a pencil?"], ["Heather", "[matter-of-fact] Veo la tele en la noche. es más como decir miro la tele en la noche.", "[matter-of-fact] I watch TV at night."], ["Heather", "[matter-of-fact] Veo un pájaro afuera.", "[matter-of-fact] I see a bird outside."], ["Heather", "[matter-of-fact] Toco la guitarra. se usa jugar.  juego la guitarra.", "[matter-of-fact] I play the guitar."], ["Heather", "[matter-of-fact] Él me dijo la verdad.", "[matter-of-fact] He told me the truth."], ["Heather", "[matter-of-fact] Ella dijo hola.", "[matter-of-fact] She said hello."], ["Heather", "[matter-of-fact] Estoy esperando el autobús.", "[matter-of-fact] I'm waiting for the bus."], ["Heather", "[matter-of-fact] Espero que te mejores.", "[matter-of-fact] I hope you feel better."], ["Heather", "[matter-of-fact] ¿Cómo está el tiempo hoy?", "[matter-of-fact] How's the weather today?"], ["Heather", "[matter-of-fact] No tengo tiempo.", "[matter-of-fact] I don't have time."]];
+const ROWS_14 = [["Heather", "[matter-of-fact] En español muchos verbos llevan me, te, se — el inglés casi nunca necesita una palabra equivalente para eso.", null], ["Heather", "[matter-of-fact] Me acuerdo de ti.", "[matter-of-fact] I remember you."], ["Heather", "[matter-of-fact] Me voy.", "[matter-of-fact] I'm leaving."], ["Heather", "[matter-of-fact] Se despertó temprano.", "[matter-of-fact] He woke up early."], ["Heather", "[matter-of-fact] Me siento mal.", "[matter-of-fact] I feel bad."], ["Heather", "[matter-of-fact] Nos vemos mañana.", "[matter-of-fact] See you tomorrow."], ["Heather", "[matter-of-fact] Me equivoqué.", "[matter-of-fact] I made a mistake."], ["Heather", "[matter-of-fact] Se casó el año pasado.", "[matter-of-fact] He got married last year."], ["Heather", "[matter-of-fact] Me quedé en casa.", "[matter-of-fact] I stayed home."], ["Heather", "[matter-of-fact] Me levanto temprano.", "[matter-of-fact] I get up early."], ["Heather", "[matter-of-fact] Me llamo Ana.", "[matter-of-fact] My name's Ana."], ["Heather", "[matter-of-fact] Me divertí.", "[matter-of-fact] I had a lot of fun."], ["Heather", "[matter-of-fact] Me olvidé.", "[matter-of-fact] I forgot my keys."]];
+const ROWS_15 = [["Roger", "[matter-of-fact] En español se usa mucho el pretérito simple donde el inglés necesita el presente perfecto — sobre todo con ya, nunca, desde y todavía.", null], ["Roger", "[matter-of-fact] Nunca fui a España.", "[matter-of-fact] I've never been to Spain."], ["Roger", "[matter-of-fact] ¿Ya terminaste?", "[matter-of-fact] Have you finished yet?"], ["Roger", "[matter-of-fact] He vivido aquí tres años.", "[matter-of-fact] I've lived here for three years."], ["Roger", "[matter-of-fact] Trabajé aquí desde 2020.", "[matter-of-fact] I've worked here since 2020."], ["Roger", "[matter-of-fact] Todavía no he terminado.", "[matter-of-fact] I haven't finished yet."], ["Roger", "[matter-of-fact] ¿Alguna vez has probado sushi?", "[matter-of-fact] Have you ever tried sushi?"], ["Roger", "[matter-of-fact] Ya comí.", "[matter-of-fact] I've already eaten."], ["Roger", "[matter-of-fact] Nunca he estado tan cansado.", "[matter-of-fact] I've never been this tired."], ["Roger", "[matter-of-fact] ¿Viste mi teléfono? — cuando todavía lo estás buscando.", "[matter-of-fact] Have you seen my phone?"], ["Roger", "[matter-of-fact] Este año trabajé mucho — el año todavía no termina.", "[matter-of-fact] I've worked a lot this year."], ["Roger", "[matter-of-fact] Acabo de terminar.", "[matter-of-fact] I've just finished."], ["Roger", "[matter-of-fact] Perdí mis llaves — cuando todavía no las encuentras.", "[matter-of-fact] I've lost my keys."]];
 
 const BUILT_IN_COURSE = {
-  id: 'errores',
-  title: 'Errores',
+  id: 'errores-comunes',
+  title: 'Errores Comunes',
+  format: 'narrator',    // one narrator per row: Spanish explains, English demonstrates
+  hideHubTile: true,     // English-only-learning course: no "I speak English" tile on the home screen
+  defaultSrc: 'es',
+  defaultTgt: 'en',
   langs: BASE_LANGS,
-  // fixedPair: this course only ever runs Spanish (explanation) -> English
-  // (demonstration). The home screen drops the English "hub" tile and the
-  // language-swap controls are hidden, since English -> Spanish makes no
-  // sense for narrator rows. See renderLangTiles() and the INIT block.
-  fixedPair: true,
-  // Row shape: [SPEAKER, es, en, MISPRONUNCIATION]. The 4th cell is the
-  // Mispronunciation (Source Voice) column -- blank on almost every row;
-  // buildActiveLines() reads it via `mispronCol`.
-  mispronCol: 3,
-  // Two fixed NARRATOR characters (see Character Roster in the workbook).
-  // Every row's speaker is whichever narrator owns that sheet.
+  // Two fixed narrators, each permanently assigned to specific sheets
+  // (see the workbook's Character Roster). The Speaker cell on every row
+  // already carries whichever narrator owns that sheet.
   characters: [
     {code:'Heather', name:'Heather', role:'narrator', gender:'female'},
     {code:'Roger',   name:'Roger',   role:'narrator', gender:'male'},
   ],
-  // No instructional/narration-mode sheet on purpose (no "how to use"
-  // page -- each sheet's first row already states the trap), so lessons
-  // number from 1 and array index 0 is Lesson 1.
+  // Lesson 0 = Instrucciones (instructional/narration-mode page); lessons
+  // 1-15 follow in the workbook's tab order. See LESSON NUMBERING below.
   sheets: [
+    { name: "Instrucciones", desc: "Instructional page — Spanish narration only. Displayed as Lesson 0.", mode: 'narration', rows: ROWS_0 },
     { name: "Pronunciación", desc: "Systematic mispronunciation patterns — uses the 3-column cross-voice contrast (see Course Rules)", rows: ROWS_1 },
-    { name: "False Friends", desc: "Spanish/English lookalike words with different meanings", rows: ROWS_2 },
-    { name: "Age & States", desc: "tener-verbs (age/hunger/fear/etc.) vs. English to be", rows: ROWS_3 },
-    { name: "Make vs Do", desc: "Both map to Spanish hacer", rows: ROWS_4 },
-    { name: "Adjective Order", desc: "Spanish noun-adjective vs. English adjective-noun", rows: ROWS_5 },
-    { name: "Double Negation", desc: "Spanish allows stacked negatives; English doesn't", rows: ROWS_6 },
-    { name: "Prepositions", desc: "Spanish en covers in/on/at; other preps map unpredictably", rows: ROWS_7 },
-    { name: "Possessives & Pronouns", desc: "Spanish su covers his/her/their/your; pronoun-drop confusion", rows: ROWS_8 },
-    { name: "Verb Tenses & Word Order", desc: "Mixed common errors: going-to-go, thinking-that, word order in questions", rows: ROWS_9 },
-    { name: "Missing Subject", desc: "Spanish null-subject vs. English required subject", rows: ROWS_10 },
-    { name: "Ser-Estar Residue", desc: "Spanish ser/estar split (soy aburrido vs. estoy aburrido, es listo vs. está listo) creates residual errors even past the Age & States basics", rows: ROWS_11 },
+    { name: "Falsos Amigos", desc: "Spanish/English lookalike words with different meanings", rows: ROWS_2 },
+    { name: "Edad y Estados", desc: "tener-verbs (age/hunger/fear/etc.) vs. English to be", rows: ROWS_3 },
+    { name: "Hacer (Make-Do)", desc: "Both map to Spanish hacer", rows: ROWS_4 },
+    { name: "Orden de Adjetivos", desc: "Spanish noun-adjective vs. English adjective-noun", rows: ROWS_5 },
+    { name: "Doble Negación", desc: "Spanish allows stacked negatives; English doesn't", rows: ROWS_6 },
+    { name: "Preposiciones", desc: "Spanish en covers in/on/at; other preps map unpredictably", rows: ROWS_7 },
+    { name: "Posesivos y Pronombres", desc: "Spanish su covers his/her/their/your; pronoun-drop confusion", rows: ROWS_8 },
+    { name: "Tiempos y Orden Verbal", desc: "Mixed common errors: going-to-go, thinking-that, word order in questions", rows: ROWS_9 },
+    { name: "Sujeto Omitido", desc: "Spanish null-subject vs. English required subject", rows: ROWS_10 },
+    { name: "Residuo Ser-Estar", desc: "Spanish ser/estar split (soy aburrido vs. estoy aburrido, es listo vs. está listo) creates residual errors even past the Age & States basics", rows: ROWS_11 },
     { name: "Por-Para", desc: "Spanish speakers reach for 'for' for both por and para, and the split has no clean English equivalent", rows: ROWS_12 },
-    { name: "One Word, Two Words", desc: "Spanish words that cover two English words (prestar = lend/borrow, mucho = a lot of/many, ver = see/watch, etc.) — learner picks the wrong English word", rows: ROWS_13 },
-    { name: "Reflexive Verbs", desc: "Spanish reflexives (me acuerdo, me voy) get literally translated (I remember myself, I go myself) instead of their non-reflexive English equivalents", rows: ROWS_14 },
-    { name: "Present Perfect vs Simple Past", desc: "Spanish speakers overuse simple past (I ate already) where English wants present perfect (I've eaten already)", rows: ROWS_15 },
+    { name: "Una Palabra, Dos Palabras", desc: "Spanish words that cover two English words (prestar = lend/borrow, mucho = a lot of/many, ver = see/watch, etc.) — learner picks the wrong English word", rows: ROWS_13 },
+    { name: "Verbos Reflexivos", desc: "Spanish reflexives (me acuerdo, me voy) get literally translated (I remember myself, I go myself) instead of their non-reflexive English equivalents", rows: ROWS_14 },
+    { name: "Perfecto vs. Pasado Simple", desc: "Spanish speakers overuse simple past (I ate already) where English wants present perfect (I've eaten already)", rows: ROWS_15 },
   ],
 };
 
@@ -1416,17 +1361,18 @@ function stripTags(raw){
   text = text.replace(/\[([^\]]+)\]/g, (m,g)=>{ tags.push(g); return ''; });
   text = text.replace(/\.\.\.\s*$/,'').trim();
   text = text.replace(/\s{2,}/g,' ').trim();
-  // PIPE SYNTAX ("displayed text |spoken text"): everything before the first
-  // pipe is shown on screen, everything after is what TTS says. No pipe ->
-  // the same text is used for both. Parsed after tone-tag extraction so it
-  // works for source and target cells alike.
+  // PIPE SYNTAX: "displayed text |spoken text". Everything before the pipe
+  // is what shows on screen; everything after is what TTS says. No pipe =
+  // the same text is used for both.
   let spoken = text;
-  const pi = text.indexOf('|');
-  if(pi>=0){
-    spoken = text.slice(pi+1).trim();
-    text = text.slice(0,pi).trim();
+  const bar = text.indexOf('|');
+  if(bar !== -1){
+    const shown = text.slice(0, bar).trim();
+    const said = text.slice(bar+1).trim();
+    text = shown;
+    spoken = said || shown;
   }
-  return {clean:text, spoken:spoken, tags};
+  return {clean:text, spoken, tags};
 }
 function escapeHtml(s){
   return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1950,7 +1896,9 @@ function renderLangTiles(){
   const hubLang = langByCode(course, hubCode);
   const hubLabel = hubLang ? hubLang.label : hubCode;
   const others = sortLangTiles(course.langs.filter(l=>l.code!==hubCode));
-  const orderedTiles = (hubLang && !course.fixedPair) ? [...others, hubLang] : others;
+  // course.hideHubTile: an English-only-learning course shows just the
+  // Spanish tile -- no "I speak English" hub tile.
+  const orderedTiles = (hubLang && !course.hideHubTile) ? [...others, hubLang] : others;
   orderedTiles.forEach(l=>{
     const isHub = l.code===hubCode;
     const disp = LANG_DISPLAY[l.code] || {flag:'🌐', phrase:`I speak ${l.label}`};
@@ -2057,43 +2005,50 @@ function buildActiveLines(){
         speaker: row[0] || '',
         tone: s.tags[0] || '',
         source: '',
+        sourceSpoken: '',
         target: s.clean,
+        targetSpoken: s.spoken,
       });
     }
-  } else {
-    // GROUPING: one entry per Spanish teaching line. An English alt row (blank
-    // Spanish cell) attaches to the group above it as an extra target, and a
-    // Spanish-only row followed by English-only rows (e.g. "Escucha la
-    // diferencia." then Ship / Sheep) becomes one group too. A Spanish-only
-    // row with nothing after it (a framing line) stays an entry with no
-    // target and is narrated once.
-    const mIdx = (course.mispronCol!==undefined) ? course.mispronCol : -1;
-    let cur = null;
+  } else if(course.format === 'narrator'){
+    // Narrator format: one narrator per row. Spanish (source) explains, English
+    // (target) demonstrates. Unlike dialogue courses, a row with Spanish but no
+    // English is a real teaching/framing line (kept, plays once), and a row with
+    // English but no Spanish that directly follows a row is an "alt" row -- it's
+    // grouped onto that row so the English forms play A, B, A, B.
     for(const row of sh.rows){
-      const rawTarget = row[tgtColIdx];
-      const rawSource = (srcColIdx>=0 && srcColIdx!==tgtColIdx) ? row[srcColIdx] : '';
-      const hasT = !!(rawTarget && String(rawTarget).trim());
-      const hasS = !!(rawSource && String(rawSource).trim());
-      if(!hasT && !hasS) continue;
-      const t = hasT ? stripTags(rawTarget) : {clean:'', spoken:'', tags:[]};
-      const s = hasS ? stripTags(rawSource) : {clean:'', spoken:'', tags:[]};
-      if(!hasS && cur){
-        if(!cur.target){ cur.target = t.clean; cur.targetSpoken = t.spoken; if(!cur.tone) cur.tone = t.tags[0] || ''; }
-        else cur.more.push({target:t.clean, targetSpoken:t.spoken});
+      const t = stripTags(row[tgtColIdx]);
+      const s = srcColIdx>=0 && srcColIdx!==tgtColIdx ? stripTags(row[srcColIdx]) : {clean:'', spoken:'', tags:[]};
+      if(!t.clean && !s.clean) continue;
+      const prev = list[list.length-1];
+      if(!s.clean && t.clean && prev && prev.targets.length){
+        prev.targets.push({text:t.clean, spoken:t.spoken});
         continue;
       }
-      const mp = (mIdx>=0 && row[mIdx]) ? String(row[mIdx]).trim() : '';
-      cur = {
+      list.push({
         speaker: row[0] || '',
         tone: t.tags[0] || s.tags[0] || '',
         source: s.clean,
         sourceSpoken: s.spoken,
         target: t.clean,
         targetSpoken: t.spoken,
-        mispron: mp,
-        more: [],
-      };
-      list.push(cur);
+        targets: t.clean ? [{text:t.clean, spoken:t.spoken}] : [],
+      });
+    }
+  } else {
+    for(const row of sh.rows){
+      const rawTarget = row[tgtColIdx];
+      if(!rawTarget || !String(rawTarget).trim()) continue;
+      const t = stripTags(rawTarget);
+      const s = srcColIdx>=0 && srcColIdx!==tgtColIdx ? stripTags(row[srcColIdx]) : {clean:'', spoken:'', tags:[]};
+      list.push({
+        speaker: row[0] || '',
+        tone: t.tags[0] || s.tags[0] || '',
+        source: s.clean,
+        sourceSpoken: s.spoken,
+        target: t.clean,
+        targetSpoken: t.spoken,
+      });
     }
   }
   S.activeLines = list;
@@ -2946,6 +2901,11 @@ function preferExactNamesFirst(list, profile){
   const hitSet = new Set(hits);
   return [...hits, ...list.filter(v=>!hitSet.has(v))];
 }
+// Hoisted from the voice-collision section below: loadVoices() runs at load time and can
+// synchronously reach applyVoiceCollisionPitch(), which reads these.
+const PITCH_MID = 1.00;
+const PITCH_MALE_COLLISION = 0.90;
+const PITCH_FEMALE_COLLISION = 1.10;
 function loadVoices(){
   const prevCount = S.voices.length;
   S.voices = window.speechSynthesis ? speechSynthesis.getVoices() : [];
@@ -3314,9 +3274,6 @@ function renderCharacterCards(){
    manual pitches are reset to Mid first so a nudge from a previous
    language pairing doesn't linger once the voices no longer clash.
    ============================================================ */
-const PITCH_MID = 1.00;
-const PITCH_MALE_COLLISION = 0.90;
-const PITCH_FEMALE_COLLISION = 1.10;
 function applyVoiceCollisionPitch(course){
   ['src','tgt'].forEach(side=>{
     const uriKey = side;
@@ -3357,10 +3314,10 @@ function populateVoicesForOSHelp(){
 
 function updateListenNote(){
   const txt = S.style==='narrator'
-    ? 'Narrator: the Spanish explanation plays once, then the English example plays twice with a pause after each so you can repeat it. Moves on automatically — no input needed.'
-    : (S.style==='exposure'
-      ? 'Hands-free: each line plays twice with a pause after each, then moves on automatically — no input needed.'
-      : '');
+    ? 'Narrator: the explanation plays once, then the English example plays twice with a pause after each — no input needed.'
+    : S.style==='exposure'
+    ? 'Hands-free: each line plays twice with a pause after each, then moves on automatically — no input needed.'
+    : '';
   document.getElementById('listenNote').textContent = txt;
   const drillNote = document.getElementById('drillListenNote');
   if(drillNote) drillNote.textContent = txt;
@@ -3849,7 +3806,7 @@ async function runLine(i){
 
   if(S.narrationMode){
     await runNarrationLine(entry, myToken);
-  } else if(S.style==='narrator' || !entry.target){
+  } else if(S.style==='narrator'){
     await runNarratorLine(entry, myToken);
   } else if(S.style==='exposure'){
     await runExposureLine(entry, myToken);
@@ -3865,7 +3822,7 @@ async function runNarrationLine(entry, token){
   const {srcURI, srcPitch} = voicesForEntry(entry);
   setPhase('Listen');
   document.getElementById('targetLineEl').textContent = entry.target;
-  await speak(entry.target, S.narrationVoiceLang, token, srcURI, srcPitch);
+  await speak(entry.targetSpoken||entry.target, S.narrationVoiceLang, token, srcURI, srcPitch);
   if(token!==S.token) return;
   await sleep(estimateMs(entry.target)*0.6, token);
   if(token!==S.token) return;
@@ -3873,47 +3830,33 @@ async function runNarrationLine(entry, token){
   advance();
 }
 
-/* NARRATOR STYLE (Errores' default): Spanish explanation once -> pause ->
-   [Mispronunciation, spoken by the SOURCE voice, never shown] -> the English
-   demonstration(s) twice with repeat pauses. entry.more holds English alt
-   rows; each pass plays every English line in order, so a group like
-   lend / borrow plays lend, borrow, lend, borrow. A Spanish-only entry (a
-   framing line, no English) just plays once and moves on. */
+/* NARRATOR STYLE (this build's default): Spanish explanation plays once,
+   a brief pause, then the English demonstration plays twice, each with a
+   repeat pause (1.4 s floor so short words like "Ship." still leave room to
+   echo). A Spanish-only row (framing/teaching line) plays once and moves on.
+   An entry with several English forms (alt rows) plays them as a group,
+   A, B, A, B. */
 async function runNarratorLine(entry, token){
   const {srcURI, tgtURI, srcPitch, tgtPitch} = voicesForEntry(entry);
-  const srcLang = S.sourceLangGuess || S.narrationVoiceLang;
-  const targets = entry.target ? [{target:entry.target, targetSpoken:entry.targetSpoken}].concat(entry.more||[]) : [];
+  const targets = entry.targets || [];
   setPhase('Listen');
-  if(entry.source){
-    await speak(entry.sourceSpoken || entry.source, srcLang, token, srcURI, srcPitch);
+  if(entry.source && S.sourceLangGuess){
+    await speak(entry.sourceSpoken||entry.source, S.sourceLangGuess, token, srcURI, srcPitch);
     if(token!==S.token) return;
-    if(!targets.length){
-      await sleep(estimateMs(entry.source)*0.6, token);
-      if(token!==S.token) return;
-      S.linesCompleted++;
-      advance();
-      return;
+    if(targets.length){
+      await sleep(Math.min(estimateMs(targets[0].text), 2000), token);
+    } else {
+      await sleep(Math.max(1400, estimateMs(entry.source)*0.6), token);
     }
-    await sleep(Math.max(1000, Math.min(estimateMs(targets[0].target), 2000)), token);
     if(token!==S.token) return;
   }
-  if(entry.mispron && srcLang){
-    await speak(entry.mispron, srcLang, token, srcURI, srcPitch);
-    if(token!==S.token) return;
-    await sleep(700, token);
-    if(token!==S.token) return;
-  }
-  const shown = [];
-  for(let pass=0; pass<2; pass++){
-    if(pass===1) setPhase('Once more');
-    for(const tg of targets){
-      if(pass===0){
-        shown.push(tg.target);
-        document.getElementById('targetLineEl').innerHTML = shown.map(escapeHtml).join('<br>');
-      }
-      await speak(tg.targetSpoken || tg.target, S.targetLangGuess, token, tgtURI, tgtPitch);
+  for(let pass=0; pass<2 && targets.length; pass++){
+    setPhase(pass===0 ? 'Listen' : 'Once more');
+    for(const t of targets){
+      document.getElementById('targetLineEl').textContent = t.text;
+      await speak(t.spoken||t.text, S.targetLangGuess, token, tgtURI, tgtPitch);
       if(token!==S.token) return;
-      await sleep(Math.max(1400, estimateMs(tg.target)*1.2), token); // floor so one-word lines still leave time to repeat aloud
+      await sleep(Math.max(1400, estimateMs(t.text)*1.2), token);
       if(token!==S.token) return;
     }
   }
@@ -3925,18 +3868,18 @@ async function runExposureLine(entry, token){
   const {srcURI, tgtURI, srcPitch, tgtPitch} = voicesForEntry(entry);
   setPhase('Listen');
   if(entry.source && S.sourceLangGuess){
-    await speak(entry.source, S.sourceLangGuess, token, srcURI, srcPitch);
+    await speak(entry.sourceSpoken||entry.source, S.sourceLangGuess, token, srcURI, srcPitch);
     if(token!==S.token) return;
     await sleep(Math.min(estimateMs(entry.target), 2000), token);
     if(token!==S.token) return;
   }
   document.getElementById('targetLineEl').textContent = entry.target;
-  await speak(entry.target, S.targetLangGuess, token, tgtURI, tgtPitch);
+  await speak(entry.targetSpoken||entry.target, S.targetLangGuess, token, tgtURI, tgtPitch);
   if(token!==S.token) return;
   await sleep(estimateMs(entry.target)*1.2, token);
   if(token!==S.token) return;
   setPhase('Once more');
-  await speak(entry.target, S.targetLangGuess, token, tgtURI, tgtPitch);
+  await speak(entry.targetSpoken||entry.target, S.targetLangGuess, token, tgtURI, tgtPitch);
   if(token!==S.token) return;
   await sleep(estimateMs(entry.target)*1.2, token);
   if(token!==S.token) return;
@@ -3951,7 +3894,7 @@ async function runJudgedLine(entry, token, attempt){
   if(attempt===1){
     setPhase('Listen');
     if(entry.source && S.sourceLangGuess){
-      await speak(entry.source, S.sourceLangGuess, token, srcURI, srcPitch);
+      await speak(entry.sourceSpoken||entry.source, S.sourceLangGuess, token, srcURI, srcPitch);
       if(token!==S.token) return;
       await sleep(Math.min(estimateMs(entry.target), 2000), token);
       if(token!==S.token) return;
@@ -3960,7 +3903,7 @@ async function runJudgedLine(entry, token, attempt){
     setPhase('One more time');
   }
   document.getElementById('targetLineEl').textContent = entry.target;
-  await speak(entry.target, S.targetLangGuess, token, tgtURI, tgtPitch);
+  await speak(entry.targetSpoken||entry.target, S.targetLangGuess, token, tgtURI, tgtPitch);
   if(token!==S.token) return;
 
   setPhase(attempt===1 ? 'Your turn' : 'Your turn — last try');
@@ -4116,13 +4059,20 @@ updateListenNote();
 renderVoiceCoverageWarning(currentCourse());
 renderGenderCoverageWarning(currentCourse());
 renderLangTiles();
-if(currentCourse().fixedPair){
-  // Spanish -> English only: nothing to choose, so hide the direction controls.
-  const cap = document.querySelector('.lang-pair-caption'); if(cap) cap.style.display = 'none';
-  const grid = document.querySelector('.lang-grid'); if(grid) grid.style.display = 'none';
-}
 setupMediaSession();
 updateMediaSessionMetadata();
+</script>
+<script>
+/* langPairCard: the language-pair controls are hidden in this English-only
+   course, but the card also carries the voice/gender warning notes. Show the
+   card only while at least one of those notes is visible. */
+(function(){
+  const card = document.getElementById('langPairCard');
+  if(!card) return;
+  const update = ()=> card.classList.toggle('hidden', !card.querySelector('.note.warn:not(.hidden)'));
+  new MutationObserver(update).observe(card, {subtree:true, attributes:true, attributeFilter:['class'], childList:true});
+  update();
+})();
 </script>
 </body>
 </html>
