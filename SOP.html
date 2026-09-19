@@ -5,6 +5,40 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Instructor SOP — Workplace Language Course</title>
+<!-- ===================== CONTENT PROTECTION (shared block) =====================
+     Deters casual copying/saving. This raises the bar but is NOT foolproof —
+     browser dev tools, view-source, or downloading the raw HTML via network
+     tools will still work for anyone determined; there is no client-side way
+     to fully prevent that. This only removes the easy, accidental routes:
+     right-click "Save As"/"Save Image", drag-to-save, text selection/copy,
+     and the most common save/view-source/devtools keyboard shortcuts.
+     Keep this exact block, verbatim, at this same spot (top of <head>, right
+     after the meta/app tags and before the page's own <style>) in every
+     HTML file in this project. -->
+<style>
+  html, body {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none; /* iOS long-press "Save Image"/"Copy" menu */
+  }
+</style>
+<script>
+(function () {
+  document.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  document.addEventListener('dragstart', function (e) { e.preventDefault(); });
+  document.addEventListener('keydown', function (e) {
+    var k = e.key ? e.key.toLowerCase() : '';
+    var blockCombo = (e.ctrlKey || e.metaKey) && ['s', 'u', 'p'].indexOf(k) !== -1;
+    var blockDevtools = e.key === 'F12' ||
+      ((e.ctrlKey || e.metaKey) && e.shiftKey && ['i', 'j', 'c'].indexOf(k) !== -1);
+    if (blockCombo || blockDevtools) { e.preventDefault(); }
+  });
+})();
+</script>
+<!-- ===================== END CONTENT PROTECTION ===================== -->
+
 <style>
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
@@ -329,6 +363,7 @@
 
     <footer class="page-footer">
       <a href="index.html" style="color:#9aa7b1;">← Back to Courses</a>
+          <div style="margin-top:0.8em; font-size:9px; color:#00000055;">Intellectual property of Fayne Milner</div>
     </footer>
   </main>
 
