@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en" translate="no" class="notranslate">
+<head>
+<meta name="google" content="notranslate">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Instructor SOP — Workplace Language Course</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #f5f3ef;
+    color: #1f374a;
+  }
+
+  .arch-bg {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    z-index: -1;
+    pointer-events: none;
+    display: flex;
+    justify-content: center;
+    transform: translateY(12%);
+    opacity: 0.6;
+  }
+  .arch-bg img {
+    width: min(634px, 132vw);
+    max-width: none;
+    height: auto;
+    display: block;
+  }
+  @media (max-width: 700px) {
+    .arch-bg { transform: translateY(0%); }
+    .arch-bg img { width: 100vw; }
+  }
+
+  .screen {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .top-banner {
+    width: 100%;
+    background: #e8630f;
+    color: #ffffff;
+    padding: 3.2% 5%;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.6em;
+    flex-shrink: 0;
+  }
+  .top-banner .es { font-size: clamp(14px, 2.3vw, 21px); font-weight: 800; letter-spacing: 0.01em; }
+  .top-banner a.back {
+    color: #ffffff;
+    text-decoration: none;
+    font-size: clamp(12px, 1.8vw, 15px);
+    font-weight: 700;
+    opacity: 0.92;
+    white-space: nowrap;
+  }
+  .top-banner a.back:hover { text-decoration: underline; }
+
+  .content {
+    flex: 1;
+    padding: 6% 6% 10% 6%;
+  }
+
+  .doc-card {
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid rgba(236, 232, 225, 0.9);
+    border-left: 8px solid #e8630f;
+    border-radius: 16px;
+    padding: 6% 7%;
+  }
+
+  h1.doc-title {
+    font-size: clamp(20px, 3.2vw, 30px);
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    margin: 0 0 0.2em 0;
+    text-align: center;
+  }
+  .doc-subtitle {
+    text-align: center;
+    color: #7c8a97;
+    font-size: clamp(13px, 1.8vw, 16px);
+    font-weight: 600;
+    margin-bottom: 1.4em;
+  }
+
+  .meta-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.8em;
+    font-size: clamp(13px, 1.7vw, 15px);
+  }
+  .meta-table td {
+    border: 1px solid #eec8a8;
+    padding: 0.6em 0.9em;
+    vertical-align: top;
+  }
+  .meta-table td:first-child {
+    background: #fff3e9;
+    font-weight: 800;
+    color: #b3480f;
+    width: 30%;
+    white-space: nowrap;
+  }
+
+  h2 {
+    color: #b3480f;
+    font-size: clamp(16px, 2.3vw, 20px);
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    margin: 1.8em 0 0.6em 0;
+    padding-bottom: 0.3em;
+    border-bottom: 2px solid #f0d9c4;
+  }
+  h2:first-of-type { margin-top: 0; }
+
+  h3 {
+    color: #1f374a;
+    font-size: clamp(14.5px, 2vw, 17px);
+    font-weight: 800;
+    margin: 1.2em 0 0.4em 0;
+  }
+
+  p {
+    font-size: clamp(14px, 1.9vw, 16.5px);
+    line-height: 1.6;
+    margin: 0.6em 0;
+  }
+
+  ul { margin: 0.4em 0 0.8em 0; padding-left: 1.3em; }
+  li { font-size: clamp(14px, 1.9vw, 16.5px); line-height: 1.6; margin-bottom: 0.35em; }
+
+  .callout {
+    background: #fff3e9;
+    border: 1px solid #eec8a8;
+    border-radius: 10px;
+    padding: 0.8em 1.1em;
+    font-weight: 700;
+    color: #b3480f;
+    margin: 1em 0;
+  }
+
+  .pattern-box {
+    background: #1f374a;
+    color: #ffffff;
+    border-radius: 12px;
+    padding: 1em 1.2em;
+    text-align: center;
+    font-weight: 800;
+    font-size: clamp(13px, 2vw, 16px);
+    letter-spacing: 0.01em;
+    margin: 0.8em 0 1em 0;
+  }
+
+  .dos-donts {
+    display: flex;
+    gap: 4%;
+    flex-wrap: wrap;
+    margin: 0.6em 0 1.2em 0;
+  }
+  .dos-donts > div {
+    flex: 1;
+    min-width: 220px;
+    border-radius: 12px;
+    padding: 1em 1.2em;
+  }
+  .do-col { background: #eef8f0; border: 1px solid #bfe3c8; }
+  .dont-col { background: #fdeeee; border: 1px solid #f1c3c3; }
+  .do-col h3 { color: #1e7a3a; margin-top: 0; }
+  .dont-col h3 { color: #b3261e; margin-top: 0; }
+  .dos-donts ul { padding-left: 1.1em; }
+  .dos-donts li { font-size: clamp(13px, 1.7vw, 15px); }
+
+  .ip-note {
+    margin-top: 2em;
+    padding: 1em 1.2em;
+    background: #f5f3ef;
+    border: 1px dashed #cbb9a4;
+    border-radius: 10px;
+    font-size: clamp(12.5px, 1.6vw, 14.5px);
+    color: #5a6a78;
+    line-height: 1.6;
+  }
+  .ip-note strong { color: #1f374a; }
+
+  footer.page-footer {
+    text-align: center;
+    padding: 2em 5% 3em 5%;
+    color: #9aa7b1;
+    font-size: clamp(11px, 1.5vw, 13px);
+  }
+</style>
+</head>
+<body translate="no" class="notranslate">
+
+  <div class="arch-bg" aria-hidden="true"><img src="arch.png" alt=""></div>
+
+  <main class="screen" aria-label="Instructor SOP — Workplace Language Course">
+
+    <div class="top-banner">
+      <span class="es">Instructor SOP</span>
+      <a class="back" href="index.html">← Back to Courses</a>
+    </div>
+
+    <div class="content">
+      <div class="doc-card">
+        <h1 class="doc-title">Standard Operating Procedure</h1>
+        <div class="doc-subtitle">Instructor Guide • Workplace Language Course</div>
+
+        <table class="meta-table">
+          <tr><td>Document Title</td><td>Instructor SOP — Workplace Language Course</td></tr>
+          <tr><td>Purpose</td><td>Provide a consistent weekly format for instructors leading workplace language course sessions.</td></tr>
+          <tr><td>Course Length</td><td>20 lessons • approximately 20 weeks</td></tr>
+        </table>
+
+        <h2>I. The Goal</h2>
+        <p>The Workplace Language Course is <strong>not intended to be a complete ESL course.</strong> It is designed for quick learning of some of the most important language a factory worker needs to know on the job.</p>
+        <p>The website contains several language-learning web apps, each with its own focus. The Workplace Language Course is <strong>primarily designed for Spanish-speaking ESL students.</strong> For the class, the instructor should focus on this workplace-specific course. Many of the other apps support multiple languages, so students whose first language is not Spanish may use them independently on their own device with earbuds, if their language is available.</p>
+        <p>Each week, students listen to the language, have time to recall and say it themselves, ask questions, and then hear it again.</p>
+        <div class="callout">The pauses are an important part of the lesson. Do not interrupt them.</div>
+
+        <h2>II. Weekly Procedure</h2>
+        <h3>1. Review Last Week</h3>
+        <ul>
+          <li>Play last week's lesson once.</li>
+          <li>Students should try to say the target language during the pauses.</li>
+          <li>After the lesson, allow students to ask questions and discuss what they heard.</li>
+          <li>Answer questions and explain anything they don't understand. Keep this informal and conversational. Do not lecture.</li>
+        </ul>
+
+        <h3>2A. This Week's Lesson — Hands-Free Mode</h3>
+        <ul>
+          <li>Play this week's lesson in hands-free mode. The lesson will run at its normal pace and take its normal runtime.</li>
+          <li>Students should try to say the target language during the pauses, even if they aren't sure of the answer.</li>
+          <li>Afterward, allow students to ask questions and discuss the lesson.</li>
+        </ul>
+
+        <h3>2B. This Week's Lesson — Slow Mode / Extended Practice</h3>
+        <ul>
+          <li>If there is additional time, the lesson may be played in slow mode.</li>
+          <li>Slow mode gives the group time after each sentence to discuss, practice, and think about what they heard before continuing.</li>
+          <li>The group can use this as an extended practice activity, moving through the lesson one section at a time.</li>
+          <li>When useful, the lesson can be displayed on a projector or shared screen so the group can follow along together.</li>
+        </ul>
+
+        <h3>3. Hear This Week's Lesson Again</h3>
+        <ul>
+          <li>Play this week's lesson one more time.</li>
+          <li>Students should again try to say the answers during the pauses.</li>
+          <li>Do not stop for explanations afterward. When the lesson is finished, they're done for the week.</li>
+        </ul>
+
+        <h2>III. The Weekly Pattern</h2>
+        <div class="pattern-box">LAST WEEK → DISCUSS → THIS WEEK → DISCUSS → THIS WEEK</div>
+        <p>Keep this pattern consistent from week to week.</p>
+
+        <h2>IV. The Three Pauses</h2>
+        <p>The lessons deliberately give students time to respond.</p>
+        <p>Do not rescue them during the pauses. Encourage students to say the answer out loud, even when they aren't sure.</p>
+        <ul>
+          <li>If they remember it correctly, they reinforce that memory.</li>
+          <li>If they say it incorrectly, hearing the correct answer gives them an opportunity to correct and strengthen the connection.</li>
+          <li>On the first time through a new lesson, they may not be able to answer at all. That's okay. The pause gives them time to think and begin making connections.</li>
+          <li>With repeated exposure, they should increasingly be able to recall and say the language themselves.</li>
+        </ul>
+
+        <h2>V. Why the Pauses Matter</h2>
+        <p>The pauses are not empty time. They are part of the teaching method. They give the brain time to train new connections between what students hear and what they are learning to recall and say.</p>
+        <p>Saying the wrong thing is not a failure. The attempt gets the student thinking about the language, and hearing the correct answer immediately afterward helps connect their attempt with the correct idea and build stronger memories.</p>
+        <p>As students become familiar with a lesson, the first pause — the moment when they anticipate and say the target language themselves — becomes especially important. That act of recalling and producing the language helps train those connections through repeated use.</p>
+        <div class="callout">Do not fill the pauses for them. Give them time to think, recall, and speak.</div>
+
+        <h2>VI. Instructor Responsibilities</h2>
+        <div class="dos-donts">
+          <div class="do-col">
+            <h3>DO</h3>
+            <ul>
+              <li>Keep the weekly routine moving.</li>
+              <li>Protect the pauses.</li>
+              <li>Encourage students to speak, even when uncertain.</li>
+              <li>Answer questions.</li>
+              <li>Explain things when students ask.</li>
+              <li>Let discussion be natural and conversational.</li>
+            </ul>
+          </div>
+          <div class="dont-col">
+            <h3>DON'T</h3>
+            <ul>
+              <li>Interrupt students during the pauses.</li>
+              <li>Give lectures about grammar or vocabulary.</li>
+              <li>Stop the recording to explain every phrase.</li>
+              <li>Require students to get every answer right.</li>
+              <li>Turn the session into a traditional classroom lesson.</li>
+            </ul>
+          </div>
+        </div>
+        <p><strong>Instructor Role:</strong> The recordings provide the instruction. Your job is to give students structure, protect the practice, and help them when they have questions.</p>
+
+        <h2>VII. Practice During the Week</h2>
+        <p>Students are encouraged to practice their current lesson once or twice each day during the week. A lesson takes approximately ten minutes, making regular practice easy to fit into the workday.</p>
+        <p>The site also contains additional language-learning content that is continually being developed and updated. Students are welcome to explore those materials if they wish, but their primary focus should remain on practicing the current workplace lesson.</p>
+
+        <h2>VIII. Course Schedule</h2>
+        <p>The workplace course contains 20 lessons, with one lesson introduced each week. The normal sequence therefore takes approximately 20 weeks (about five months).</p>
+        <p>Students have access to the other materials on the site as well, but the workplace course should be the primary focus of the weekly group sessions.</p>
+
+        <h2>IX. Important — Personal Project</h2>
+        <div class="ip-note">
+          This is Fayne's personal project and intellectual property. The website, web apps, course materials, recordings, and related content are part of that project and are not intended for distribution or use outside this class. Please do not share or distribute access outside the class. The current server capacity is limited, and wider distribution could overwhelm the system.<br><br>
+          Questions or feedback can be given to your instructor and funneled back to <strong>Fayne</strong> through Teams.
+        </div>
+      </div>
+    </div>
+
+    <footer class="page-footer">
+      <a href="index.html" style="color:#9aa7b1;">← Back to Courses</a>
+    </footer>
+  </main>
+
+</body>
+</html>
