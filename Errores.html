@@ -78,6 +78,40 @@ list to copy entries from.
 <title>Errores Comunes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Code+Pro:wght@500;600&display=swap" rel="stylesheet">
+<!-- ===================== CONTENT PROTECTION (shared block) =====================
+     Deters casual copying/saving. This raises the bar but is NOT foolproof —
+     browser dev tools, view-source, or downloading the raw HTML via network
+     tools will still work for anyone determined; there is no client-side way
+     to fully prevent that. This only removes the easy, accidental routes:
+     right-click "Save As"/"Save Image", drag-to-save, text selection/copy,
+     and the most common save/view-source/devtools keyboard shortcuts.
+     Keep this exact block, verbatim, at this same spot (top of <head>, right
+     after the meta/app tags and before the page's own <style>) in every
+     HTML file in this project. -->
+<style>
+  html, body {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none; /* iOS long-press "Save Image"/"Copy" menu */
+  }
+</style>
+<script>
+(function () {
+  document.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  document.addEventListener('dragstart', function (e) { e.preventDefault(); });
+  document.addEventListener('keydown', function (e) {
+    var k = e.key ? e.key.toLowerCase() : '';
+    var blockCombo = (e.ctrlKey || e.metaKey) && ['s', 'u', 'p'].indexOf(k) !== -1;
+    var blockDevtools = e.key === 'F12' ||
+      ((e.ctrlKey || e.metaKey) && e.shiftKey && ['i', 'j', 'c'].indexOf(k) !== -1);
+    if (blockCombo || blockDevtools) { e.preventDefault(); }
+  });
+})();
+</script>
+<!-- ===================== END CONTENT PROTECTION ===================== -->
+
 <style>
   :root{
     /* ---- Practice brand system: orange / white / black ----
@@ -948,6 +982,8 @@ list to copy entries from.
   </footer>
 
   <div class="ad-safe-spacer"></div>
+
+  <div style="text-align:center; padding:4px 5% 6px 5%;"><span style="display:inline-block; background:rgba(255,255,255,0.65); color:#2a2320; font-size:9px; padding:2px 10px; border-radius:999px; user-select:none;">Intellectual property of Fayne Milner</span></div>
 
 </div>
 
