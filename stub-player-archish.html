@@ -477,7 +477,14 @@ you at runtime.
     box-shadow:var(--shadow);
     position:relative; padding:54px 18px 26px; text-align:center; min-height:150px;
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+    cursor:pointer; transition:background-color 180ms ease;
   }
+  /* Tap-to-pause feedback: the whole stage card and the play/pause button
+     flash the same transparent orange together, in unison, whichever one
+     was actually tapped -- see flashPauseFeedback() and the .stage click
+     handler near the transport controls in the script below. */
+  .stage.tap-flash{ background-color:rgba(240,90,34,0.28); }
+  .icon-btn.primary.tap-flash{ filter:brightness(1.4); box-shadow:0 0 0 7px rgba(240,90,34,0.35); }
   .speaker-tag{
     position:absolute; top:14px; left:14px; max-width:58%;
     font-family:'Source Code Pro', monospace; font-size:9.5px; letter-spacing:.08em; text-transform:uppercase;
@@ -500,7 +507,8 @@ you at runtime.
   .mic-pulse{ width:12px; height:12px; border-radius:50%; background:var(--amber); animation:micpulse 1.1s ease-in-out infinite; }
   @keyframes micpulse{ 0%,100%{ opacity:1; transform:scale(1); } 50%{ opacity:.55; transform:scale(1.25); } }
   .small-muted{ font-size:12px; color:var(--ink-dim); }
-  .heard{ font-size:13px; color:var(--ink-soft); min-height:16px; }
+  .heard{ font-size:24px; font-weight:700; color:var(--accent, #1f7a5c); min-height:30px; line-height:1.25; margin-top:2px; }
+  @media (max-width:400px){ .heard{ font-size:20px; } }
   .judge-btns{ display:flex; gap:10px; }
   .judge-btns .btn{ padding:9px 14px; font-size:13px; }
 
@@ -518,6 +526,7 @@ you at runtime.
   .icon-btn.primary{
     width:52px; height:52px;
     background:var(--amber); border-color:#000; color:#FFFFFF;
+    transition:background var(--ease), color var(--ease), border-color var(--ease), transform var(--ease), filter 180ms ease, box-shadow 180ms ease;
   }
   /* Was transparent border/background — on the arch's orange artwork these
      were nearly invisible. A black border keeps them visible against any
@@ -1000,6 +1009,7 @@ you at runtime.
 
 <script>
 // build:JysnMlnrMthd
+var UI = { chosen:false, lang:'en', ready:false };  // UI-LANGUAGE state; see "UI LANGUAGE" block at the end of this script
 /* ============================================================
    TTS PLAYBACK FIX STATUS — READ THIS FIRST IF PICKING THIS FILE
    UP COLD (updated 2026-09-16)
@@ -1415,9 +1425,8 @@ function switchCourse(idx){
 
 function fillLangOptions(selectEl, course, allowNone){
   selectEl.innerHTML = allowNone ? '<option value="">— none (target only) —</option>' : '';
-  course.langs.forEach(l=>{
-    if(l.selectable===false) return;
-    const o = document.createElement('option'); o.value=l.code; o.textContent=l.label; selectEl.appendChild(o);
+  sortLangTiles(course.langs.filter(l=>l.selectable!==false)).forEach(l=>{   // es + pt-BR pinned on top, rest alphabetical in the UI language
+    const o = document.createElement('option'); o.value=l.code; o.textContent=uiLabel(l); selectEl.appendChild(o);
   });
 }
 
@@ -1854,7 +1863,7 @@ function sortLangTiles(langs){
     const pa = PRIORITY.hasOwnProperty(a.code) ? PRIORITY[a.code] : 2;
     const pb = PRIORITY.hasOwnProperty(b.code) ? PRIORITY[b.code] : 2;
     if(pa!==pb) return pa-pb;
-    if(pa===2) return a.label.localeCompare(b.label);
+    if(pa===2) return uiLabel(a).localeCompare(uiLabel(b), UI.ready ? UI.lang : undefined);
     return 0;
   });
 }
@@ -1884,7 +1893,7 @@ function renderLangTiles(){
       <span class="lang-tile-icon">${disp.flag}</span>
       <span class="lang-tile-text">
         <span class="lang-tile-title">${escapeHtml(disp.phrase)}</span>
-        <span class="lang-tile-sub">${isHub ? 'Choose a language to work on' : `${escapeHtml(l.label)} → ${escapeHtml(hubLabel)}`}</span>
+        <span class="lang-tile-sub">${isHub ? 'Choose a language to work on' : `${escapeHtml(uiLabel(l))} → ${escapeHtml(hubLang ? uiLabel(hubLang) : hubLabel)}`}</span>
       </span>
       <span class="lang-tile-chev">${CHEVRON_RIGHT_SVG}</span>`;
     if(isHub){
@@ -1915,7 +1924,7 @@ function toggleTargetChooser(tileBtn, srcCode, candidates){
     const opt = document.createElement('button');
     opt.type = 'button';
     opt.className = 'lang-target-option';
-    opt.innerHTML = `<span>${escapeHtml(t.label)}</span><span>${disp.flag}</span>`;
+    opt.innerHTML = `<span>${escapeHtml(uiLabel(t))}</span><span>${disp.flag}</span>`;
     opt.addEventListener('click', ()=> chooseLanguageAndStart(srcCode, t.code));
     chooser.appendChild(opt);
   });
@@ -2190,7 +2199,7 @@ const REGION_NUDGE_I18N = {
 function updateOSVoiceHelp(candidates, usingFallback, alwaysApproximate, regionMatched, profile){
   const el = document.getElementById('osVoiceHelp');
   const shaky = usingFallback || alwaysApproximate || candidates.length===0;
-  const uiKey = uiLangKeyFor(S.srcCode || S.tgtCode);
+  const uiKey = uiLangKeyFor(UI.lang === 'en' ? '' : S.srcCode);
   const course = currentCourse();
   const targetName = (langByCode(course, S.tgtCode)||{}).label || S.tgtCode;
   const os = detectOS();
@@ -3648,7 +3657,12 @@ function checkAudioActuallyPlaying(){
         el = document.createElement('div');
         el.id = 'noAudioNotice';
         el.style.cssText = 'background:#f8d7da;color:#58151c;border:1px solid #f1aeb5;border-radius:8px;padding:12px 14px;margin:12px 0;font-size:14px;line-height:1.4;';
-        el.textContent = "No audio detected. This viewer likely doesn't support text-to-speech — try opening this page in Chrome (tap ⋮ or Share → Open in Chrome).";
+        const isIOS = /iP(hone|od|ad)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        if(isIOS){
+          el.innerHTML = 'No audio detected. On iPhone/iPad, check that the side switch is set to ring, not silent, then try again.<br>¿Sin audio? En iPhone/iPad, revisa que el interruptor lateral esté en modo timbre, no en silencio, y vuelve a intentarlo.';
+        } else {
+          el.textContent = "No audio detected. This viewer likely doesn't support text-to-speech — try opening this page in Chrome (tap ⋮ or Share → Open in Chrome).";
+        }
         const drillCard = document.getElementById('drillScreen');
         if(drillCard) drillCard.prepend(el);
       }
@@ -3878,7 +3892,29 @@ function finishSession(){
 }
 
 /* ---- transport controls ---- */
+// Flashes the stage card and the play/pause button together, briefly, so
+// tapping either one gives the same confirmation without needing to look
+// closely -- useful for a quick "shut it up" tap while driving.
+function flashPauseFeedback(){
+  const stageEl = document.querySelector('.stage');
+  const btnEl = document.getElementById('playPauseBtn');
+  stageEl.classList.add('tap-flash');
+  btnEl.classList.add('tap-flash');
+  setTimeout(()=>{
+    stageEl.classList.remove('tap-flash');
+    btnEl.classList.remove('tap-flash');
+  }, 180);
+}
+// The whole stage card doubles as a big play/pause target -- meant for
+// tapping without looking (e.g. while driving). "Got it" / "Once more"
+// only exist during slow-practice mode, so they're excluded here rather
+// than also triggering a pause.
+document.querySelector('.stage').addEventListener('click', (e)=>{
+  if(e.target.closest('#judgeBtns')) return;
+  document.getElementById('playPauseBtn').click();
+});
 document.getElementById('playPauseBtn').addEventListener('click', ()=>{
+  flashPauseFeedback();
   S.paused = !S.paused;
   document.getElementById('playPauseBtn').innerHTML = S.paused
     ? '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>'
@@ -4418,6 +4454,164 @@ renderGenderCoverageWarning(currentCourse());
 renderLangTiles();
 setupMediaSession();
 updateMediaSessionMetadata();
+
+/* ============================================================
+   UI LANGUAGE -- everything that isn't course content (buttons, labels,
+   tooltips, phase text, notices) follows the SOURCE language:
+     - Home screen before anyone has picked a language: English.
+     - Tap "I speak <language>" (or pick a target from the English hub):
+       the UI switches to that source language (English hub = English).
+     - Change or swap the Source language later: the UI follows it.
+     - Source set to "none (target only)": English.
+     - A source language with no UI translation yet: English.
+   HOW IT WORKS: UI_TABLE (below) maps each English UI string to its
+   translation per language. A MutationObserver re-translates any text
+   or title that the app writes into the page, remembering the English
+   original on each node so switching languages never compounds. Course
+   content (source/target lines, speaker and tone tags) is never touched.
+   TO ADD A LANGUAGE: add its 2-letter code to UI_TABLE.langs and one
+   translated entry per row (same order as the English column).
+   TO ADD A STRING: add a row [english, ...translations]; use {1}, {2}
+   for values the app fills in.
+   ============================================================ */
+const UI_TABLE = {"langs":["es","pt","fr","it","ro","de","ru","vi","th","ar","sw","sv"],"rows":[["Lesson {1} of {2}","Lección {1} de {2}","Lição {1} de {2}","Leçon {1} sur {2}","Lezione {1} di {2}","Lecția {1} din {2}","Lektion {1} von {2}","Урок {1} из {2}","Bài {1}/{2}","บทที่ {1} จาก {2}","الدرس {1} من {2}","Somo la {1} kati ya {2}","Lektion {1} av {2}"],["Line {1} of {2}","Línea {1} de {2}","Linha {1} de {2}","Ligne {1} sur {2}","Riga {1} di {2}","Rândul {1} din {2}","Zeile {1} von {2}","Строка {1} из {2}","Câu {1}/{2}","บรรทัดที่ {1} จาก {2}","السطر {1} من {2}","Mstari {1} kati ya {2}","Rad {1} av {2}"],["Getting ready…","Preparando…","Preparando…","Préparation…","Preparazione…","Se pregătește…","Wird vorbereitet…","Подготовка…","Đang chuẩn bị…","กำลังเตรียม…","جارٍ التحضير…","Inaandaa…","Förbereder…"],["Listen","Escucha","Escute","Écoute","Ascolta","Ascultă","Hör zu","Слушайте","Nghe","ฟัง","استمع","Sikiliza","Lyssna"],["Once more","Otra vez","Mais uma vez","Une fois de plus","Ancora una volta","Încă o dată","Noch einmal","Ещё раз","Thêm lần nữa","อีกครั้ง","مرة أخرى","Tena mara moja","En gång till"],["One more time","Una vez más","Só mais uma vez","Encore une fois","Un'altra volta","Încă o dată","Ein weiteres Mal","Ещё один раз","Một lần nữa","อีกที","مرة أخرى مرة أخيرة","Mara nyingine tena","Ännu en gång"],["Your turn","Tu turno","Sua vez","À toi","Tocca a te","Rândul tău","Du bist dran","Ваша очередь","Đến lượt bạn","ถึงตาคุณ","دورك","Zamu yako","Din tur"],["Your turn — last try","Tu turno — último intento","Sua vez — última tentativa","À toi — dernier essai","Tocca a te — ultimo tentativo","Rândul tău — ultima încercare","Du bist dran — letzter Versuch","Ваша очередь — последняя попытка","Đến lượt bạn — lần thử cuối","ถึงตาคุณ — ลองครั้งสุดท้าย","دورك — المحاولة الأخيرة","Zamu yako — jaribio la mwisho","Din tur — sista försöket"],["Paused","En pausa","Pausado","En pause","In pausa","În pauză","Pausiert","Пауза","Đã tạm dừng","หยุดชั่วคราว","متوقف مؤقتًا","Imesimamishwa","Pausad"],["Your turn — say it out loud","Tu turno — dilo en voz alta","Sua vez — diga em voz alta","À toi — dis-le à voix haute","Tocca a te — dillo ad alta voce","Rândul tău — spune-o cu voce tare","Du bist dran — sag es laut","Ваша очередь — скажите вслух","Đến lượt bạn — hãy nói to lên","ถึงตาคุณ — พูดออกเสียงดัง ๆ","دورك — قلها بصوت عالٍ","Zamu yako — sema kwa sauti","Din tur — säg det högt"],["Got it","Entendido","Entendi","Compris","Capito","Am înțeles","Verstanden","Понятно","Đã hiểu","เข้าใจแล้ว","فهمت","Nimeelewa","Uppfattat"],["Speed","Velocidad","Velocidade","Vitesse","Velocità","Viteză","Geschwindigkeit","Скорость","Tốc độ","ความเร็ว","السرعة","Kasi","Hastighet"],["Source language","Idioma de origen","Idioma de origem","Langue source","Lingua di partenza","Limba sursă","Ausgangssprache","Исходный язык","Ngôn ngữ nguồn","ภาษาต้นทาง","اللغة المصدر","Lugha chanzo","Källspråk"],["Target language","Idioma de destino","Idioma de destino","Langue cible","Lingua di arrivo","Limba țintă","Zielsprache","Изучаемый язык","Ngôn ngữ đích","ภาษาปลายทาง","اللغة الهدف","Lugha lengwa","Målspråk"],["Advanced","Avanzado","Avançado","Avancé","Avanzate","Avansat","Erweitert","Дополнительно","Nâng cao","ขั้นสูง","متقدّم","Mipangilio ya juu","Avancerat"],["Characters & voices","Personajes y voces","Personagens e vozes","Personnages et voix","Personaggi e voci","Personaje și voci","Figuren & Stimmen","Персонажи и голоса","Nhân vật & giọng nói","ตัวละครและเสียง","الشخصيات والأصوات","Wahusika na sauti","Karaktärer & röster"],["Session style","Estilo de sesión","Estilo da sessão","Style de session","Stile della sessione","Stilul sesiunii","Sitzungsart","Режим занятия","Kiểu buổi học","รูปแบบการฝึก","نمط الجلسة","Mtindo wa kipindi","Sessionstyp"],["Hands-free","Manos libres","Mãos livres","Mains libres","Senza mani","Fără mâini","Freihändig","Без рук","Rảnh tay","แฮนด์ฟรี","بدون استخدام اليدين","Bila mikono","Handsfree"],["Slow practice","Práctica lenta","Prática lenta","Pratique lente","Pratica lenta","Exersare lentă","Langsames Üben","Медленная практика","Luyện tập chậm","ฝึกช้า ๆ","تدريب بطيء","Mazoezi ya polepole","Långsam övning"],["Session complete","Sesión completada","Sessão concluída","Session terminée","Sessione completata","Sesiune încheiată","Sitzung beendet","Занятие завершено","Đã hoàn thành buổi học","จบการฝึกแล้ว","اكتملت الجلسة","Kipindi kimekamilika","Sessionen är klar"],["Run it again","Repetirlo","Repetir","Recommencer","Ripeti","Repetă","Nochmal starten","Повторить","Chạy lại","เริ่มอีกครั้ง","تشغيل مرة أخرى","Endesha tena","Kör igen"],["New setup","Nueva configuración","Nova configuração","Nouveau réglage","Nuova impostazione","Configurare nouă","Neu einrichten","Новая настройка","Cài đặt mới","ตั้งค่าใหม่","إعداد جديد","Mpangilio mpya","Ny inställning"],["Source voice","Voz de origen","Voz de origem","Voix source","Voce di partenza","Voce sursă","Ausgangsstimme","Голос исходного языка","Giọng nguồn","เสียงต้นทาง","صوت اللغة المصدر","Sauti ya chanzo","Källröst"],["Target voice","Voz de destino","Voz de destino","Voix cible","Voce di arrivo","Voce țintă","Zielstimme","Голос изучаемого языка","Giọng đích","เสียงปลายทาง","صوت اللغة الهدف","Sauti lengwa","Målröst"],["Test ▶","Probar ▶","Testar ▶","Tester ▶","Prova ▶","Testează ▶","Testen ▶","Проверить ▶","Thử ▶","ทดสอบ ▶","جرّب ▶","Jaribu ▶","Testa ▶"],["Choose a language to work on","Elige un idioma para practicar","Escolha um idioma para praticar","Choisis une langue à pratiquer","Scegli una lingua da praticare","Alege o limbă de exersat","Wähle eine Sprache zum Üben","Выберите язык для занятий","Chọn ngôn ngữ để luyện tập","เลือกภาษาที่จะฝึก","اختر لغة للتدرّب عليها","Chagua lugha ya kufanyia mazoezi","Välj ett språk att öva på"],["Which language would you like to work on?","¿Qué idioma quieres practicar?","Qual idioma você quer praticar?","Quelle langue veux-tu pratiquer ?","Quale lingua vuoi praticare?","Ce limbă vrei să exersezi?","Welche Sprache möchtest du üben?","Какой язык вы хотите практиковать?","Bạn muốn luyện ngôn ngữ nào?","คุณอยากฝึกภาษาอะไร","أي لغة تريد التدرب عليها؟","Ungependa kufanyia mazoezi lugha gani?","Vilket språk vill du öva på?"],["— none (target only) —","— ninguno (solo destino) —","— nenhum (só destino) —","— aucune (cible seulement) —","— nessuna (solo arrivo) —","— niciuna (doar țintă) —","— keine (nur Zielsprache) —","— нет (только изучаемый) —","— không (chỉ ngôn ngữ đích) —","— ไม่มี (เฉพาะภาษาปลายทาง) —","— بدون (اللغة الهدف فقط) —","— hakuna (lugha lengwa pekee) —","— ingen (bara målspråk) —"],["— no separate source voice needed —","— no se necesita una voz de origen aparte —","— não precisa de voz de origem separada —","— pas besoin de voix source séparée —","— non serve una voce di partenza separata —","— nu este nevoie de o voce sursă separată —","— keine separate Ausgangsstimme nötig —","— отдельный голос исходного языка не нужен —","— không cần giọng nguồn riêng —","— ไม่ต้องใช้เสียงต้นทางแยกต่างหาก —","— لا حاجة إلى صوت مصدر منفصل —","— hakuna haja ya sauti tofauti ya chanzo —","— ingen separat källröst behövs —"],["🎤 Try live listen-along: on","🎤 Probar escucha en vivo: activada","🎤 Testar escuta ao vivo: ativada","🎤 Essayer l'écoute en direct : activée","🎤 Prova l'ascolto dal vivo: attivo","🎤 Încearcă ascultarea live: activată","🎤 Live-Mithören testen: an","🎤 Попробовать живое прослушивание: вкл","🎤 Thử nghe trực tiếp: bật","🎤 ลองฟังสดขณะพูดตาม: เปิด","🎤 جرّب الاستماع المباشر: مفعّل","🎤 Jaribu kusikiliza moja kwa moja: imewashwa","🎤 Testa direktlyssning: på"],["🎤 Try live listen-along: off","🎤 Probar escucha en vivo: desactivada","🎤 Testar escuta ao vivo: desativada","🎤 Essayer l'écoute en direct : désactivée","🎤 Prova l'ascolto dal vivo: disattivo","🎤 Încearcă ascultarea live: dezactivată","🎤 Live-Mithören testen: aus","🎤 Попробовать живое прослушивание: выкл","🎤 Thử nghe trực tiếp: tắt","🎤 ลองฟังสดขณะพูดตาม: ปิด","🎤 جرّب الاستماع المباشر: معطّل","🎤 Jaribu kusikiliza moja kwa moja: imezimwa","🎤 Testa direktlyssning: av"],["Heard: \"{1}\"","Escuché: \"{1}\"","Ouvi: \"{1}\"","Entendu : \"{1}\"","Sentito: \"{1}\"","Am auzit: \"{1}\"","Gehört: \"{1}\"","Услышано: \"{1}\"","Nghe được: \"{1}\"","ได้ยิน: \"{1}\"","سُمع: \"{1}\"","Nimesikia: \"{1}\"","Hörde: \"{1}\""],["{1} lines drilled in about {2} minutes.","Líneas practicadas: {1} · Tiempo: unos {2} min.","Linhas praticadas: {1} · Tempo: cerca de {2} min.","Lignes pratiquées : {1} · Durée : environ {2} min.","Righe esercitate: {1} · Tempo: circa {2} min.","Rânduri exersate: {1} · Timp: aproximativ {2} min.","Geübte Zeilen: {1} · Dauer: etwa {2} Min.","Отработано строк: {1} · Время: около {2} мин.","Số câu đã luyện: {1} · Thời gian: khoảng {2} phút.","จำนวนบรรทัดที่ฝึก: {1} · ใช้เวลาประมาณ {2} นาที","الأسطر التي تدرّبت عليها: {1} · المدة: نحو {2} دقيقة.","Mistari iliyofanyiwa mazoezi: {1} · Muda: takriban dakika {2}.","Övade rader: {1} · Tid: ungefär {2} min."],["no {1} voice installed — pick one below to override","no hay voz de {1} instalada — elige una abajo para reemplazar","nenhuma voz de {1} instalada — escolha uma abaixo para substituir","aucune voix {1} installée — choisis-en une ci-dessous","nessuna voce {1} installata — scegline una qui sotto","nicio voce {1} instalată — alege una mai jos","keine {1}-Stimme installiert — wähle unten eine aus","голос {1} не установлен — выберите другой ниже","chưa cài giọng {1} — hãy chọn giọng khác bên dưới","ยังไม่ได้ติดตั้งเสียง {1} — เลือกเสียงด้านล่าง","لا يوجد صوت {1} مثبّت — اختر صوتًا من الأسفل","hakuna sauti ya {1} iliyosakinishwa — chagua moja hapa chini","ingen {1}-röst installerad — välj en nedan"],["no {1} voice installed on this device","no hay voz de {1} instalada en este dispositivo","nenhuma voz de {1} instalada neste dispositivo","aucune voix {1} installée sur cet appareil","nessuna voce {1} installata su questo dispositivo","nicio voce {1} instalată pe acest dispozitiv","keine {1}-Stimme auf diesem Gerät installiert","голос {1} не установлен на этом устройстве","thiết bị này chưa cài giọng {1}","อุปกรณ์นี้ยังไม่ได้ติดตั้งเสียง {1}","لا يوجد صوت {1} مثبّت على هذا الجهاز","hakuna sauti ya {1} iliyosakinishwa kwenye kifaa hiki","ingen {1}-röst installerad på den här enheten"],["no voice available on this device","no hay voces disponibles en este dispositivo","nenhuma voz disponível neste dispositivo","aucune voix disponible sur cet appareil","nessuna voce disponibile su questo dispositivo","nicio voce disponibilă pe acest dispozitiv","keine Stimme auf diesem Gerät verfügbar","на этом устройстве нет доступных голосов","thiết bị này không có giọng nói nào","อุปกรณ์นี้ไม่มีเสียงที่ใช้ได้","لا توجد أصوات متاحة على هذا الجهاز","hakuna sauti zinazopatikana kwenye kifaa hiki","inga röster tillgängliga på den här enheten"],["Choose lesson","Elegir lección","Escolher lição","Choisir une leçon","Scegli lezione","Alege lecția","Lektion wählen","Выбрать урок","Chọn bài học","เลือกบทเรียน","اختر الدرس","Chagua somo","Välj lektion"],["Previous lesson","Lección anterior","Lição anterior","Leçon précédente","Lezione precedente","Lecția anterioară","Vorherige Lektion","Предыдущий урок","Bài trước","บทเรียนก่อนหน้า","الدرس السابق","Somo lililopita","Föregående lektion"],["Home","Inicio","Início","Accueil","Home","Acasă","Startseite","Главная","Trang chủ","หน้าแรก","الرئيسية","Mwanzo","Hem"],["Next lesson","Lección siguiente","Próxima lição","Leçon suivante","Lezione successiva","Lecția următoare","Nächste Lektion","Следующий урок","Bài tiếp theo","บทเรียนถัดไป","الدرس التالي","Somo linalofuata","Nästa lektion"],["Previous line","Línea anterior","Linha anterior","Ligne précédente","Riga precedente","Rândul anterior","Vorherige Zeile","Предыдущая строка","Câu trước","บรรทัดก่อนหน้า","السطر السابق","Mstari uliopita","Föregående rad"],["Play / Pause","Reproducir / Pausar","Reproduzir / Pausar","Lecture / Pause","Riproduci / Pausa","Redare / Pauză","Wiedergabe / Pause","Воспроизвести / Пауза","Phát / Tạm dừng","เล่น / หยุดชั่วคราว","تشغيل / إيقاف مؤقت","Cheza / Simamisha","Spela / Pausa"],["Skip to next line","Saltar a la siguiente línea","Ir para a próxima linha","Passer à la ligne suivante","Vai alla riga successiva","Treci la rândul următor","Zur nächsten Zeile springen","К следующей строке","Chuyển sang câu tiếp theo","ข้ามไปบรรทัดถัดไป","انتقل إلى السطر التالي","Ruka hadi mstari unaofuata","Hoppa till nästa rad"],["Repeat this line","Repetir esta línea","Repetir esta linha","Répéter cette ligne","Ripeti questa riga","Repetă acest rând","Diese Zeile wiederholen","Повторить эту строку","Lặp lại câu này","เล่นบรรทัดนี้ซ้ำ","كرّر هذا السطر","Rudia mstari huu","Upprepa den här raden"],["Loop (on by default — repeats from the start when finished, handy for hands-free)","Repetición en bucle (activada por defecto — vuelve a empezar al terminar, útil para manos libres)","Repetição em loop (ativada por padrão — recomeça ao terminar, útil para mãos livres)","Boucle (activée par défaut — recommence depuis le début à la fin, pratique en mains libres)","Ripetizione continua (attiva di default — riparte dall'inizio alla fine, utile senza mani)","Buclă (activată implicit — reia de la început când se termină, utilă fără mâini)","Wiederholung (standardmäßig an — beginnt am Ende von vorn, praktisch freihändig)","Повтор (включён по умолчанию — после конца начинается сначала, удобно без рук)","Lặp lại (bật sẵn — tự phát lại từ đầu khi kết thúc, tiện khi rảnh tay)","เล่นวน (เปิดไว้ตามค่าเริ่มต้น — เริ่มใหม่เมื่อจบ เหมาะกับการใช้แบบแฮนด์ฟรี)","تكرار (مفعّل افتراضيًا — يبدأ من جديد عند الانتهاء، مناسب دون استخدام اليدين)","Rudia mfululizo (imewashwa awali — inaanza upya inapoisha, inafaa bila mikono)","Loop (på som standard — börjar om när det är slut, praktiskt handsfree)"],["Shuffle line order","Mezclar el orden de las líneas","Embaralhar a ordem das linhas","Mélanger l'ordre des lignes","Mescola l'ordine delle righe","Amestecă ordinea rândurilor","Zeilenreihenfolge mischen","Перемешать порядок строк","Xáo trộn thứ tự câu","สลับลำดับบรรทัด","خلط ترتيب الأسطر","Changanya mpangilio wa mistari","Blanda radordningen"],["End session","Terminar sesión","Encerrar sessão","Terminer la session","Termina sessione","Încheie sesiunea","Sitzung beenden","Завершить занятие","Kết thúc buổi học","จบการฝึก","إنهاء الجلسة","Maliza kipindi","Avsluta sessionen"],["Swap source and target","Intercambiar origen y destino","Trocar origem e destino","Inverser source et cible","Scambia partenza e arrivo","Inversează sursa și ținta","Ausgangs- und Zielsprache tauschen","Поменять языки местами","Đổi ngôn ngữ nguồn và đích","สลับภาษาต้นทางและปลายทาง","تبديل المصدر والهدف","Badilisha chanzo na lengwa","Byt käll- och målspråk"],["Preview this voice","Escuchar esta voz","Ouvir esta voz","Écouter cette voix","Ascolta questa voce","Ascultă această voce","Diese Stimme anhören","Прослушать этот голос","Nghe thử giọng này","ฟังตัวอย่างเสียงนี้","استمع إلى هذا الصوت","Sikiliza sauti hii","Förhandslyssna på rösten"],["This lesson was opened in a newer tab. Audio here has been stopped — you can close this tab and continue in the newer one.","Esta lección se abrió en una pestaña más nueva. El audio aquí se detuvo — puedes cerrar esta pestaña y continuar en la nueva.","Esta lição foi aberta em uma aba mais nova. O áudio aqui foi interrompido — você pode fechar esta aba e continuar na nova.","Cette leçon a été ouverte dans un onglet plus récent. L'audio ici est arrêté — tu peux fermer cet onglet et continuer dans le nouveau.","Questa lezione è stata aperta in una scheda più recente. L'audio qui è stato interrotto — puoi chiudere questa scheda e continuare in quella nuova.","Această lecție a fost deschisă într-o filă mai nouă. Sunetul de aici s-a oprit — poți închide această filă și continua în cea nouă.","Diese Lektion wurde in einem neueren Tab geöffnet. Der Ton hier wurde gestoppt — du kannst diesen Tab schließen und im neueren weitermachen.","Этот урок открыт в более новой вкладке. Звук здесь остановлен — можно закрыть эту вкладку и продолжить в новой.","Bài học này đã được mở ở một tab mới hơn. Âm thanh ở đây đã dừng — bạn có thể đóng tab này và tiếp tục ở tab mới.","บทเรียนนี้ถูกเปิดในแท็บที่ใหม่กว่า เสียงในแท็บนี้หยุดแล้ว — คุณปิดแท็บนี้แล้วไปต่อในแท็บใหม่ได้","تم فتح هذا الدرس في علامة تبويب أحدث. توقّف الصوت هنا — يمكنك إغلاق هذه العلامة والمتابعة في الأحدث.","Somo hili lilifunguliwa kwenye kichupo kipya zaidi. Sauti hapa imesimamishwa — unaweza kufunga kichupo hiki na kuendelea kwenye kipya.","Den här lektionen öppnades i en nyare flik. Ljudet här har stoppats — du kan stänga den här fliken och fortsätta i den nya."],["For sound to work, open this in your browser (tap","Para que funcione el sonido, ábrelo en tu navegador (toca","Para o som funcionar, abra no seu navegador (toque em","Pour que le son fonctionne, ouvre ceci dans ton navigateur (appuie sur","Perché l'audio funzioni, aprilo nel browser (tocca","Pentru ca sunetul să funcționeze, deschide în browser (atinge","Damit der Ton funktioniert, öffne dies in deinem Browser (tippe auf","Чтобы звук работал, откройте страницу в браузере (нажмите","Để có âm thanh, hãy mở trang này trong trình duyệt (chạm","เพื่อให้มีเสียง ให้เปิดในเบราว์เซอร์ของคุณ (แตะ","لكي يعمل الصوت، افتح هذا في المتصفح (اضغط على","Ili sauti ifanye kazi, fungua hii kwenye kivinjari chako (gusa","För att ljudet ska fungera, öppna sidan i din webbläsare (tryck på"],["or","o","ou","ou","o","sau","oder","или","hoặc","หรือ","أو","au","eller"],["and choose","y elige","e escolha","puis choisis","e scegli","apoi alege","und wähle","и выберите","rồi chọn","แล้วเลือก","ثم اختر","kisha chagua","och välj"],["), not this app's built-in viewer.","), no el visor integrado de esta app.","), não o visualizador embutido deste app.","), pas le lecteur intégré de cette application.","), non il visualizzatore integrato di questa app.","), nu vizualizatorul încorporat al acestei aplicații.","), nicht im integrierten Viewer dieser App.","), а не во встроенном просмотрщике приложения.","), không dùng trình xem tích hợp của ứng dụng này.","), ไม่ใช่ตัวแสดงผลที่มีในแอปนี้","), وليس عارض التطبيق المدمج.","), si kionyeshi kilichojengwa ndani ya programu hii.","), inte appens inbyggda visare."],["No lines available for that language combination in this lesson.","No hay líneas para esa combinación de idiomas en esta lección.","Não há linhas para essa combinação de idiomas nesta lição.","Aucune ligne pour cette combinaison de langues dans cette leçon.","Nessuna riga per questa combinazione di lingue in questa lezione.","Nu există rânduri pentru această combinație de limbi în această lecție.","Für diese Sprachkombination gibt es in dieser Lektion keine Zeilen.","В этом уроке нет строк для такой комбинации языков.","Bài học này không có câu nào cho cặp ngôn ngữ đó.","บทเรียนนี้ไม่มีบรรทัดสำหรับคู่ภาษานี้","لا توجد أسطر لهذه المجموعة من اللغات في هذا الدرس.","Hakuna mistari kwa mchanganyiko huo wa lugha katika somo hili.","Det finns inga rader för den språkkombinationen i den här lektionen."],["No lines available for that language combination.","No hay líneas para esa combinación de idiomas.","Não há linhas para essa combinação de idiomas.","Aucune ligne pour cette combinaison de langues.","Nessuna riga per questa combinazione di lingue.","Nu există rânduri pentru această combinație de limbi.","Für diese Sprachkombination gibt es keine Zeilen.","Нет строк для такой комбинации языков.","Không có câu nào cho cặp ngôn ngữ đó.","ไม่มีบรรทัดสำหรับคู่ภาษานี้","لا توجد أسطر لهذه المجموعة من اللغات.","Hakuna mistari kwa mchanganyiko huo wa lugha.","Det finns inga rader för den språkkombinationen."]]};
+const UI_MAP = {}, UI_RX = {};
+UI_TABLE.langs.forEach((lg, li) => {
+  UI_MAP[lg] = new Map(); UI_RX[lg] = [];
+  UI_TABLE.rows.forEach(r => {
+    const en = r[0], tr = r[li + 1];
+    if(!/\{\d\}/.test(en)){ UI_MAP[lg].set(en, tr); return; }
+    const parts = en.split(/\{(\d)\}/); let rx = '^';
+    parts.forEach((p, i) => { rx += (i % 2 === 0) ? p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '(.+?)'; });
+    UI_RX[lg].push({ rx: new RegExp(rx + '$'), en, tr, order: parts.filter((_, i) => i % 2 === 1).map(Number) });
+  });
+});
+function uiLangFor(code){
+  if(!code || code === 'ar-MA') return 'en';          // Latin-script Darija: keep English UI
+  const base = String(code).split('-')[0].toLowerCase();
+  return UI_MAP[base] ? base : 'en';
+}
+
+/* ---- LANGUAGE NAMES in the UI language ----
+   Names of the languages themselves (source/target dropdowns, hub chooser,
+   "Spanish → English" tile subtitles, voice notes) are shown in the UI
+   language. The base name comes from the browser's own Intl.DisplayNames
+   (no table needed); qualifiers like "(South American)" and the few
+   languages the browser doesn't know (Susu, Klingon, Navajo, Nahuatl,
+   Darija) come from the tables below. Anything unknown falls back to the
+   course's English label. */
+const UI_QUAL = {"South American":["sudamericano","sul-americano","sud-américain","sudamericano","sud-american","südamerikanisch","южноамериканский","Nam Mỹ","อเมริกาใต้","أمريكا الجنوبية","Amerika Kusini","sydamerikansk"],"Brazilian":["brasileño","brasileiro","brésilien","brasiliano","brazilian","brasilianisch","бразильский","Brazil","บราซิล","برازيلية","Kibrazili","brasiliansk"],"European":["europeo","europeu","européen","europeo","european","europäisch","европейский","châu Âu","ยุโรป","أوروبية","Ulaya","europeisk"],"Parisian":["parisino","parisiense","parisien","parigino","parizian","Pariser","парижский","Paris","ปารีส","باريسية","Paris","parisisk"],"African":["africano","africano","africain","africano","african","afrikanisch","африканский","châu Phi","แอฟริกา","أفريقية","Afrika","afrikansk"],"Spain":["España","Espanha","Espagne","Spagna","Spania","Spanien","Испания","Tây Ban Nha","สเปน","إسبانيا","Uhispania","Spanien"],"Equatoguinean African":["africano de Guinea Ecuatorial","africano da Guiné Equatorial","africain de Guinée équatoriale","africano della Guinea Equatoriale","african din Guineea Ecuatorială","afrikanisch, Äquatorialguinea","африканский, Экваториальная Гвинея","châu Phi, Guinea Xích Đạo","แอฟริกา อิเควทอเรียลกินี","أفريقية، غينيا الاستوائية","Afrika, Guinea ya Ikweta","afrikansk, Ekvatorialguinea"],"Modern Ecclesiastical":["eclesiástico moderno","eclesiástico moderno","ecclésiastique moderne","ecclesiastico moderno","ecleziastic modern","modernes Kirchenlatein","современный церковный","Giáo hội hiện đại","คริสตจักรสมัยใหม่","كنسية حديثة","ya kanisa ya kisasa","modern kyrklig"],"Classical":["clásico","clássico","classique","classico","clasic","klassisch","классический","cổ điển","คลาสสิก","كلاسيكية","ya kale","klassisk"],"Formal":["formal","formal","formel","formale","formal","formell","формальный","trang trọng","ทางการ","رسمي","rasmi","formell"],"Informal":["informal","informal","informel","informale","informal","informell","неформальный","thân mật","ไม่เป็นทางการ","غير رسمي","isiyo rasmi","informell"],"Arabizi/Latin script":["arabizi/escritura latina","arabizi/escrita latina","arabizi/écriture latine","arabizi/scrittura latina","arabizi/scriere latină","Arabizi/lateinische Schrift","арабизи/латиница","Arabizi/chữ Latinh","อาราบิซี/อักษรละติน","عربيزي/الحروف اللاتينية","Arabizi/herufi za Kilatini","arabizi/latinsk skrift"]};
+const UI_CUSTOM_BASE = {"Susu":["Susu","Susu","Soussou","Susu","Susu","Susu","Сусу","Susu","ซูซู","السوسو","Susu","Susu"],"Klingon":["Klingon","Klingon","Klingon","Klingon","Klingon","Klingonisch","Клингонский","Klingon","คลิงออน","الكلينغونية","Klingon","Klingonska"],"Navajo":["Navajo","Navajo","Navajo","Navajo","Navajo","Navajo","Навахо","Navajo","นาวาโฮ","النافاجو","Navajo","Navajo"],"Huasteca Nahuatl":["Náhuatl huasteco","Náuatle huasteco","Nahuatl de la Huasteca","Nahuatl huasteco","Nahuatl huasteca","Huasteca-Nahuatl","Уастекский науатль","Nahuatl Huasteca","นาวาตล์ฮัวสเตกา","ناواتل هواستيكا","Nahuatl ya Huasteca","Huasteca-nahuatl"],"Darija Arabic":["Árabe darija","Árabe darija","Arabe darija","Arabo darija","Arabă darija","Darija-Arabisch","Арабский (дарижа)","Ả Rập Darija","อาหรับดาริจา","العربية الدارجة","Kiarabu cha Darija","Darija-arabiska"]};
+const UI_BASE_CODE = {"Spanish":"es","English":"en","Portuguese":"pt","French":"fr","Romanian":"ro","Italian":"it","Latin":"la","Samoan":"sm","German":"de","Russian":"ru","Vietnamese":"vi","Lao":"lo","Swahili":"sw","Lingala":"ln","Thai":"th","Arabic":"ar","Modern Standard Arabic":"ar-001","Swedish":"sv","Amharic":"am","Czech":"cs","Hausa":"ha","Hawaiian":"haw","Igbo":"ig","Japanese":"ja","Khmer":"km","Māori":"mi","Polish":"pl","Slovak":"sk","Southern Quechua":"quz","Tongan":"to","Ukrainian":"uk","Yoruba":"yo","isiXhosa":"xh","isiZulu":"zu"};
+const uiLabelCache = {};
+function uiLabelText(en, lang){
+  if(!en || lang === 'en' || !UI_MAP[lang]) return en;
+  const key = lang + '|' + en;
+  if(uiLabelCache[key] !== undefined) return uiLabelCache[key];
+  const m = String(en).match(/^(.+?)(?: \((.+)\))?$/), base = m[1], q = m[2], li = UI_TABLE.langs.indexOf(lang);
+  let name = null;
+  if(UI_CUSTOM_BASE[base]) name = UI_CUSTOM_BASE[base][li];
+  else if(UI_BASE_CODE[base] && typeof Intl !== 'undefined' && Intl.DisplayNames){
+    try {
+      const v = new Intl.DisplayNames([lang], { type:'language' }).of(UI_BASE_CODE[base]);
+      if(v && v !== UI_BASE_CODE[base]) name = v.charAt(0).toLocaleUpperCase(lang) + v.slice(1);
+    } catch(e){}
+  }
+  let out = en;
+  if(name) out = q ? name + ' (' + (UI_QUAL[q] ? UI_QUAL[q][li] : q) + ')' : name;
+  return (uiLabelCache[key] = out);
+}
+function uiLabel(l){ return (UI.ready && l) ? uiLabelText(l.label, UI.lang) : (l ? l.label : ''); }
+
+function uiCurrentLang(){
+  const drill = document.getElementById('drillScreen');
+  const chosen = UI.chosen || (drill && !drill.classList.contains('hidden'));
+  return chosen ? uiLangFor(S.srcCode) : 'en';
+}
+function uiTranslate(text, lang){
+  if(lang === 'en' || !UI_MAP[lang]) return text;
+  const core = text.trim(); if(!core) return text;
+  const lead = text.slice(0, text.indexOf(core)), trail = text.slice(lead.length + core.length);
+  const norm = core.replace(/^(\d+) lines? drilled in about (\d+) minutes?\.$/, '$1 lines drilled in about $2 minutes.');
+  let out = UI_MAP[lang].get(norm);
+  if(out === undefined){
+    for(const e of UI_RX[lang]){
+      const m = norm.match(e.rx);
+      if(m){ const isVoiceNote = /voice installed/.test(e.en);
+      out = e.tr.replace(/\{(\d)\}/g, (_, k) => { const v = m[e.order.indexOf(+k) + 1] ?? ''; return isVoiceNote ? uiLabelText(v, lang) : v; }); break; }
+    }
+  }
+  return out === undefined ? text : lead + out + trail;
+}
+const UI_SKIP = '.source-line,.target-line,.speaker-tag,.tone-tag';
+function uiText(n){
+  const p = n.parentElement;
+  if(!p || p.closest(UI_SKIP) || p.tagName === 'SCRIPT' || p.tagName === 'STYLE') return;
+  const cur = n.nodeValue;
+  if(n.__uiOut !== cur){ n.__uiEn = cur; }             // the app wrote fresh English
+  const out = uiTranslate(n.__uiEn, UI.lang);
+  n.__uiOut = out;
+  if(out !== cur) n.nodeValue = out;
+}
+function uiTitle(el){
+  const cur = el.getAttribute('title');
+  if(el.__uiTOut !== cur){ el.__uiTEn = cur; }
+  const out = uiTranslate(el.__uiTEn, UI.lang);
+  el.__uiTOut = out;
+  if(out !== cur) el.setAttribute('title', out);
+}
+function uiApply(node){
+  if(node.nodeType === 3){ uiText(node); return; }
+  if(node.nodeType !== 1 || node.tagName === 'SCRIPT' || node.tagName === 'STYLE' || node.matches(UI_SKIP)) return;
+  if(node.hasAttribute('title')) uiTitle(node);
+  for(let c = node.firstChild; c; c = c.nextSibling) uiApply(c);
+}
+const uiObserver = new MutationObserver(recs => {
+  recs.forEach(r => {
+    if(r.type === 'characterData') uiText(r.target);
+    else if(r.type === 'attributes') uiTitle(r.target);
+    else r.addedNodes.forEach(n => {
+      const host = n.nodeType === 1 ? n.parentElement : n.parentElement;
+      if(host && host.closest(UI_SKIP)) return;
+      uiApply(n);
+    });
+  });
+  uiObserver.takeRecords();                            // discard our own writes
+});
+function uiRefresh(force){
+  const lang = uiCurrentLang();
+  if(lang === UI.lang && !force) return;
+  const changed = UI.lang !== lang;
+  UI.lang = lang;
+  document.documentElement.lang = lang;
+  if(changed && UI.ready){            // re-render the language names (and their alphabetical order) in the new UI language
+    try { renderLangTiles(); populateLangSelects(); } catch(e){ console.error('[ui language] re-render failed', e); }
+  }
+  uiApply(document.body);
+  uiObserver.takeRecords();
+}
+(function initUiLanguage(){
+  const _alert = window.alert.bind(window);
+  window.alert = m => _alert(uiTranslate(String(m), UI.lang));
+  // "chosen" = the learner has picked a language (tile, source dropdown, or swap)
+  const _choose = chooseLanguageAndStart;
+  chooseLanguageAndStart = function(){ UI.chosen = true; const r = _choose.apply(this, arguments); uiRefresh(); return r; };
+  ['srcLangSelect', 'drillSrcLangSelect'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('change', () => { UI.chosen = true; setTimeout(() => uiRefresh(), 0); }, true);
+  });
+  const sw = document.getElementById('swapBtn');
+  if(sw) sw.addEventListener('click', () => { UI.chosen = true; setTimeout(() => uiRefresh(), 0); }, true);
+  document.addEventListener('click', () => setTimeout(() => uiRefresh(), 0), true);
+  document.addEventListener('change', () => setTimeout(() => uiRefresh(), 0), true);
+  setInterval(() => uiRefresh(), 400);                 // safety net for any other code path that sets S.srcCode
+  const st = document.createElement('style');       // keep "source → target" in order when both labels are right-to-left (Arabic)
+  st.textContent = '.lang-pair-caption > span{unicode-bidi:isolate}';
+  document.head.appendChild(st);
+  uiObserver.observe(document.body, { childList:true, subtree:true, characterData:true, attributes:true, attributeFilter:['title'] });
+  UI.ready = true;
+  uiRefresh(true);
+})();
 </script>
 </body>
 </html>
