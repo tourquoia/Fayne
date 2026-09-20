@@ -491,8 +491,24 @@ list to copy entries from.
   .drill-lang-row .lang-col.tgt{ border-left-color:var(--teal); }
   .drill-lang-row select{ font-size:13px; padding:7px 8px; }
 
-  .milestone{ display:flex; align-items:center; gap:10px; margin:0 0 14px; }
-  .road{ flex:1; }
+  /* One compact row: line-progress bar (about a third of the width) with
+     the Hands-free / Slow practice pills sitting right beside it. The pills
+     used to live inside Advanced (as #drillStyleRow); the id is unchanged so
+     the JS bindings still work. */
+  .milestone{ display:flex; align-items:center; gap:8px; margin:0 0 14px; flex-wrap:nowrap; }
+  .road{ flex:0 0 33%; min-width:0; }
+  .milestone .track{ height:28px; }
+  .milestone .cap{ justify-content:center; padding:0 4px; white-space:nowrap; }
+  .milestone .toggle-row{ flex:1; min-width:0; gap:6px; }
+  .milestone .toggle-pill{
+    flex:1; min-width:0; height:28px; padding:0 6px; border-radius:14px;
+    font-size:11.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  @media (max-width:360px){
+    .milestone{ gap:6px; }
+    .milestone .toggle-pill{ font-size:10.5px; padding:0 4px; }
+    .milestone .cap{ font-size:9.5px; }
+  }
   .track{ position:relative; height:24px; border-radius:12px; background:var(--border-soft); overflow:hidden; }
   .fill{ position:absolute; left:0; top:0; height:100%; background:var(--amber); border-radius:12px; transition:width var(--ease); }
   .cap{
@@ -914,6 +930,12 @@ list to copy entries from.
           <div class="cap"><span id="capLeft">Line 1 of 1</span><span id="capRight"></span></div>
         </div>
       </div>
+      <!-- Session style pills, moved out of Advanced (2026-09) so switching
+           between Hands-free and Slow practice is always one tap away. -->
+      <div class="toggle-row" id="drillStyleRow">
+        <button class="toggle-pill on" data-val="exposure">Hands-free</button>
+        <button class="toggle-pill" data-val="judge">Slow practice</button>
+      </div>
     </div>
     <div class="stage">
       <div class="speaker-tag" id="speakerTag">&nbsp;</div>
@@ -1000,12 +1022,6 @@ list to copy entries from.
           <div class="subgroup-label">Characters &amp; voices</div>
           <div id="charactersList"></div>
 
-          <div class="subgroup-label">Session style</div>
-          <div class="toggle-row" id="drillStyleRow">
-            <button class="toggle-pill on" data-val="exposure">Hands-free</button>
-            <button class="toggle-pill" data-val="judge">Slow practice</button>
-          </div>
-          <div class="note hidden" id="drillListenNote"></div>
 
         </div>
       </details>
@@ -4124,7 +4140,7 @@ function updateMilestone(){
   const cur = S.idx+1;
   document.getElementById('roadFill').style.width = Math.round((cur/total)*100)+'%';
   document.getElementById('capLeft').textContent = `Line ${cur} of ${total}`;
-  document.getElementById('capRight').textContent = S.style==='judge' ? (S.attempt===2 ? 'attempt 2 of 2' : '') : '';
+  document.getElementById('capRight').textContent = '';   // bar is only a third wide now; no room for an attempt counter
 }
 
 /* ============================================================
@@ -4262,59 +4278,46 @@ async function runJudgedLine(entry, token, attempt, opts){
     if(token!==S.token) return;
   }
 
-  setPhase(attempt===1 ? 'Your turn' : 'Your turn — last try');
+  setPhase('Your turn');
   document.getElementById('yourTurn').classList.add('show');
-  document.getElementById('retryBtn').style.visibility = attempt===1 ? 'visible' : 'hidden';
+  document.getElementById('retryBtn').style.visibility = 'visible';
   document.getElementById('heardText').textContent = '';
   updateMicToggleUI();
   tryStartRecognition(S.targetLangGuess==='la' ? 'it-IT' : S.targetLangGuess, entry.target);
 
-  const repeatPauseMs = estimateMs(entry.target)*1.5;
-
-  if(attempt===1){
-    await new Promise(resolve=>{
-      let settled=false;
-      let iv=null;
-      const done = (verdict)=>{
-        if(settled) return; settled=true;
-        clearInterval(iv);
-        // 'stale' = the line was paused/skipped underneath us; just drop the
-        // listeners, don't touch mic/panel state a newer run may now own.
-        if(verdict!=='stale'){
-          stopRecognition();
-          document.getElementById('yourTurn').classList.remove('show');
-        }
-        cleanup();
-        resolve(verdict);
-      };
-      iv = setInterval(()=>{ if(token!==S.token) done('stale'); }, 150);
-      const passH = ()=>done('pass');
-      const retryH = ()=>done('retry');
-      const cleanup = ()=>{
-        document.getElementById('passBtn').removeEventListener('click', passH);
-        document.getElementById('retryBtn').removeEventListener('click', retryH);
-      };
-      document.getElementById('passBtn').addEventListener('click', passH);
-      document.getElementById('retryBtn').addEventListener('click', retryH);
-    }).then(verdict=>{
-      if(token!==S.token) return;
-      if(verdict==='pass'){ flashOK(); S.linesCompleted++; advance(); }
-      else { runJudgedLine(entry, token, 2); }
-    });
-  } else {
-    await new Promise(resolve=>{
-      let settled=false;
-      const done = ()=>{ if(settled) return; settled=true; if(token===S.token) stopRecognition(); cleanup(); resolve(); };
-      const passH = ()=>done();
-      document.getElementById('passBtn').addEventListener('click', passH);
-      const cleanup = ()=>document.getElementById('passBtn').removeEventListener('click', passH);
-      sleep(repeatPauseMs, token).then(done);
-    });
+  // The learner's turn never times out and never auto-advances: "Once more"
+  // replays the model line and comes right back here (mic re-armed, "what I
+  // heard" cleared) as many times as they like; only "Got it" (or Next)
+  // moves on to the next line.
+  await new Promise(resolve=>{
+    let settled=false;
+    let iv=null;
+    const done = (verdict)=>{
+      if(settled) return; settled=true;
+      clearInterval(iv);
+      // 'stale' = the line was paused/skipped underneath us; just drop the
+      // listeners, don't touch mic/panel state a newer run may now own.
+      if(verdict!=='stale'){
+        stopRecognition();
+        document.getElementById('yourTurn').classList.remove('show');
+      }
+      cleanup();
+      resolve(verdict);
+    };
+    iv = setInterval(()=>{ if(token!==S.token) done('stale'); }, 150);
+    const passH = ()=>done('pass');
+    const retryH = ()=>done('retry');
+    const cleanup = ()=>{
+      document.getElementById('passBtn').removeEventListener('click', passH);
+      document.getElementById('retryBtn').removeEventListener('click', retryH);
+    };
+    document.getElementById('passBtn').addEventListener('click', passH);
+    document.getElementById('retryBtn').addEventListener('click', retryH);
+  }).then(verdict=>{
     if(token!==S.token) return;
-    document.getElementById('yourTurn').classList.remove('show');
-    S.linesCompleted++;
-    advance();
-  }
+    if(verdict==='pass'){ flashOK(); S.linesCompleted++; advance(); }
+    else { runJudgedLine(entry, token, attempt+1); }
+  });
 }
 
 function flashOK(){
