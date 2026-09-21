@@ -1315,6 +1315,7 @@ const S = {
   sourceLangGuess: 'es-ES',
   activeLines: [],
   voices: [],
+  sharedVoices: {src:'', tgt:'', srcLang:'', tgtLang:'', srcUserPicked:false, tgtUserPicked:false},
   charVoices: {},     // { speakerCode: {src, tgt, srcLang, tgtLang, srcUserPicked, tgtUserPicked} } —
                        // *Lang stamps the langCode a URI was picked for, so a language change can
                        // tell a still-valid-but-stale voice apart from a real manual override.
@@ -1447,6 +1448,7 @@ function switchCourse(idx){
   S.courseIdx = idx;
   S.sheetIdx = 0;
   S.charVoices = {};
+  S.sharedVoices = {src:'', tgt:'', srcLang:'', tgtLang:'', srcUserPicked:false, tgtUserPicked:false};
   chooseDefaultLangsForCourse(currentCourse());
   populateLangSelects();
   populateSheetSelect();
@@ -1502,6 +1504,10 @@ document.getElementById('swapBtn').addEventListener('click', ()=>{
   const s = srcSel.value, t = tgtSel.value;
   srcSel.value = t; tgtSel.value = s;
   S.srcCode = srcSel.value; S.tgtCode = tgtSel.value;
+  const sv = S.sharedVoices || (S.sharedVoices = {src:'', tgt:'', srcLang:'', tgtLang:'', srcUserPicked:false, tgtUserPicked:false});
+  [sv.src, sv.tgt] = [sv.tgt, sv.src];
+  [sv.srcLang, sv.tgtLang] = [sv.tgtLang, sv.srcLang];
+  [sv.srcUserPicked, sv.tgtUserPicked] = [sv.tgtUserPicked, sv.srcUserPicked];
   Object.keys(S.charVoices).forEach(code=>{
     const cv = S.charVoices[code];
     const tmpURI = cv.src; cv.src = cv.tgt; cv.tgt = tmpURI;
@@ -2723,113 +2729,99 @@ function renderCharacterCards(){
 
   const srcVoiceLangCode = srcLang ? srcLang.voiceLang : 'en-US';
   const tgtVoiceLangCode = tgtLang ? tgtLang.voiceLang : 'en-US';
-  // The *language* `code` (e.g. 'pt-BR', 'la-VA') drives voice defaults —
-  // NOT srcVoiceLangCode/tgtVoiceLangCode above, which are only used for
-  // the actual utterance's lang tag. Several codes share a voiceLang
-  // (all three Latin registers resolve to 'la'; fr-FR/fr-AFR both resolve
-  // to 'fr-FR'), so keying defaults off voiceLang can't tell them apart —
-  // keying off `code` instead is also what lets switching between two
-  // codes that share a voiceLang correctly count as a language change.
   const srcLangCode = srcLang ? srcLang.code : 'en';
   const tgtLangCode = tgtLang ? tgtLang.code : 'en';
 
-  course.characters.forEach(ch=>{
-    if(!S.charVoices[ch.code]) S.charVoices[ch.code] = {src:'', tgt:'', srcLang:'', tgtLang:'', srcUserPicked:false, tgtUserPicked:false, srcPitch:1, tgtPitch:1, srcPitchUserPicked:false, tgtPitchUserPicked:false};
-    const cv = S.charVoices[ch.code];
-    const charGender = guessCharGender(ch);
-    const srcId = 'srcVoice__'+sanitizeId(ch.code);
-    const tgtId = 'tgtVoice__'+sanitizeId(ch.code);
+  // Characters are intentionally collapsed in Advanced. There is one
+  // selectable TTS voice per active language, shared by every character.
+  // Character-specific pitch remains internal so the dialogue can still
+  // preserve character differentiation without displaying a character list.
+  const shared = S.sharedVoices || (S.sharedVoices = {
+    src:'', tgt:'', srcLang:'', tgtLang:'', srcUserPicked:false, tgtUserPicked:false
+  });
 
-    const card = document.createElement('div');
-    card.className = 'char-card';
-    card.innerHTML = `
-      <div class="char-head">
-        <span class="char-name">${escapeHtml(ch.name)}</span>
-        <span class="char-role-tag">${escapeHtml(ch.code)}</span>
-        ${ch.role ? `<span class="char-role">— ${escapeHtml(ch.role)}</span>` : ''}
+  const voiceCard = document.createElement('div');
+  voiceCard.className = 'char-card';
+  voiceCard.innerHTML = `
+    <div class="char-head">
+      <span class="char-name">Voices</span>
+      <span class="char-role">one voice per language · shared by all characters</span>
+    </div>
+    <div class="char-divider"></div>
+    <div class="char-voice-row">
+      <div class="voice-col">
+        <div class="voice-label src"><span class="dot" id="dot_sharedSrcVoice"></span>Source voice</div>
+        <select id="sharedSrcVoice"></select>
+        <div class="voice-control-row src">
+          <button type="button" class="voice-test-btn src" id="test_sharedSrcVoice" title="Preview this voice">Test ▶</button>
+        </div>
+        <div class="voice-note" id="note_sharedSrcVoice"></div>
       </div>
-      <div class="char-divider"></div>
-      <div class="char-voice-row">
-        <div class="voice-col">
-          <div class="voice-label src"><span class="dot" id="dot_${srcId}"></span>Source voice</div>
-          <select id="${srcId}"></select>
-          <div class="voice-control-row src">
-            <button type="button" class="voice-test-btn src" id="test_${srcId}" title="Preview this voice">Test ▶</button>
-          </div>
-          <div class="voice-note" id="note_${srcId}"></div>
+      <div class="voice-col">
+        <div class="voice-label tgt"><span class="dot" id="dot_sharedTgtVoice"></span>Target voice</div>
+        <select id="sharedTgtVoice"></select>
+        <div class="voice-control-row tgt">
+          <button type="button" class="voice-test-btn tgt" id="test_sharedTgtVoice" title="Preview this voice">Test ▶</button>
         </div>
-        <div class="voice-col">
-          <div class="voice-label tgt"><span class="dot" id="dot_${tgtId}"></span>Target voice</div>
-          <select id="${tgtId}"></select>
-          <div class="voice-control-row tgt">
-            <button type="button" class="voice-test-btn tgt" id="test_${tgtId}" title="Preview this voice">Test ▶</button>
-          </div>
-          <div class="voice-note" id="note_${tgtId}"></div>
-        </div>
-      </div>`;
-    wrap.appendChild(card);
-    // Pitch dropdowns are wired in a second pass below, once every
-    // character's voice URI for this language pair is known — the
-    // collision check needs the full picture first.
+        <div class="voice-note" id="note_sharedTgtVoice"></div>
+      </div>
+    </div>`;
+  wrap.appendChild(voiceCard);
 
-    if(noSrc){
-      const sel = document.getElementById(srcId);
-      sel.innerHTML = '<option value="">— no separate source voice needed —</option>';
-      sel.disabled = true;
-      cv.src = '';
-      cv.srcLang = '';
-      cv.srcUserPicked = false;
-      const srcTestBtn = document.getElementById('test_'+srcId);
-      if(srcTestBtn) srcTestBtn.disabled = true;
-    } else {
-      // Only trust the saved URI as a "keep my manual override" signal if the
-      // user actually chose it themselves for this exact language — an
-      // auto-picked default is never sticky, so as more voices finish loading
-      // (e.g. a proper regional voice arriving after a placeholder), the pick
-      // keeps improving instead of freezing on whatever loaded first.
-      const prevSrcURI = (cv.srcUserPicked && cv.srcLang===srcLangCode) ? cv.src : '';
-      const {chosenURI, matches, usingFallback:srcUsingFallback, genderMatched} = populateVoiceSelect(srcId, srcLangCode, prevSrcURI, charGender);
-      cv.src = chosenURI;
-      cv.srcLang = srcLangCode;
-      updateDotAndNote(srcId, chosenURI, matches, genderMatched, srcUsingFallback, charGender, srcLang && srcLang.label);
-      document.getElementById(srcId).onchange = e=>{
-        cv.src = e.target.value;
-        cv.srcLang = srcLangCode;
-        cv.srcUserPicked = true;
-        updateDotAndNote(srcId, e.target.value, matches, false, srcUsingFallback, charGender, srcLang && srcLang.label);
-      };
-      const srcTestBtn = document.getElementById('test_'+srcId);
-      if(srcTestBtn) srcTestBtn.onclick = ()=> previewVoice(cv.src, srcVoiceLangCode, srcTestBtn, cv.srcPitch);
-    }
+  const srcSel = document.getElementById('sharedSrcVoice');
+  const tgtSel = document.getElementById('sharedTgtVoice');
 
-    const prevTgtURI = (cv.tgtUserPicked && cv.tgtLang===tgtLangCode) ? cv.tgt : '';
-    const {chosenURI:tURI, matches:tMatches, usingFallback, genderMatched:tGenderMatched} = populateVoiceSelect(tgtId, tgtLangCode, prevTgtURI, charGender);
-    cv.tgt = tURI;
-    cv.tgtLang = tgtLangCode;
-    updateDotAndNote(tgtId, tURI, tMatches, tGenderMatched, usingFallback, charGender, tgtLang && tgtLang.label);
-    document.getElementById(tgtId).onchange = e=>{
-      cv.tgt = e.target.value;
-      cv.tgtLang = tgtLangCode;
-      cv.tgtUserPicked = true;
-      updateDotAndNote(tgtId, e.target.value, tMatches, false, usingFallback, charGender, tgtLang && tgtLang.label);
+  if(noSrc){
+    srcSel.innerHTML = '<option value="">— no separate source voice needed —</option>';
+    srcSel.disabled = true;
+    shared.src = ''; shared.srcLang = ''; shared.srcUserPicked = false;
+    document.getElementById('test_sharedSrcVoice').disabled = true;
+  } else {
+    const prevSrcURI = (shared.srcUserPicked && shared.srcLang===srcLangCode) ? shared.src : '';
+    const result = populateVoiceSelect('sharedSrcVoice', srcLangCode, prevSrcURI);
+    shared.src = result.chosenURI;
+    shared.srcLang = srcLangCode;
+    updateDotAndNote('sharedSrcVoice', result.chosenURI, result.matches, false, result.usingFallback, null, srcLang && srcLang.label);
+    srcSel.onchange = e=>{
+      shared.src = e.target.value;
+      shared.srcLang = srcLangCode;
+      shared.srcUserPicked = true;
+      updateDotAndNote('sharedSrcVoice', e.target.value, result.matches, false, result.usingFallback, null, srcLang && srcLang.label);
+      Object.values(S.charVoices).forEach(cv=>{ cv.src = shared.src; cv.srcLang = shared.srcLang; });
+      applyVoiceCollisionPitch(course);
     };
-    const tgtTestBtn = document.getElementById('test_'+tgtId);
-    if(tgtTestBtn) tgtTestBtn.onclick = ()=> previewVoice(cv.tgt, tgtVoiceLangCode, tgtTestBtn, cv.tgtPitch);
-  });
+    document.getElementById('test_sharedSrcVoice').onclick = ()=> previewVoice(shared.src, srcVoiceLangCode, document.getElementById('test_sharedSrcVoice'));
+  }
 
-  // Second pass: every character now has a resolved voice URI for both
-  // sides, so this is the first point where a "two characters ended up on
-  // the same underlying voice" collision can actually be detected. Nudge
-  // pitch apart for anyone caught in a collision who hasn't manually set
-  // their own pitch, then build/wire the dropdowns with the final values.
-  applyVoiceCollisionPitch(course);
+  const prevTgtURI = (shared.tgtUserPicked && shared.tgtLang===tgtLangCode) ? shared.tgt : '';
+  const tgtResult = populateVoiceSelect('sharedTgtVoice', tgtLangCode, prevTgtURI);
+  shared.tgt = tgtResult.chosenURI;
+  shared.tgtLang = tgtLangCode;
+  updateDotAndNote('sharedTgtVoice', tgtResult.chosenURI, tgtResult.matches, false, tgtResult.usingFallback, null, tgtLang && tgtLang.label);
+  tgtSel.onchange = e=>{
+    shared.tgt = e.target.value;
+    shared.tgtLang = tgtLangCode;
+    shared.tgtUserPicked = true;
+    updateDotAndNote('sharedTgtVoice', e.target.value, tgtResult.matches, false, tgtResult.usingFallback, null, tgtLang && tgtLang.label);
+    Object.values(S.charVoices).forEach(cv=>{ cv.tgt = shared.tgt; cv.tgtLang = shared.tgtLang; });
+    applyVoiceCollisionPitch(course);
+  };
+  document.getElementById('test_sharedTgtVoice').onclick = ()=> previewVoice(shared.tgt, tgtVoiceLangCode, document.getElementById('test_sharedTgtVoice'));
+
+  // Keep the per-character runtime records, but do not render their names,
+  // voice controls, or cards in Advanced. The selected language voice is
+  // mirrored into every character automatically.
   course.characters.forEach(ch=>{
+    if(!S.charVoices[ch.code]) S.charVoices[ch.code] = {
+      src:'', tgt:'', srcLang:'', tgtLang:'',
+      srcUserPicked:false, tgtUserPicked:false,
+      srcPitch:1, tgtPitch:1, srcPitchUserPicked:false, tgtPitchUserPicked:false
+    };
     const cv = S.charVoices[ch.code];
-    const srcId = 'srcVoice__'+sanitizeId(ch.code);
-    const tgtId = 'tgtVoice__'+sanitizeId(ch.code);
-    setupPitchSelect(srcId, cv, 'srcPitch', 'srcPitchUserPicked');
-    setupPitchSelect(tgtId, cv, 'tgtPitch', 'tgtPitchUserPicked');
+    cv.src = shared.src; cv.srcLang = shared.srcLang;
+    cv.tgt = shared.tgt; cv.tgtLang = shared.tgtLang;
   });
+  applyVoiceCollisionPitch(course);
 }
 
 /* ============================================================
@@ -3449,10 +3441,12 @@ function applyStageMode(){
    dedicated source voice chosen. */
 function voicesForEntry(entry){
   const cv = S.charVoices[entry.speaker] || {};
-  const sameLang = !!cv.srcLang && cv.srcLang === cv.tgtLang;
+  const shared = S.sharedVoices || {};
+  const srcURI = shared.src || cv.src || '';
+  const tgtURI = shared.tgt || cv.tgt || '';
   return {
-    srcURI: cv.src || (sameLang ? cv.tgt : '') || '',
-    tgtURI: cv.tgt || (sameLang ? cv.src : '') || '',
+    srcURI,
+    tgtURI,
     srcPitch: cv.srcPitch || 1,
     tgtPitch: cv.tgtPitch || 1,
   };
