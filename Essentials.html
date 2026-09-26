@@ -66,6 +66,21 @@ list to copy entries from.
 <meta name="google" content="notranslate"> <!-- prevents iOS Safari auto-translate from stripping page content -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- DARK MODE — applied as early as possible, before the stylesheet paints,
+     so there's no flash of the wrong theme. Respects an explicit toggle
+     choice (localStorage) if one was ever made; otherwise follows the
+     device's current color-scheme setting. -->
+<script>
+(function () {
+  try {
+    var stored = localStorage.getItem('themeMode'); // 'light' | 'dark' | absent = follow system
+    var dark = stored ? stored === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
 <!-- CACHE-BUSTING (2026-09): asks the browser to always revalidate/fetch a
      fresh copy of this page instead of serving a stale cached version when
      reopened. Note: for a file opened directly from disk (file://) browsers
@@ -158,7 +173,44 @@ list to copy entries from.
        bottom of the viewport. Bump this if the ad unit is taller. */
     --ad-safe-space:90px;
     --ease:150ms ease;
+    /* ---- DARK MODE (2026-09) ----
+       --surface: opaque light "paper" fill used by modals/dropdowns/option
+       lists that sit on a scrim or need to stay fully opaque (not the
+       translucent --card). --border-strong: the thick black decorative
+       border used on cards/buttons/tiles; flips to a light border in dark
+       mode so the outline stays visible against a dark page. */
+    --surface:#FFFFFF;
+    --border-strong:#000000;
+    /* Per-speaker gender text color (2026-09): the dialogue text itself
+       (.target-line / .source-line) shifts to a warm rose for female
+       speakers so it's visible right where the eyes already are, without
+       touching the card's border/fill — see the "GENDER TEXT COLOR" block
+       near runLine() for how the class gets applied per line. */
+    --ink-female:#B23A5E;
+    --ink-female-soft:#C1667E;
   }
+  html[data-theme="dark"]{
+    --bg:#121212;
+    --bg-hi:#121212;
+    --card:rgba(255,255,255,0.07);
+    --card-hi:rgba(240,90,34,0.12);
+    --border:#3A3530;
+    --border-soft:#2A2622;
+    --ink:#F2EDE8;
+    --ink-soft:#C9C2BA;
+    --ink-dim:#938D86;
+    --surface:#1E1B19;
+    --border-strong:#F2EDE8;
+    --white-dot:#938D86;
+    --shadow: 0 1px 2px rgba(0,0,0,.5), 0 8px 24px -12px rgba(0,0,0,.6);
+    /* Lighter, softer rose here so it sits alongside the light-mode ink
+       the same way white body text does — visible, easy on the eyes,
+       still clearly a different color from the default speaker's text. */
+    --ink-female:#F0A8B8;
+    --ink-female-soft:#E8B9C6;
+  }
+  html[data-theme="dark"] .home-dropdown-item.active{ background:rgba(240,90,34,0.18); }
+  html[data-theme="dark"] .note.warn{ background:rgba(240,90,34,0.12); border-color:#7A4423; color:#F0B98C; }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0; height:100%;}
   html{ -webkit-text-size-adjust:100%; }
@@ -185,7 +237,7 @@ list to copy entries from.
   /* ---- base card: amber neon-bordered dark panel ---- */
   .card{
     background:var(--card);
-    border:1.5px solid #000;
+    border:1.5px solid var(--border-strong);
     border-radius:var(--radius-lg);
     box-shadow:0 0 0 1px var(--amber-glow-soft), 0 0 30px -10px var(--amber-glow), var(--shadow);
     padding:14px 16px 13px;
@@ -222,11 +274,11 @@ list to copy entries from.
   select, input[type=text], input[type=number], textarea{
     width:100%; font-family:'Inter', inherit; font-size:13.5px;
     padding:8px 10px; border-radius:9px;
-    border:1.5px solid var(--border); background:rgba(255,255,255,0.58);
+    border:1.5px solid var(--border); background:var(--card);
     color:var(--ink);
   }
   select:focus, input:focus, textarea:focus{ outline:2px solid var(--amber-dim); outline-offset:1px; }
-  select option{ background:#FFFFFF; color:var(--ink); }
+  select option{ background:var(--surface); color:var(--ink); }
 
   /* ---- language selector row ---- */
   .lang-pair-caption{
@@ -240,10 +292,10 @@ list to copy entries from.
     border-top:1px solid var(--border-soft); margin-top:10px; padding-top:12px; }
   .lang-col{ border-left:3px solid var(--amber); padding-left:10px; }
   .lang-col.tgt{ border-left-color:var(--teal); }
-  #srcLangSelect, #tgtLangSelect{ font-size:15px; font-weight:700; padding:9px 10px; border-color:var(--border-soft); background:rgba(255,255,255,0.58); }
+  #srcLangSelect, #tgtLangSelect{ font-size:15px; font-weight:700; padding:9px 10px; border-color:var(--border-soft); background:var(--card); }
   .swap-btn{
     width:34px; height:34px; border-radius:50%;
-    border:1.5px solid var(--amber-dim); background:rgba(255,255,255,0.58); color:var(--ink-soft);
+    border:1.5px solid var(--amber-dim); background:var(--card); color:var(--ink-soft);
     display:flex; align-items:center; justify-content:center;
     cursor:pointer; margin-bottom:6px; transition:color var(--ease), border-color var(--ease);
   }
@@ -283,7 +335,7 @@ list to copy entries from.
   .voice-alert-note{ display:block; font-family:'Inter', sans-serif; font-size:14px; font-weight:800; color:var(--danger); margin:6px 0; line-height:1.35; }
   .voice-test-btn{
     flex:none; padding:5px 10px; margin-top:-1px;
-    border-radius:7px; border:1px solid var(--border); background:rgba(255,255,255,0.58);
+    border-radius:7px; border:1px solid var(--border); background:var(--card);
     color:var(--ink-soft); font-size:11px; font-weight:600; line-height:1.2; cursor:pointer;
     font-family:'Inter', inherit; white-space:nowrap;
     display:flex; align-items:center; gap:4px; justify-content:center;
@@ -301,21 +353,21 @@ list to copy entries from.
   /* ---- unified button system: primary / secondary / ghost ---- */
   .btn{
     font-family:'Inter', inherit; font-weight:700; font-size:13px;
-    padding:9px 15px; border-radius:10px; border:1.5px solid #000;
+    padding:9px 15px; border-radius:10px; border:1.5px solid var(--border-strong);
     background:var(--amber); color:#FFFFFF; cursor:pointer;
     box-shadow:var(--shadow);
     transition:background var(--ease), color var(--ease), border-color var(--ease), filter var(--ease);
   }
   .btn:hover{ filter:brightness(1.06); }
   .btn.secondary{
-    background:rgba(255,255,255,0.58); color:var(--amber-bright); border-color:#000;
+    background:var(--card); color:var(--amber-bright); border-color:var(--border-strong);
     box-shadow:none;
   }
   .btn.secondary:hover{ background:var(--card-hi); filter:none; }
   /* Was transparent border — invisible against the orange artwork behind
      the drill screen. A black border keeps "Retry" readable as a
      button there instead of floating text. */
-  .btn.ghost{ background:rgba(255,255,255,0.58); border-color:#000; color:var(--ink-soft); box-shadow:none; }
+  .btn.ghost{ background:var(--card); border-color:var(--border-strong); color:var(--ink-soft); box-shadow:none; }
   .btn.ghost:hover{ color:var(--ink); background:var(--border-soft); filter:none; }
   .btn.block{ width:100%; padding:11px; font-size:14px; margin-top:10px; }
   .btn-icon{ padding:8px 11px; line-height:1; flex:none; }
@@ -326,7 +378,7 @@ list to copy entries from.
 
   /* ---- hero "start practice" panel (now also holds the lesson grid) ---- */
   .hero-card{
-    background:linear-gradient(160deg, #FFFFFF 0%, var(--card-hi) 100%);
+    background:linear-gradient(160deg, var(--surface) 0%, var(--card-hi) 100%);
     border:1.5px solid var(--amber);
     border-radius:var(--radius-lg);
     box-shadow:0 0 0 1px var(--amber-glow-soft), 0 0 44px -10px var(--amber-glow), var(--shadow);
@@ -378,7 +430,7 @@ list to copy entries from.
   .lesson-tile{
     display:flex; align-items:center; gap:6px; flex:none;
     border:1.5px solid var(--border); border-radius:999px;
-    background:rgba(255,255,255,0.58); color:var(--ink-soft);
+    background:var(--card); color:var(--ink-soft);
     padding:8px 14px; font-size:12.5px; font-weight:600;
     font-family:'Inter', inherit; cursor:pointer; white-space:nowrap;
     transition:border-color var(--ease), color var(--ease), background var(--ease);
@@ -396,7 +448,7 @@ list to copy entries from.
   .toggle-row{ display:flex; gap:6px; }
   .toggle-pill{
     flex:1; padding:8px 10px; border-radius:9px; border:1.5px solid var(--border);
-    background:rgba(255,255,255,0.58); color:var(--ink-soft); font-size:12.5px; font-weight:600; cursor:pointer;
+    background:var(--card); color:var(--ink-soft); font-size:12.5px; font-weight:600; cursor:pointer;
     transition:background var(--ease), color var(--ease), border-color var(--ease);
   }
   .toggle-pill.on{ background:var(--amber); border-color:var(--amber); color:#FFFFFF; }
@@ -422,7 +474,7 @@ list to copy entries from.
   .nav-btn{
     display:flex; align-items:center; gap:6px;
     height:36px; padding:0 14px; border-radius:18px;
-    border:1.5px solid #000; background:var(--card); color:var(--ink-soft);
+    border:1.5px solid var(--border-strong); background:var(--card); color:var(--ink-soft);
     font-family:'Source Code Pro', monospace; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
     cursor:pointer; white-space:nowrap;
     transition:color var(--ease), border-color var(--ease);
@@ -433,20 +485,35 @@ list to copy entries from.
   .nav-btn:disabled:hover{ color:var(--ink-soft); border-color:var(--amber-dim); }
   .nav-btn.nav-home{
     flex:none; width:40px; height:40px; padding:0; border-radius:50%; justify-content:center;
-    border-color:#000; background:var(--card-hi); font-size:15px;
+    border-color:var(--border-strong); background:var(--card-hi); font-size:15px;
   }
   .nav-btn.nav-home:hover{ border-color:var(--amber); }
   .nav-btn.nav-home .home-icon{ display:flex; color:var(--amber-bright); }
+  /* Dark-mode toggle button — same circle as the home button, mirrored
+     onto the other side of the lesson-dropdown pill. Only one of the two
+     icons is shown at a time, based on the current theme. */
+  /* !important here because both icon spans also carry .home-icon (for its
+     shared color rule), whose own "display:flex" would otherwise outrank a
+     plain .theme-icon-sun/-moon selector and show both icons at once. */
+  .theme-icon-sun{ display:none !important; }
+  html[data-theme="dark"] .theme-icon-sun{ display:flex !important; }
+  html[data-theme="dark"] .theme-icon-moon{ display:none !important; }
 
   /* ---- player-nav: back/forward are quiet icon-only circles (matching
      the transport controls below); home + lesson dropdown are the
      prominent, primary controls in the middle ---- */
   .player-nav{ position:relative; }
   .player-nav .icon-btn{ flex:none; }
-  .home-pill-wrap{ position:relative; flex:1 1 auto; min-width:0; }
+  .home-pill-wrap{ position:relative; flex:1 1 0%; min-width:0; }
   .nav-btn.nav-home-pill{
-    flex:1 1 auto; min-width:0; width:auto; border-radius:999px; justify-content:center;
-    border-color:#000; background:var(--card-hi); color:var(--ink);
+    /* width:100% (not width:auto) is required here: a <button> is a form
+       control, and browsers size those to their own content by default
+       even with display:flex set — it will NOT auto-stretch to fill its
+       parent the way a normal block element would. Without this, the
+       button renders at its natural (wider) text width and spills past
+       .home-pill-wrap's edge into whatever sits next to it. */
+    flex:1 1 auto; min-width:0; width:100%; border-radius:999px; justify-content:center;
+    border-color:var(--border-strong); background:var(--card-hi); color:var(--ink);
     font-family:'Inter', inherit; font-size:12.5px; font-weight:700; letter-spacing:0;
     text-transform:none; gap:8px; overflow:hidden;
   }
@@ -456,14 +523,14 @@ list to copy entries from.
   .nav-btn.nav-home-pill .chev{ display:flex; color:var(--ink-soft); }
   .home-dropdown-list{
     position:absolute; top:calc(100% + 6px); left:50%; transform:translateX(-50%);
-    background:#FFFFFF; border:1.5px solid var(--border); border-radius:12px;
+    background:var(--surface); border:1.5px solid var(--border); border-radius:12px;
     box-shadow:var(--shadow); padding:6px; min-width:150px; z-index:30;
   }
   .home-dropdown-item{
-    padding:8px 12px; border-radius:8px; font-size:13.5px; color:#000000;
+    padding:8px 12px; border-radius:8px; font-size:13.5px; color:var(--ink);
     cursor:pointer; white-space:nowrap;
   }
-  .home-dropdown-item:hover{ background:var(--border-soft); color:#000000; }
+  .home-dropdown-item:hover{ background:var(--border-soft); color:var(--ink); }
   .home-dropdown-item.active{ background:#FEE9DD; color:var(--amber-bright); font-weight:700; }
   .home-dropdown-more{ text-align:center; padding:6px 0 2px; color:var(--ink-dim); font-size:12px; letter-spacing:.1em; }
   .home-dropdown-list{ max-height:280px; overflow-y:auto; }
@@ -562,6 +629,12 @@ list to copy entries from.
   .source-line{ font-size:15px; color:var(--ink-soft); margin-top:2px; }
   .target-line{ font-family:'Inter', sans-serif; font-size:30px; font-weight:800; letter-spacing:-.01em; line-height:1.2; color:var(--ink); margin-top:4px; min-height:34px; }
   @media (max-width:400px){ .target-line{ font-size:26px; } }
+  /* Per-speaker gender text color — see .stage.gender-female toggling in
+     runLine(). Only overrides the two text colors; border/background/
+     everything else about the stage card stays exactly the same for
+     every line. */
+  .stage.gender-female .target-line{ color:var(--ink-female); }
+  .stage.gender-female .source-line{ color:var(--ink-female-soft); }
 
   .your-turn{ display:none; flex-direction:column; align-items:center; gap:10px; margin-top:10px; }
   .your-turn.show{ display:flex; }
@@ -578,7 +651,7 @@ list to copy entries from.
      the target text, only while Practice is active. ---- */
   .mic-toggle{
     display:none; align-items:center; gap:8px; margin-top:6px;
-    padding:9px 16px; border-radius:999px; border:1.5px solid #000;
+    padding:9px 16px; border-radius:999px; border:1.5px solid var(--border-strong);
     background:var(--amber); color:#FFFFFF; cursor:pointer;
     font-family:'Inter', inherit; font-weight:700; font-size:13px;
     box-shadow:var(--shadow);
@@ -586,7 +659,7 @@ list to copy entries from.
   }
   .stage.judge-mode .mic-toggle{ display:inline-flex; }
   .mic-toggle:hover{ filter:brightness(1.06); }
-  .mic-toggle.off{ background:rgba(255,255,255,0.58); color:var(--ink-soft); }
+  .mic-toggle.off{ background:var(--card); color:var(--ink-soft); }
   .mic-toggle:disabled{ opacity:.55; cursor:default; filter:none; }
 
   /* ---- live "what I heard" comparison ---- */
@@ -605,27 +678,27 @@ list to copy entries from.
   .transport-secondary{ display:flex; align-items:center; gap:6px; padding-left:14px; border-left:1px solid var(--border); }
   @media (max-width:360px){ .transport-secondary{ padding-left:0; border-left:none; } }
   .icon-btn{
-    width:40px; height:40px; border-radius:50%; border:1.5px solid #000;
-    background:rgba(255,255,255,0.58); color:var(--ink-soft); cursor:pointer;
+    width:40px; height:40px; border-radius:50%; border:1.5px solid var(--border-strong);
+    background:var(--card); color:var(--ink-soft); cursor:pointer;
     display:flex; align-items:center; justify-content:center;
     box-shadow:var(--shadow);
     transition:background var(--ease), color var(--ease), border-color var(--ease), transform var(--ease);
   }
   .icon-btn.primary{
     width:52px; height:52px;
-    background:var(--amber); border-color:#000; color:#FFFFFF;
+    background:var(--amber); border-color:var(--border-strong); color:#FFFFFF;
     transition:background var(--ease), color var(--ease), border-color var(--ease), transform var(--ease), filter 180ms ease, box-shadow 180ms ease;
   }
   /* Was transparent border/background — on the arch's orange artwork these
      were nearly invisible. A black border keeps them visible against any
      part of the background while still reading as "secondary" controls. */
-  .icon-btn.small{ width:32px; height:32px; border:1.5px solid #000; background:rgba(255,255,255,0.58); box-shadow:none; }
+  .icon-btn.small{ width:32px; height:32px; border:1.5px solid var(--border-strong); background:var(--card); box-shadow:none; }
   .icon-btn:hover{ border-color:var(--amber); color:var(--amber-bright); transform:translateY(-1px); }
   .icon-btn.primary:hover{ filter:brightness(1.06); color:#FFFFFF; }
 
   .settings-panel{ background:var(--card-hi); border:1px solid var(--border-soft); border-radius:12px; padding:10px 12px; margin-top:10px; }
   .icon-btn.active{
-    background:var(--card-hi); border-color:#000; color:var(--amber-bright);
+    background:var(--card-hi); border-color:var(--border-strong); color:var(--amber-bright);
   }
   .icon-btn.active:hover{ color:var(--amber-bright); }
 
@@ -643,7 +716,7 @@ list to copy entries from.
   .modal-card{
     /* Opaque here (not var(--card)) — this sits on the dark modal scrim,
        not the arch artwork, so translucency would just look muddy. */
-    background:#FFFFFF; border:1.5px solid var(--amber-dim); border-radius:var(--radius-lg);
+    background:var(--surface); border:1.5px solid var(--amber-dim); border-radius:var(--radius-lg);
     box-shadow:0 0 0 1px var(--amber-glow-soft), 0 0 40px -10px var(--amber-glow), var(--shadow);
     padding:22px 22px 20px; width:100%; max-width:420px;
     max-height:calc(100vh - 40px); display:flex; flex-direction:column;
@@ -655,7 +728,7 @@ list to copy entries from.
     overflow-y:auto; min-height:0; flex:1 1 auto; }
   .colopt-row{
     display:flex; align-items:center; gap:10px; padding:10px 12px;
-    border:1.5px solid var(--border); border-radius:10px; background:rgba(255,255,255,0.58);
+    border:1.5px solid var(--border); border-radius:10px; background:var(--card);
     font-size:14px; cursor:pointer;
   }
   .colopt-row:hover{ border-color:var(--amber-dim); }
@@ -668,7 +741,7 @@ list to copy entries from.
   .modal-card.wide{ max-width:480px; }
   .setup-modal-body{ overflow-y:auto; min-height:0; flex:1 1 auto; margin-bottom:14px; }
   .gender-list{ display:flex; flex-direction:column; gap:8px; margin-top:8px; }
-  .gender-row{ border:1.5px solid var(--border); border-radius:10px; padding:9px 11px; background:rgba(255,255,255,0.58); }
+  .gender-row{ border:1.5px solid var(--border); border-radius:10px; padding:9px 11px; background:var(--card); }
   .gender-row-name{ font-size:13px; font-weight:600; color:var(--ink); margin-bottom:6px; display:flex; align-items:baseline; gap:6px; flex-wrap:wrap; }
   .gender-guess-note{ font-family:'Source Code Pro', monospace; font-size:9px; color:var(--ink-dim); font-weight:400; margin-left:auto; text-transform:uppercase; letter-spacing:.04em; }
   .gender-options{ display:flex; gap:14px; font-size:12.5px; color:var(--ink-soft); }
@@ -681,7 +754,7 @@ list to copy entries from.
   .home-lesson-picker-wrap{ position:relative; margin-bottom:16px; }
   .lesson-picker-pill{
     display:flex; align-items:center; gap:10px; width:100%;
-    background:var(--card); border:1.5px solid #000;
+    background:var(--card); border:1.5px solid var(--border-strong);
     border-radius:14px; padding:12px 14px; margin:0;
     box-shadow:var(--shadow); cursor:pointer;
     font-family:'Inter', inherit; text-align:left;
@@ -705,7 +778,7 @@ list to copy entries from.
   .lang-target-option{
     display:flex; align-items:center; justify-content:space-between;
     width:100%; text-align:left; font-family:'Inter', inherit; font-size:13.5px; font-weight:600;
-    color:var(--ink); background:rgba(255,255,255,0.58); border:1.5px solid var(--border);
+    color:var(--ink); background:var(--card); border:1.5px solid var(--border);
     border-radius:10px; padding:9px 12px; cursor:pointer;
     transition:border-color var(--ease), color var(--ease);
   }
@@ -716,7 +789,7 @@ list to copy entries from.
   .lang-tile{
     display:flex; align-items:center; gap:14px; width:100%;
     background:linear-gradient(135deg, var(--amber-bright) 0%, var(--amber) 100%);
-    border:1.5px solid #000; border-radius:16px; padding:14px 16px;
+    border:1.5px solid var(--border-strong); border-radius:16px; padding:14px 16px;
     color:#FFFFFF; text-align:left; cursor:pointer;
     box-shadow:var(--shadow);
     font-family:'Inter', inherit;
@@ -727,7 +800,7 @@ list to copy entries from.
   .lang-tile.ghost-tile{ background:linear-gradient(135deg, var(--amber-bright) 0%, var(--amber) 100%); }
   .lang-tile-icon{
     flex:none; width:44px; height:44px; border-radius:50%;
-    background:#FFFFFF; display:flex; align-items:center; justify-content:center;
+    background:var(--surface); display:flex; align-items:center; justify-content:center;
     font-size:22px; line-height:1; overflow:hidden;
   }
   .lang-tile-text{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
@@ -917,6 +990,10 @@ list to copy entries from.
         </button>
         <div class="home-dropdown-list hidden" id="homeDropdownList"><!-- populated by renderLessonDropdownInto() --></div>
       </div>
+      <button class="nav-btn nav-home" id="themeToggleBtn" title="Toggle dark mode">
+        <span class="home-icon theme-icon-moon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></span>
+        <span class="home-icon theme-icon-sun"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><line x1="12" y1="2" x2="12" y2="4.5"></line><line x1="12" y1="19.5" x2="12" y2="22"></line><line x1="4.5" y1="12" x2="2" y2="12"></line><line x1="22" y1="12" x2="19.5" y2="12"></line><line x1="18.36" y1="5.64" x2="16.6" y2="7.4"></line><line x1="7.4" y1="16.6" x2="5.64" y2="18.36"></line><line x1="18.36" y1="18.36" x2="16.6" y2="16.6"></line><line x1="7.4" y1="7.4" x2="5.64" y2="5.64"></line></svg></span>
+      </button>
       <button class="icon-btn" id="nextLessonBtn" title="Next lesson"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
     </div>
     <!-- Line-progress bar — moved right above the stage card (2026-09):
@@ -1766,6 +1843,23 @@ function goToLesson(newIdx, startIdx){
 }
 document.getElementById('prevLessonBtn').addEventListener('click', ()=> goToLesson(S.sheetIdx-1));
 document.getElementById('nextLessonBtn').addEventListener('click', ()=> goToLesson(S.sheetIdx+1));
+
+// ---- DARK MODE TOGGLE ----
+// Clicking flips the theme and remembers the explicit choice. Until the
+// person ever taps it, the page just follows the device's own light/dark
+// setting (see the early <head> script) and updates live if that changes.
+document.getElementById('themeToggleBtn').addEventListener('click', function(){
+  var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  try { localStorage.setItem('themeMode', next); } catch(e){}
+});
+if (window.matchMedia) {
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e){
+    var hasExplicitChoice = false;
+    try { hasExplicitChoice = !!localStorage.getItem('themeMode'); } catch(err){}
+    if (!hasExplicitChoice) document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+  });
+}
 
 /* ============================================================
    MEDIA SESSION -- lets a phone's lock screen and any Bluetooth-
@@ -4250,6 +4344,19 @@ async function runLine(i){
   document.getElementById('targetLineEl').textContent = '';
   document.getElementById('yourTurn').classList.remove('show');
   document.getElementById('heardText').textContent = '';
+
+  // ---- GENDER TEXT COLOR ----
+  // Independent of the reverse-direction gender reminder in speakerTagLabel()
+  // above (that's just the pill's text) — this runs every line, either
+  // direction, purely to color .target-line/.source-line via the
+  // .stage.gender-female CSS rule. Unknown/unset gender leaves the
+  // default text color alone.
+  {
+    const course = currentCourse();
+    const ch = course.characters && course.characters.find(c=>c.code===entry.speaker);
+    const speakerGender = guessCharGender(ch);
+    document.querySelector('.stage').classList.toggle('gender-female', speakerGender==='female');
+  }
 
   if(S.narrationMode){
     await runNarrationLine(entry, myToken);
