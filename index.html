@@ -171,6 +171,13 @@
     height: auto;
     display: block;
   }
+  .arch-bg img.arch-dark { display: none; }
+  :root[data-theme="dark"] .arch-bg img.arch-light { display: none; }
+  :root[data-theme="dark"] .arch-bg img.arch-dark { display: block; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .arch-bg img.arch-light { display: none; }
+    :root:not([data-theme="light"]) .arch-bg img.arch-dark { display: block; }
+  }
   /* On phone widths, show the artwork close to its natural proportions
      (roughly full viewport width, bottom-anchored) instead of zoomed in —
      this keeps the image's own broad white sky visible above the arch,
@@ -383,7 +390,7 @@
 </head>
 <body translate="no" class="notranslate">
 
-  <div class="arch-bg" aria-hidden="true"><img src="arch.png" alt=""></div>
+  <div class="arch-bg" aria-hidden="true"><img class="arch-light" src="arch-light.png" alt=""><img class="arch-dark" src="arch-dark.png" alt=""></div>
 
   <main class="screen" aria-label="Fayne’s Mini Language Course">
 
