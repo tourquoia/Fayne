@@ -4,11 +4,14 @@
 <meta name="google" content="notranslate"> <!-- prevents iOS Safari auto-translate from stripping page content -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
 <title>Fayne’s Mini Language Course</title>
 <!-- JysnMlnrMthd -->
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<meta name="theme-color" content="#e8630f">
+<meta name="theme-color" content="#F05A22">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script>
   // Apply any saved manual theme choice immediately (before CSS paints)
   // so there's no flash of the wrong mode. No saved choice = follow the
@@ -69,63 +72,71 @@
      explicit manual choice (data-theme="light" or "dark" on <html>,
      saved in localStorage) always wins over the system setting. */
   :root {
-    --bg-page: #f5f3ef;
-    --icon-btn-bg: #ffffff;
-    --photo-border: #cbd5e1;
-    --header-title-color: #1f374a;
-    --track-btn-bg: rgba(255, 255, 255, 0.78);
-    --track-btn-border: rgba(236, 232, 225, 0.9);
-    --track-title-es-color: #1f374a;
-    --track-title-en-color: #7c8a97;
-    --chevron-color: #c9530a;
-    --install-bg: rgba(255, 243, 233, 0.92);
-    --install-color: #b3480f;
-    --install-sub-color: #92582f;
-    --ios-color: #475569;
-    --installed-note-color: #7c8a97;
-    --footer-color: #000000;
-    --ip-badge-bg: rgba(255, 255, 255, 0.65);
-    --ip-badge-color: #2a2320;
+    color-scheme: light dark;
+    /* ---- Practice brand system: orange / white / black ----
+       Matches the player template's palette 1:1 (same --amber/--ink/
+       --card/--border values) so the home page and the lesson players
+       read as one product instead of two different skins. */
+    --bg-page: #FAFAFA;
+    --icon-btn-bg: #FFFFFF;
+    --photo-border: #E7E1DC;
+    --header-title-color: #141414;
+    --track-btn-bg: rgba(255, 255, 255, 0.58);
+    --track-btn-border: #EFEAE5;
+    --track-title-es-color: #141414;
+    --track-title-en-color: #5B5652;
+    --chevron-color: #F05A22;
+    --install-bg: rgba(254, 233, 221, 0.62);
+    --install-color: #C2410C;
+    --install-sub-color: #5B5652;
+    --ios-color: #5B5652;
+    --installed-note-color: #8C8680;
+    --footer-color: #5B5652;
+    --ip-badge-bg: rgba(254, 233, 221, 0.62);
+    --ip-badge-color: #8C8680;
+    --brand-accent: #F05A22;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg-page: #15181d;
-      --icon-btn-bg: #232830;
-      --photo-border: #3a4350;
-      --header-title-color: #eef2f6;
-      --track-btn-bg: rgba(35, 40, 48, 0.78);
-      --track-btn-border: rgba(70, 80, 92, 0.55);
-      --track-title-es-color: #eef2f6;
-      --track-title-en-color: #9fb0bd;
-      --chevron-color: #ff8f52;
-      --install-bg: rgba(45, 33, 24, 0.85);
-      --install-color: #ff9a54;
-      --install-sub-color: #d99a6c;
-      --ios-color: #c7d0d9;
-      --installed-note-color: #9fb0bd;
-      --footer-color: #e8eef5;
-      --ip-badge-bg: rgba(255, 255, 255, 0.12);
-      --ip-badge-color: #cbd5e1;
+      color-scheme: dark;
+      --bg-page: #121212;
+      --icon-btn-bg: #1E1B19;
+      --photo-border: #3A3530;
+      --header-title-color: #F2EDE8;
+      --track-btn-bg: rgba(255, 255, 255, 0.07);
+      --track-btn-border: #2A2622;
+      --track-title-es-color: #F2EDE8;
+      --track-title-en-color: #C9C2BA;
+      --chevron-color: #F05A22;
+      --install-bg: rgba(240, 90, 34, 0.12);
+      --install-color: #F05A22;
+      --install-sub-color: #C9C2BA;
+      --ios-color: #C9C2BA;
+      --installed-note-color: #938D86;
+      --footer-color: #C9C2BA;
+      --ip-badge-bg: rgba(240, 90, 34, 0.12);
+      --ip-badge-color: #938D86;
     }
   }
   :root[data-theme="dark"] {
-    --bg-page: #15181d;
-    --icon-btn-bg: #232830;
-    --photo-border: #3a4350;
-    --header-title-color: #eef2f6;
-    --track-btn-bg: rgba(35, 40, 48, 0.78);
-    --track-btn-border: rgba(70, 80, 92, 0.55);
-    --track-title-es-color: #eef2f6;
-    --track-title-en-color: #9fb0bd;
-    --chevron-color: #ff8f52;
-    --install-bg: rgba(45, 33, 24, 0.85);
-    --install-color: #ff9a54;
-    --install-sub-color: #d99a6c;
-    --ios-color: #c7d0d9;
-    --installed-note-color: #9fb0bd;
-    --footer-color: #e8eef5;
-    --ip-badge-bg: rgba(255, 255, 255, 0.12);
-    --ip-badge-color: #cbd5e1;
+    color-scheme: dark;
+    --bg-page: #121212;
+    --icon-btn-bg: #1E1B19;
+    --photo-border: #3A3530;
+    --header-title-color: #F2EDE8;
+    --track-btn-bg: rgba(255, 255, 255, 0.07);
+    --track-btn-border: #2A2622;
+    --track-title-es-color: #F2EDE8;
+    --track-title-en-color: #C9C2BA;
+    --chevron-color: #F05A22;
+    --install-bg: rgba(240, 90, 34, 0.12);
+    --install-color: #F05A22;
+    --install-sub-color: #C9C2BA;
+    --ios-color: #C9C2BA;
+    --installed-note-color: #938D86;
+    --footer-color: #C9C2BA;
+    --ip-badge-bg: rgba(240, 90, 34, 0.12);
+    --ip-badge-color: #938D86;
   }
   /* ===================== END THEME ===================== */
 
@@ -133,7 +144,7 @@
   html, body { margin: 0; padding: 0; }
   body {
     min-height: 100vh;
-    font-family: system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     background: var(--bg-page);
   }
 
@@ -183,12 +194,12 @@
 
   .top-banner {
     width: 100%;
-    background: #e8630f;
+    background: var(--brand-accent);
     color: #ffffff;
     padding: 3.2% 5%;
     display: flex;
     align-items: baseline;
-    justify-content: flex-start;
+    justify-content: center;
     gap: 0.6em;
     flex-shrink: 0;
   }
@@ -204,7 +215,7 @@
   #installBtn {
     display: none;
     width: 100%;
-    border: 2px solid #e8630f;
+    border: 2px solid var(--brand-accent);
     border-radius: 16px;
     background: var(--install-bg);
     color: var(--install-color);
@@ -223,7 +234,7 @@
   }
   #iosInstructions {
     display: none;
-    border: 2px dashed #e8630f;
+    border: 2px dashed var(--brand-accent);
     border-radius: 16px;
     padding: 16px 14px;
     color: var(--ios-color);
@@ -295,7 +306,7 @@
   .heart { border: 2px solid #ef4444; }
   .heart svg { width: 22px; height: 22px; fill: #ef4444; }
 
-  .hotspot:focus-visible { outline: 3px solid #e8630f; outline-offset: 4px; }
+  .hotspot:focus-visible { outline: 3px solid var(--brand-accent); outline-offset: 4px; }
 
   .track-list {
     width: 90%;
@@ -309,7 +320,7 @@
     width: 100%;
     background: var(--track-btn-bg);
     border: 2px solid var(--track-btn-border);
-    border-left: 8px solid #e8630f;
+    border-left: 8px solid var(--brand-accent);
     border-radius: 16px;
     display: flex;
     align-items: center;
@@ -328,7 +339,7 @@
     width: 62px; height: 62px;
     min-width: 62px;
     border-radius: 50%;
-    background: #e8630f;
+    background: var(--brand-accent);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -377,7 +388,7 @@
   <main class="screen" aria-label="Fayne’s Mini Language Course">
 
     <div class="top-banner">
-      <span class="es">Fayne's Personal Projects</span>
+      <span class="es">Fayne's Projects</span>
     </div>
 
     <div class="save-section">

@@ -67,6 +67,7 @@ list to copy entries from.
 <meta name="google" content="notranslate"> <!-- prevents iOS Safari auto-translate from stripping page content -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
 <!-- DARK MODE — applied as early as possible, before the stylesheet paints,
      so there's no flash of the wrong theme. Respects an explicit toggle
      choice (localStorage) if one was ever made; otherwise follows the
@@ -129,6 +130,7 @@ list to copy entries from.
 
 <style>
   :root{
+    color-scheme: light dark;
     /* ---- Practice brand system: orange / white / black ----
        All former "amber" and "teal" tokens are kept (renaming every
        selector below would risk breaking something) but repointed to
@@ -191,6 +193,7 @@ list to copy entries from.
     --ink-female-soft:#C1667E;
   }
   html[data-theme="dark"]{
+    color-scheme: dark;
     --bg:#121212;
     --bg-hi:#121212;
     --card:rgba(255,255,255,0.07);
