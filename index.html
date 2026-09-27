@@ -171,13 +171,6 @@
     height: auto;
     display: block;
   }
-  .arch-bg img.arch-dark { display: none; }
-  :root[data-theme="dark"] .arch-bg img.arch-light { display: none; }
-  :root[data-theme="dark"] .arch-bg img.arch-dark { display: block; }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) .arch-bg img.arch-light { display: none; }
-    :root:not([data-theme="light"]) .arch-bg img.arch-dark { display: block; }
-  }
   /* On phone widths, show the artwork close to its natural proportions
      (roughly full viewport width, bottom-anchored) instead of zoomed in —
      this keeps the image's own broad white sky visible above the arch,
@@ -390,7 +383,7 @@
 </head>
 <body translate="no" class="notranslate">
 
-  <div class="arch-bg" aria-hidden="true"><img class="arch-light" src="arch-light.png" alt=""><img class="arch-dark" src="arch-dark.png" alt=""></div>
+  <div class="arch-bg" aria-hidden="true"><img src="arch.png" alt=""></div>
 
   <main class="screen" aria-label="Fayne’s Mini Language Course">
 
@@ -421,6 +414,30 @@
         </a>
       </header>
       <div class="track-list">
+        <a href="1stSteps.html" class="hotspot track-btn" aria-label="Primeros Pasos">
+          <div class="track-icon">
+            <svg class="icon-lg" viewBox="0 0 2100 2100" style="width:48px;height:48px;fill:#ffffff;stroke:none;">
+              <path fill-rule="evenodd" d="M 663.742188 904.921875 C 566.148438 919.378906 496.105469 981.519531 460.398438 1045.289062 C 371.621094 1203.835938 494.160156 1417.730469 582.9375 1545.570312 C 633.054688 1617.738281 674.761719 1674.457031 759.597656 1714.316406 C 858.144531 1760.621094 956.796875 1688.710938 934.035156 1581.253906 C 913.542969 1484.523438 841.09375 1445.941406 826.078125 1344.789062 C 807.890625 1222.265625 878.644531 1163.800781 856.730469 1047.449219 C 840.554688 961.589844 769.136719 889.300781 663.742188 904.921875 "/>
+              <path fill-rule="evenodd" d="M 797.925781 720.738281 C 705.007812 751.109375 724.890625 935.519531 816.933594 911.101562 C 852.839844 901.578125 878.195312 851.949219 877.636719 805.5 C 877.058594 757.230469 846.9375 704.730469 797.925781 720.738281 "/>
+              <path fill-rule="evenodd" d="M 641.332031 750.21875 C 576.433594 770.640625 606.402344 904.589844 672.464844 883.339844 C 728.46875 865.328125 703.925781 730.519531 641.332031 750.21875 "/>
+              <path fill-rule="evenodd" d="M 524.703125 796.070312 C 463.214844 811.910156 495.726562 935.539062 555.121094 919.621094 C 612.40625 904.28125 582.824219 781.101562 524.703125 796.070312 "/>
+              <path fill-rule="evenodd" d="M 437.027344 879.210938 C 380.910156 898.699219 423.429688 1007.261719 475.074219 985.449219 C 524.351562 964.648438 487.441406 861.710938 437.027344 879.210938 "/>
+              <path fill-rule="evenodd" d="M 371.835938 980.058594 C 346.417969 994.851562 349.882812 1024.929688 359.398438 1045.179688 C 367.101562 1061.570312 388.964844 1087.078125 416.464844 1072.261719 C 457.90625 1049.941406 418.726562 952.769531 371.835938 980.058594 "/>
+              <path fill-rule="evenodd" d="M 1436.261719 558.5 C 1533.851562 572.960938 1603.890625 635.101562 1639.601562 698.871094 C 1728.378906 857.410156 1605.839844 1071.308594 1517.058594 1199.152344 C 1466.941406 1271.320312 1425.238281 1328.035156 1340.398438 1367.894531 C 1241.851562 1414.199219 1143.199219 1342.289062 1165.96875 1234.835938 C 1186.460938 1138.105469 1258.910156 1099.519531 1273.921875 998.371094 C 1292.109375 875.851562 1221.351562 817.378906 1243.269531 701.03125 C 1259.449219 615.171875 1330.859375 542.878906 1436.261719 558.5 "/>
+              <path fill-rule="evenodd" d="M 1302.070312 374.320312 C 1394.988281 404.691406 1375.109375 589.101562 1283.058594 564.679688 C 1247.160156 555.160156 1221.800781 505.53125 1222.359375 459.078125 C 1222.941406 410.808594 1253.058594 358.308594 1302.070312 374.320312 "/>
+              <path fill-rule="evenodd" d="M 1458.671875 403.800781 C 1523.570312 424.21875 1493.601562 558.171875 1427.53125 536.929688 C 1371.53125 518.910156 1396.070312 384.101562 1458.671875 403.800781 "/>
+              <path fill-rule="evenodd" d="M 1575.300781 449.648438 C 1636.78125 465.488281 1604.269531 589.121094 1544.878906 573.210938 C 1487.589844 557.859375 1517.171875 434.679688 1575.300781 449.648438 "/>
+              <path fill-rule="evenodd" d="M 1662.96875 532.789062 C 1719.089844 552.28125 1676.570312 660.839844 1624.921875 639.03125 C 1575.648438 618.230469 1612.558594 515.289062 1662.96875 532.789062 "/>
+              <path fill-rule="evenodd" d="M 1728.160156 633.640625 C 1753.578125 648.429688 1750.121094 678.511719 1740.601562 698.761719 C 1732.898438 715.148438 1711.03125 740.660156 1683.539062 725.839844 C 1642.089844 703.519531 1681.269531 606.351562 1728.160156 633.640625 "/>
+            </svg>
+          </div>
+          <div class="track-text">
+            <span class="track-title-es">PRIMEROS PASOS</span>
+            <span class="track-title-en">1ST STEPS</span>
+          </div>
+          <span class="chevron">›</span>
+        </a>
+
         <a href="Basics.html" class="hotspot track-btn featured" aria-label="Lo Básico">
           <div class="track-icon">
             <svg viewBox="0 0 24 24"><text x="12" y="16.8" text-anchor="middle" font-size="13.5" font-weight="800" font-family="inherit" fill="#ffffff" stroke="none" letter-spacing="0">ABC</text></svg>
