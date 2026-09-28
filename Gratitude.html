@@ -734,7 +734,7 @@ function testSlot(i){
     btn.classList.remove('testing');
     btn.textContent = '🤍';
   };
-  speak(text, lang.voiceLang, voiceURI, token).then(reset).catch(reset);
+  speak(latinTextForVoice(text, lang, voiceURI), lang.voiceLang, voiceURI, token).then(reset).catch(reset);
 }
 
 function populateSlotLangOptions(i){
@@ -885,6 +885,208 @@ function estimateMs(text){
   const secs = words / (2.3 * (S.rate||1));
   return Math.max(500, Math.min(4200, secs*1000));
 }
+let LATIN_REG_OVERRIDE = '';
+
+const LATIN_FIX = {
+  // Italian voices over-release a final T (est -> "est-uh"). 'keep' leaves
+  // it alone; 'soft' respells final -t as -d. Test by ear and flip.
+  italianFinalT: 'keep',
+  // Word-level exceptions, applied first, per voice family. The Spanish/
+  // Italian voices spell short vowel-poor tokens ("sto") letter by letter.
+  // Exact-word overrides per voice family. Empty on purpose: the accent
+  // respelling ("stó") made the voice read "s-t-o con acento". Fill in
+  // whatever the audition page (latin_respell_test.html) shows works.
+  words: { it:{sto:'stoh'}, es:{}, sw:{} },
+  // Per-voice-locale exceptions (checked before `words`). es_ES and es_US are
+  // both family 'es' but differ: es_ES likes s'to (initialS), es_US and
+  // it_IT read "sto" right as "stoh". Tested by ear 2026-09-28.
+  wordsByLang: { 'es-us':{sto:'stoh'}, 'it-it':{sto:'stoh'} },
+  // Spanish voices add an "e" before word-initial s+consonant (sta -> esta).
+  // Replacement for that leading "s" when followed by a consonant, per voice
+  // family. Tested by ear: s' works for Spanish (s'to, s'ta, s'tabat). 's' = leave alone.
+  initialS: { it:'s', es:"s'", sw:'s' }
+};
+
+function latinRegisterFor(langCode){
+  if(LATIN_REG_OVERRIDE) return LATIN_REG_OVERRIDE;   // fused-voice register (add_fused_voices.py)
+  if(!langCode || String(langCode).toLowerCase()!=='la') return null;
+  const t = (typeof S!=='undefined' && S.tgtCode) ? String(S.tgtCode) : '';
+  const s = (typeof S!=='undefined' && S.srcCode) ? String(S.srcCode) : '';
+  const pick = /^la-/i.test(t) ? t : (/^la-/i.test(s) ? s : '');
+  const key = pick.toUpperCase();
+  return (key==='LA-CI'||key==='LA-VA'||key==='LA-HV') ? key.slice(3) : null; // 'CI' | 'VA' | 'HV'
+}
+
+function latinRespellCore(w, reg, fam){
+  const eccl = (reg==='VA');            // Ecclesiastical: soft c/g, sc, gn, ti, v
+  const classicalish = !eccl;           // Classical + Hispania Vulgaris: hard c/g
+  // --- vowels / diphthongs (all three voices) ---
+  w = w.replace(/ae/g, reg==='CI' ? 'ai' : 'e')
+       .replace(/oe/g, reg==='CI' ? 'oi' : 'e')
+       .replace(/y/g, 'i');
+  // --- consonantal I (Swahili would read i+vowel as two syllables) ---
+  if(fam==='sw') w = w.replace(/^i(?=[aeiou])/, 'y');
+  w = w.replace(/j/g, fam==='sw' ? 'y' : 'i');
+  // --- digraphs common to every register ---
+  w = w.replace(/ph/g, eccl ? 'f' : 'p')
+       .replace(/th/g, 't')
+       .replace(/ch/g, 'k')
+       .replace(/x/g, 'ks');
+  // --- ecclesiastical: silent-ish h in mihi/nihil ---
+  if(eccl) w = w.replace(/mihi/g,'miki').replace(/nihil/g,'nikil');
+  // --- ti + vowel = "tsi" in Ecclesiastical (ratio, gratia) ---
+  if(eccl){
+    w = w.replace(/([^s])ti(?=[aeou])/g, fam==='it' ? '$1zi' : '$1tsi');
+  }
+
+  if(fam==='it'){
+    if(classicalish){
+      w = w.replace(/sc(?=[ei])/g, 'sk')                 // sk (avoid Italian "sh")
+           .replace(/c(?=[ei])/g, 'ch')                  // che/chi = ke/ki
+           .replace(/g(?=[ei])/g, 'gh')                  // ghe/ghi = ge/gi
+           .replace(/gn/g, 'g-n')                        // stop Italian gn -> ny
+           .replace(/v(?=[aeiou])/g, 'u');               // w-sound v
+    }
+    if(LATIN_FIX.italianFinalT==='soft') w = w.replace(/([aeiou])t$/, '$1d');
+  }
+
+  if(fam==='es'){
+    w = w.replace(/qu(?=[aeiou])/g, 'cu')                // Spanish qu+e/i = k, so use cu
+         .replace(/gu(?=[ei])/g, 'gü');                  // keep the u audible (sangüis)
+    if(classicalish){
+      w = w.replace(/sc(?=[ei])/g, 'sk')
+           .replace(/c(?=[ei])/g, 'k')                   // not th/s
+           .replace(/g(?=[ei])/g, 'gu')                  // not Spanish "j"
+           .replace(/v(?=[aeiou])/g, 'u');               // w-sound v (Spanish v = b)
+    } else {
+      w = w.replace(/sc(?=[ei])/g, 'sh')
+           .replace(/c(?=[ei])/g, 'ch')
+           .replace(/g(?=[ei])/g, 'dy')
+           .replace(/gn/g, 'ñ');
+    }
+  }
+
+  if(fam==='sw'){
+    w = w.replace(/qu(?=[aeiou])/g, 'kw')
+         .replace(/gu(?=[aeio])/g, 'gw');
+    if(classicalish){
+      w = w.replace(/c/g, 'k')
+           .replace(/gn/g, 'ngn')
+           .replace(/v/g, 'w');
+    } else {
+      w = w.replace(/sc(?=[ei])/g,'sh')
+           .replace(/c(?=[ei])/g, '\u0001')             // placeholder so the new "ch" isn't re-read as k
+           .replace(/c/g, 'k')
+           .replace(/\u0001/g, 'ch')
+           .replace(/gn/g, 'ny');
+    }
+  }
+  return w;
+}
+
+/* ---- Latin stress -> accent mark, Spanish voices only -------------------
+   Spanish voices stress the LAST syllable of any word ending in a consonant
+   other than n/s (amat -> amAT, stabat -> stabAT, dominum -> dominUM), and
+   default to the second-to-last otherwise. Latin stress is second-to-last if
+   that syllable is heavy, else third-to-last. Wherever the two disagree we
+   put an accent on the Latin-stressed vowel. Vowel length isn't written in
+   the course text, so long penults are recognised by common endings
+   (-are, -abat, -atus, ...); anything else is a best guess. */
+function latinNuclei(w){
+  const V='aeiouy', isV=c=>!!c && V.indexOf(c)>=0, n=[];
+  const cons=new Array(w.length).fill(false);
+  for(let i=0;i<w.length;i++){
+    const c=w[i], p=w[i-1], q=w[i+1];
+    if(c==='i' && isV(q) && (i===0 || isV(p))) cons[i]=true;                       // Iulius, eius
+    if(c==='u' && isV(q) && (p==='q' || (p==='g' && w[i-2]==='n'))) cons[i]=true;  // qu, ngu
+  }
+  for(let i=0;i<w.length;){
+    if(isV(w[i]) && !cons[i]){
+      const two=w.substr(i,2);
+      if((two==='ae'||two==='oe'||two==='au') && !cons[i+1]){ n.push({s:i,e:i+2,d:true}); i+=2; }
+      else { n.push({s:i,e:i+1,d:false}); i++; }
+    } else i++;
+  }
+  return n;
+}
+const LATIN_LONG_PENULT = /(are|ari|ire|iri|ab(am|as|at|amus|atis|ant)|eb(am|as|at|amus|atis|ant)|at(us|a|um|i|ae|os|as|is|or|ur)|amus)$/;
+function latinStress(w){          // -> {end, fromEnd} of the stressed nucleus, or null
+  const n=latinNuclei(w);
+  if(n.length<2) return null;
+  let idx=0;
+  if(n.length>2){
+    const pen=n[n.length-2], last=n[n.length-1];
+    let heavy = pen.d || LATIN_LONG_PENULT.test(w);
+    if(!heavy){
+      const cl=w.slice(pen.e,last.s).replace(/qu|ch|ph|th/g,'q').replace(/x/g,'ks');
+      heavy = cl.length>=2 && !/^[bcdgptf][lr]$/.test(cl);
+    }
+    idx = heavy ? n.length-2 : n.length-3;
+  }
+  return {end:n[idx].e, fromEnd:n.length-1-idx};
+}
+function latinRespellWord(w, reg, fam, vlang){
+  const ex = (vlang && LATIN_FIX.wordsByLang[vlang] && LATIN_FIX.wordsByLang[vlang][w])
+          || (LATIN_FIX.words[fam] && LATIN_FIX.words[fam][w]);
+  if(ex) return ex;
+  let out = latinRespellCore(w, reg, fam);
+  if(fam==='es'){
+    const st = latinStress(w);
+    if(st){
+      const spanishFinal = !/[aeiouy\u00e1\u00e9\u00ed\u00f3\u00fa\u00fcns]$/.test(out);  // Spanish would stress the last syllable
+      if(spanishFinal || st.fromEnd===2){
+        const P = latinRespellCore(w.slice(0,st.end), reg, fam);
+        const m = /[aeiouy\u00fc]+$/.exec(P);
+        if(m && out.startsWith(P)){
+          const grp=m[0], at=P.length-grp.length;
+          let k=0;
+          if(grp.length>1){ const s2=grp.search(/[aeo]/); k = s2>=0 ? s2 : grp.length-1; }
+          const map={a:'\u00e1',e:'\u00e9',i:'\u00ed',o:'\u00f3',u:'\u00fa'};
+          const ch=out[at+k];
+          if(map[ch]) out = out.slice(0,at+k)+map[ch]+out.slice(at+k+1);
+        }
+      }
+    }
+  }
+  const iS = LATIN_FIX.initialS && LATIN_FIX.initialS[fam];
+  if(iS && iS!=='s') out = out.replace(/^s(?=[bcdfghjklmnpqrstvwxz])/, iS);
+  return out;
+}
+
+function latinSpokenText(text, langCode, voice){
+  try{
+    if(!text || !voice || !voice.lang) return text;
+    const m = /^(it|es|sw)[-_]/i.exec(voice.lang) || /^(it|es|sw)$/i.exec(voice.lang);
+    if(!m) return text;
+    const reg = latinRegisterFor(langCode);
+    if(!reg) return text;
+    const fam = m[1].toLowerCase();
+    const vlang = String(voice.lang).replace('_','-').toLowerCase();
+    // strip macrons / long marks: the stand-in voices read them unpredictably
+    let t = String(text).normalize('NFD').replace(/[\u0304\u0306]/g,'').normalize('NFC');
+    t = t.replace(/[A-Za-z\u00C0-\u024F]+/g, function(word){
+      const lower = word.toLowerCase();
+      const out = latinRespellWord(lower, reg, fam, vlang);
+      if(word[0]!==lower[0]) return out.charAt(0).toUpperCase() + out.slice(1);
+      return out;
+    });
+    return t;
+  }catch(e){ return text; }
+}
+
+
+// Gratitude: this player passes only lang.voiceLang ('la') into speak(), which
+// loses the la-VA / la-CI / la-HV register, so respell here where the code is known.
+function latinTextForVoice(text, lang, voiceURI){
+  try{
+    if(!lang || !/^la-/i.test(lang.code||'')) return text;
+    const v = S.voices.find(x=>x.voiceURI===voiceURI);
+    if(!v) return text;
+    LATIN_REG_OVERRIDE = String(lang.code).slice(3).toUpperCase();
+    try{ return latinSpokenText(text, 'la', v); } finally{ LATIN_REG_OVERRIDE = ''; }
+  }catch(e){ return text; }
+}
+
 function speak(text, voiceLang, voiceURI, token, retryCount){
   retryCount = retryCount || 0;
   return new Promise(resolve=>{
@@ -1102,7 +1304,7 @@ async function runStep(){
   setPhase(S.pass===1 ? 'Listen' : 'Once more');
   updateMilestone();
 
-  await speak(text, lang.voiceLang, S.slotVoiceURI[slotIdx], token);
+  await speak(latinTextForVoice(text, lang, S.slotVoiceURI[slotIdx]), lang.voiceLang, S.slotVoiceURI[slotIdx], token);
   if(token!==S.token || !S.running || S.paused) return;
   await new Promise(r=>setTimeout(r, GAP_MS));
   if(token!==S.token || !S.running || S.paused) return;

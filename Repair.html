@@ -1940,8 +1940,15 @@ const MASTER_LANGUAGE_CATALOG = [
   {code:'pt-BR', label:'Portuguese (Brazilian)', voiceLang:'pt-BR', flag:'🇧🇷', phrase:'Eu falo português'},
   {code:'am', label:'Amharic', voiceLang:'am-ET', flag:'🇪🇹', phrase:'አማርኛ እናገራለሁ'},
   {code:'ar', label:'Arabic', voiceLang:'ar-SA', flag:'🇸🇦', phrase:'أتحدث العربية'},
+  {code:'ar-GLF', label:'Arabic Gulf', voiceLang:'ar-GLF', flag:'🇰🇼', phrase:'أتكلم خليجي'},  // custom code; Asian dialect (RULES AFRICAN v1.04); TTS: no dedicated voice, fallback ar-SA
+  {code:'ar-IQ', label:'Arabic Iraqi', voiceLang:'ar-IQ', flag:'🇮🇶', phrase:'أحچي عراقي'},  // custom code; Asian dialect (RULES AFRICAN v1.04); TTS: no dedicated voice, fallback ar-SA
+  {code:'ar-LEV', label:'Arabic Levantine', voiceLang:'ar-LEV', flag:'🇱🇧', phrase:'بحكي عربي شامي'},  // custom code; Asian dialect (RULES AFRICAN v1.04); TTS: no dedicated voice, fallback ar-SA
+  {code:'ar-SA', label:'Arabic Saudi', voiceLang:'ar-SA', flag:'🇸🇦', phrase:'أتكلم سعودي'},  // custom code; Asian dialect (RULES AFRICAN v1.04); TTS: genuinely matches the default ar-SA voice
+  {code:'ar-YE', label:'Arabic Yemeni', voiceLang:'ar-YE', flag:'🇾🇪', phrase:'أتكلم يمني'},  // custom code; Asian dialect (RULES AFRICAN v1.04); TTS: no dedicated voice, fallback ar-SA
   {code:'cs', label:'Czech', voiceLang:'cs-CZ', flag:'🇨🇿', phrase:'Mluvím česky'},
   {code:'ar-MA', label:'Darija Arabic (Arabizi/Latin script)', voiceLang:'ar-MA', flag:'🇲🇦', phrase:'Kanhder Darija'},  // custom code; Arabizi/Latin script, not Arabic script; TTS: fallback ar-SA voice if ar-MA unavailable
+  {code:'prs', label:'Dari', voiceLang:'prs-AF', flag:'🇦🇫', phrase:'من دری صحبت می\u200cکنم'},  // RULES AFRICAN v1.04, filed provisionally; TTS: no dedicated voice, fallback Arabic (script family)
+  {code:'fa', label:'Farsi', voiceLang:'fa-IR', flag:'🇮🇷', phrase:'من فارسی صحبت می\u200cکنم'},  // RULES AFRICAN v1.04, filed provisionally; TTS: no dedicated voice, fallback Arabic (script family)
   {code:'fr-AFR', label:'French (African)', voiceLang:'fr-FR', flag:'🌍', phrase:'Je parle français'},  // custom code; TTS: fallback to fr-FR voice
   {code:'fr-FR', label:'French (Parisian)', voiceLang:'fr-FR', flag:'🇫🇷', phrase:'Je parle français'},
   {code:'de', label:'German', voiceLang:'de-DE', flag:'🇩🇪', phrase:'Ich spreche Deutsch'},
@@ -1953,7 +1960,10 @@ const MASTER_LANGUAGE_CATALOG = [
   {code:'ja-formal', label:'Japanese (Formal)', voiceLang:'ja-JP', flag:'🇯🇵', phrase:'日本語を話します'},  // custom register code; shares ja-JP voice with ja-casual
   {code:'ja-casual', label:'Japanese (Informal)', voiceLang:'ja-JP', flag:'🇯🇵', phrase:'日本語話すよ'},  // custom register code; shares ja-JP voice with ja-formal
   {code:'km', label:'Khmer', voiceLang:'km-KH', flag:'🇰🇭', phrase:'ខ្ញុមនិយាយភាសាខ្មែរ'},  // TTS: km-KH voice availability limited
-  {code:'lo', label:'Lao', voiceLang:'lo-LA', flag:'🇱🇦', phrase:'ຂ້ອຍเວ້າພາສາລາວ'},  // TTS: lo-LA voice availability limited
+  {code:'kmr', label:'Kurdish Kurmanji', voiceLang:'kmr-TR', flag:'🇹🇷', phrase:'Ez bi Kurmanc\u00ee diaxivim'},  // RULES AFRICAN v1.04, filed provisionally; TTS: no dedicated voice, fallback Turkish (Latin-script match)
+  {code:'ckb', label:'Kurdish Sorani', voiceLang:'ckb-IQ', flag:'🇮🇶', phrase:'من بە کوردی سۆرانی قسە دەکەم'},  // RULES AFRICAN v1.04, filed provisionally; TTS: no dedicated voice, fallback Arabic (script family)
+  {code:'sdh', label:'Kurdish Southern', voiceLang:'sdh-IQ', flag:'🇮🇶', phrase:'من به کوردی خوارگ قسه که\u200cم'},  // RULES AFRICAN v1.04, filed provisionally; TTS: no dedicated voice, fallback Arabic (script family)
+  {code:'lo', label:'Lao', voiceLang:'lo-LA', flag:'🇱🇦', phrase:'ຂ້ອຍເວ້າພາສາລາວ'},  // TTS: lo-LA voice availability limited
   {code:'la-CI', label:'Latin (Classical)', voiceLang:'la', flag:'🏛️', phrase:'Latine loquor'},  // custom code; TTS: no native Latin voice, it-IT is closest fallback
   {code:'la-HV', label:'Latin (Hispania Vulgaris)', voiceLang:'la', flag:'🏺', phrase:'Latine loquor'},  // custom code; TTS: no native Latin voice, es-ES is closest fallback
   {code:'la-VA', label:'Latin (Modern Ecclesiastical)', voiceLang:'la', flag:'🇻🇦', phrase:'Latine loquor'},  // custom code; TTS: no native Latin voice, it-IT is closest fallback
@@ -1972,6 +1982,8 @@ const MASTER_LANGUAGE_CATALOG = [
   {code:'es-ES', label:'Spanish (Spain)', voiceLang:'es-ES', flag:'🇪🇸', phrase:'Yo hablo español'},
   {code:'sus', label:'Susu', voiceLang:'sus-GN', flag:'🇬🇳', phrase:'N\'fala Sosoxui'},  // custom code; TTS: no known native voice, no strong fallback
   {code:'sw', label:'Swahili', voiceLang:'sw-KE', flag:'🇰🇪', phrase:'Ninaongea Kiswahili'},
+  {code:'sv', label:'Swedish', voiceLang:'sv-SE', flag:'🇸🇪', phrase:'Jag talar svenska'},
+  {code:'tg', label:'Tajik', voiceLang:'tg-TJ', flag:'🇹🇯', phrase:'Ман тоҷикӣ гап мезанам'},  // RULES AFRICAN v1.04, filed provisionally; Cyrillic script; TTS: no dedicated voice, fallback Russian (script match)
   {code:'th', label:'Thai', voiceLang:'th-TH', flag:'🇹🇭', phrase:'ฉันพูดภาษาไทย'},
   {code:'to', label:'Tongan', voiceLang:'to-TO', flag:'🇹🇴', phrase:'\'Oku ou lea faka-Tonga'},  // TTS: to-TO voice availability limited
   {code:'uk', label:'Ukrainian', voiceLang:'uk-UA', flag:'🇺🇦', phrase:'Я розмовляю українською'},
@@ -2545,6 +2557,93 @@ const REGION_PROFILES = {
     preferredNames:['Arabic', 'Google العربية'],
     label:{ en:'Saudi Arabia', es:'Arabia Saudita' },
   },
+  // ADDED (v2.81) -- Middle Eastern languages onboarded in RULES AFRICAN
+  // v1.04 (the Arabic dialects that file flags as ASIAN, not African, plus
+  // the full Persian and Kurdish sets). No browser/OS ships dialect- or
+  // variety-specific voices for any of these -- only a generic "Arabic"
+  // (ar-SA-tagged) voice is realistically installed -- so each one tries
+  // its own real prefix first (in case a dedicated voice ever ships) and
+  // falls back to the closest SCRIPT-compatible widely-available voice,
+  // same script-over-sound-alone reasoning as the Lao->Thai and Tajik
+  // entries below use. All are alwaysApproximate except Arabic (Saudi),
+  // whose dialect genuinely is what the generic Arabic voice already
+  // defaults to.
+  //
+  // Arabic dialects (ar-* family): the "boost" region has no effect on
+  // which VOICE plays (there's only ever one generic Arabic voice
+  // installed) -- it's kept as 'SA' for consistency with the plain 'ar'
+  // profile above, in case a device ever has more than one Arabic voice.
+  'ar-LEV': {
+    matchPrefixes:['ar-LEV','ar'], alwaysApproximate:true, boost:['SA'], primary:'SA',
+    label:{ en:'Arabic (generic voice, standing in for Levantine Arabic, which has no dedicated accent)', es:'árabe (voz gen\u00e9rica, para el \u00e1rabe levantino)' },
+  },
+  'ar-IQ': {
+    matchPrefixes:['ar-IQ','ar'], alwaysApproximate:true, boost:['SA'], primary:'SA',
+    label:{ en:'Arabic (generic voice, standing in for Iraqi Arabic, which has no dedicated accent)', es:'árabe (voz gen\u00e9rica, para el \u00e1rabe iraqu\u00ed)' },
+  },
+  'ar-GLF': {
+    matchPrefixes:['ar-GLF','ar'], alwaysApproximate:true, boost:['SA'], primary:'SA',
+    label:{ en:'Arabic (generic voice, standing in for Gulf Arabic, which has no dedicated accent)', es:'árabe (voz gen\u00e9rica, para el \u00e1rabe del Golfo)' },
+  },
+  // Arabic Saudi is the one dialect entry that ISN'T an approximation --
+  // the generic Arabic voice every browser/OS ships is itself tagged
+  // ar-SA, so this dialect genuinely gets the real match other Arabic
+  // dialects only approximate.
+  'ar-SA': {
+    matchPrefixes:['ar-SA','ar'], boost:['SA'], primary:'SA',
+    label:{ en:'Saudi Arabia', es:'Arabia Saudita' },
+  },
+  'ar-YE': {
+    matchPrefixes:['ar-YE','ar'], alwaysApproximate:true, boost:['SA'], primary:'SA',
+    label:{ en:'Arabic (generic voice, standing in for Yemeni Arabic, which has no dedicated accent)', es:'árabe (voz gen\u00e9rica, para el \u00e1rabe yemen\u00ed)' },
+  },
+  // Persian family (fa/prs/tg): Farsi and Dari share Perso-Arabic script
+  // with Arabic (not a clean match -- Persian has extra letters پ چ ژ گ
+  // Arabic voices won't render correctly -- but it's the closest
+  // widely-available script match, same logic as Ecclesiastical Latin ->
+  // Italian above). Tajik is written in CYRILLIC, not Perso-Arabic, so
+  // Arabic would be a pure script mismatch (the same failure mode as the
+  // Lao->Thai note above) -- Russian is the script-correct stand-in
+  // instead, and Tajik's heavy Russian loanword layer makes it a
+  // reasonable phonetic approximation too, not just a script hack.
+  fa: {
+    matchPrefixes:['fa','ar'], alwaysApproximate:true, boost:['SA'], primary:'SA',
+    label:{ en:'Arabic (standing in for Farsi, which has no dedicated voice)', es:'árabe (para el farsi)' },
+  },
+  prs: {
+    matchPrefixes:['prs','fa','ar'], alwaysApproximate:true, boost:['SA'], primary:'SA',
+    label:{ en:'Arabic (standing in for Dari, which has no dedicated voice)', es:'árabe (para el dari)' },
+  },
+  tg: {
+    matchPrefixes:['tg','ru'], alwaysApproximate:true, boost:['RU'], primary:'RU',
+    label:{ en:'Russian (standing in for Tajik, which has no dedicated voice — Tajik is Cyrillic-script, so Russian is the script-correct approximation, not Farsi/Arabic)', es:'ruso (para el tayiko, que se escribe en cir\u00edlico)' },
+  },
+  // Kurdish family (ckb/kmr/sdh): script varies by variety. Sorani and
+  // Southern Kurdish (Feyli) are conventionally written in an Arabic-based
+  // script, so Arabic is the script-compatible stand-in. Kurmanji is
+  // conventionally written in the LATIN-based alphabet (Turkey/Syria), so
+  // Arabic would be a script mismatch there -- Turkish is the closer
+  // stand-in, both for the shared Latin script and because Kurmanji is
+  // most widely spoken in Turkey.
+  ckb: {
+    matchPrefixes:['ckb','ar'], alwaysApproximate:true, boost:['SA'], primary:'SA',
+    label:{ en:'Arabic (standing in for Kurdish Sorani, which has no dedicated voice)', es:'árabe (para el kurdo sorani)' },
+  },
+  kmr: {
+    matchPrefixes:['kmr','tr'], alwaysApproximate:true, boost:['TR'], primary:'TR',
+    label:{ en:'Turkish (standing in for Kurdish Kurmanji, which has no dedicated voice — Kurmanji is Latin-script, so Turkish is the script-correct approximation, not Arabic)', es:'turco (para el kurdo kurmanyi, que se escribe en alfabeto latino)' },
+  },
+  sdh: {
+    matchPrefixes:['sdh','ar'], alwaysApproximate:true, boost:['SA'], primary:'SA',
+    label:{ en:'Arabic (standing in for Kurdish Southern (Feyli), which has no dedicated voice)', es:'árabe (para el kurdo meridional/feyli)' },
+  },
+  // ADDED (v2.81) -- Swedish, per the LeeJonas build: a real, confirmed,
+  // widely-available voice (sv is already in SAFE_VOICE_PREFIXES below),
+  // so this is a genuine match, not an approximation.
+  sv: {
+    matchPrefixes:['sv'], boost:['SE'], primary:'SE',
+    label:{ en:'Sweden', es:'Suecia' },
+  },
   'pt-BR': {
     matchPrefixes:['pt'], boost:['BR'], primary:'BR', demote:['PT'],
     label:{ en:'Brazil', es:'Brasil' },
@@ -2882,6 +2981,17 @@ const CODE_TO_REGION_KEY = {
   'nv':'nv-sw', 'haw':'haw-sw', 'sm':'sm-sw', 'mi':'mi-sw', 'to':'to-sw',
   'nah-hua':'nah-es', 'quz':'quz-es',
   'tlh':'tlh-en',
+  // ADDED (v2.81) -- Middle Eastern languages (RULES AFRICAN v1.04) and
+  // Swedish. The plain-code entries (fa/prs/tg/ckb/kmr/sdh/sv) aren't
+  // strictly required -- resolveRegionProfile() already falls back to a
+  // same-named REGION_PROFILES key via the bare prefix -- but are listed
+  // explicitly here anyway, same as 'sv':'sv' in the LeeJonas build, so
+  // every selectable code this template knows about has a visible,
+  // intentional entry rather than relying on the implicit fallback.
+  'ar-LEV':'ar-LEV', 'ar-IQ':'ar-IQ', 'ar-GLF':'ar-GLF', 'ar-SA':'ar-SA', 'ar-YE':'ar-YE',
+  'fa':'fa', 'prs':'prs', 'tg':'tg',
+  'ckb':'ckb', 'kmr':'kmr', 'sdh':'sdh',
+  'sv':'sv',
 };
 // Normalizes a language code's casing to match this file's own convention
 // (and the literal keys used in CODE_TO_REGION_KEY / REGION_PROFILES above):
@@ -3023,6 +3133,321 @@ function preferExactNamesFirst(list, profile){
 const PITCH_MID = 1.00;
 const PITCH_MALE_COLLISION = 0.90;
 const PITCH_FEMALE_COLLISION = 1.10;
+
+/* ============================================================
+   v3.3 NEW VOICES (added on top of the 3.2 voice system, which is
+   otherwise UNCHANGED): Latin female 1, Latin male, Latin female 2, Lao.
+   They live in the same voice <select>s as every other voice, using
+   values 'fused:<label>' (own-language side) or 'fused:<label>@plain'
+   (any other language: same OS voice, text read as-is, no respelling).
+   Lao side -> Lao pinned + checkmarked at top and default.
+   Latin side -> the 3 Latin voices pinned + checkmarked at top, default
+   by character gender (female -> Latin female 1, else Latin male).
+   Every other language: the four sit alphabetized among all voices.
+   ============================================================ */
+let LATIN_REG_OVERRIDE = '';
+
+const LATIN_FIX = {
+  // Italian voices over-release a final T (est -> "est-uh"). 'keep' leaves
+  // it alone; 'soft' respells final -t as -d. Test by ear and flip.
+  italianFinalT: 'keep',
+  // Word-level exceptions, applied first, per voice family. The Spanish/
+  // Italian voices spell short vowel-poor tokens ("sto") letter by letter.
+  // Exact-word overrides per voice family. Empty on purpose: the accent
+  // respelling ("stó") made the voice read "s-t-o con acento". Fill in
+  // whatever the audition page (latin_respell_test.html) shows works.
+  words: { it:{sto:'stoh'}, es:{}, sw:{} },
+  // Per-voice-locale exceptions (checked before `words`). es_ES and es_US are
+  // both family 'es' but differ: es_ES likes s'to (initialS), es_US and
+  // it_IT read "sto" right as "stoh". Tested by ear 2026-09-28.
+  wordsByLang: { 'es-us':{sto:'stoh'}, 'it-it':{sto:'stoh'} },
+  // Spanish voices add an "e" before word-initial s+consonant (sta -> esta).
+  // Replacement for that leading "s" when followed by a consonant, per voice
+  // family. Tested by ear: s' works for Spanish (s'to, s'ta, s'tabat). 's' = leave alone.
+  initialS: { it:'s', es:"s'", sw:'s' }
+};
+
+function latinRegisterFor(langCode){
+  if(LATIN_REG_OVERRIDE) return LATIN_REG_OVERRIDE;   // fused-voice register (add_fused_voices.py)
+  if(!langCode || String(langCode).toLowerCase()!=='la') return null;
+  const t = (typeof S!=='undefined' && S.tgtCode) ? String(S.tgtCode) : '';
+  const s = (typeof S!=='undefined' && S.srcCode) ? String(S.srcCode) : '';
+  const pick = /^la-/i.test(t) ? t : (/^la-/i.test(s) ? s : '');
+  const key = pick.toUpperCase();
+  return (key==='LA-CI'||key==='LA-VA'||key==='LA-HV') ? key.slice(3) : null; // 'CI' | 'VA' | 'HV'
+}
+
+function latinRespellCore(w, reg, fam){
+  const eccl = (reg==='VA');            // Ecclesiastical: soft c/g, sc, gn, ti, v
+  const classicalish = !eccl;           // Classical + Hispania Vulgaris: hard c/g
+  // --- vowels / diphthongs (all three voices) ---
+  w = w.replace(/ae/g, reg==='CI' ? 'ai' : 'e')
+       .replace(/oe/g, reg==='CI' ? 'oi' : 'e')
+       .replace(/y/g, 'i');
+  // --- consonantal I (Swahili would read i+vowel as two syllables) ---
+  if(fam==='sw') w = w.replace(/^i(?=[aeiou])/, 'y');
+  w = w.replace(/j/g, fam==='sw' ? 'y' : 'i');
+  // --- digraphs common to every register ---
+  w = w.replace(/ph/g, eccl ? 'f' : 'p')
+       .replace(/th/g, 't')
+       .replace(/ch/g, 'k')
+       .replace(/x/g, 'ks');
+  // --- ecclesiastical: silent-ish h in mihi/nihil ---
+  if(eccl) w = w.replace(/mihi/g,'miki').replace(/nihil/g,'nikil');
+  // --- ti + vowel = "tsi" in Ecclesiastical (ratio, gratia) ---
+  if(eccl){
+    w = w.replace(/([^s])ti(?=[aeou])/g, fam==='it' ? '$1zi' : '$1tsi');
+  }
+
+  if(fam==='it'){
+    if(classicalish){
+      w = w.replace(/sc(?=[ei])/g, 'sk')                 // sk (avoid Italian "sh")
+           .replace(/c(?=[ei])/g, 'ch')                  // che/chi = ke/ki
+           .replace(/g(?=[ei])/g, 'gh')                  // ghe/ghi = ge/gi
+           .replace(/gn/g, 'g-n')                        // stop Italian gn -> ny
+           .replace(/v(?=[aeiou])/g, 'u');               // w-sound v
+    }
+    if(LATIN_FIX.italianFinalT==='soft') w = w.replace(/([aeiou])t$/, '$1d');
+  }
+
+  if(fam==='es'){
+    w = w.replace(/qu(?=[aeiou])/g, 'cu')                // Spanish qu+e/i = k, so use cu
+         .replace(/gu(?=[ei])/g, 'gü');                  // keep the u audible (sangüis)
+    if(classicalish){
+      w = w.replace(/sc(?=[ei])/g, 'sk')
+           .replace(/c(?=[ei])/g, 'k')                   // not th/s
+           .replace(/g(?=[ei])/g, 'gu')                  // not Spanish "j"
+           .replace(/v(?=[aeiou])/g, 'u');               // w-sound v (Spanish v = b)
+    } else {
+      w = w.replace(/sc(?=[ei])/g, 'sh')
+           .replace(/c(?=[ei])/g, 'ch')
+           .replace(/g(?=[ei])/g, 'dy')
+           .replace(/gn/g, 'ñ');
+    }
+  }
+
+  if(fam==='sw'){
+    w = w.replace(/qu(?=[aeiou])/g, 'kw')
+         .replace(/gu(?=[aeio])/g, 'gw');
+    if(classicalish){
+      w = w.replace(/c/g, 'k')
+           .replace(/gn/g, 'ngn')
+           .replace(/v/g, 'w');
+    } else {
+      w = w.replace(/sc(?=[ei])/g,'sh')
+           .replace(/c(?=[ei])/g, '\u0001')             // placeholder so the new "ch" isn't re-read as k
+           .replace(/c/g, 'k')
+           .replace(/\u0001/g, 'ch')
+           .replace(/gn/g, 'ny');
+    }
+  }
+  return w;
+}
+
+/* ---- Latin stress -> accent mark, Spanish voices only -------------------
+   Spanish voices stress the LAST syllable of any word ending in a consonant
+   other than n/s (amat -> amAT, stabat -> stabAT, dominum -> dominUM), and
+   default to the second-to-last otherwise. Latin stress is second-to-last if
+   that syllable is heavy, else third-to-last. Wherever the two disagree we
+   put an accent on the Latin-stressed vowel. Vowel length isn't written in
+   the course text, so long penults are recognised by common endings
+   (-are, -abat, -atus, ...); anything else is a best guess. */
+function latinNuclei(w){
+  const V='aeiouy', isV=c=>!!c && V.indexOf(c)>=0, n=[];
+  const cons=new Array(w.length).fill(false);
+  for(let i=0;i<w.length;i++){
+    const c=w[i], p=w[i-1], q=w[i+1];
+    if(c==='i' && isV(q) && (i===0 || isV(p))) cons[i]=true;                       // Iulius, eius
+    if(c==='u' && isV(q) && (p==='q' || (p==='g' && w[i-2]==='n'))) cons[i]=true;  // qu, ngu
+  }
+  for(let i=0;i<w.length;){
+    if(isV(w[i]) && !cons[i]){
+      const two=w.substr(i,2);
+      if((two==='ae'||two==='oe'||two==='au') && !cons[i+1]){ n.push({s:i,e:i+2,d:true}); i+=2; }
+      else { n.push({s:i,e:i+1,d:false}); i++; }
+    } else i++;
+  }
+  return n;
+}
+const LATIN_LONG_PENULT = /(are|ari|ire|iri|ab(am|as|at|amus|atis|ant)|eb(am|as|at|amus|atis|ant)|at(us|a|um|i|ae|os|as|is|or|ur)|amus)$/;
+function latinStress(w){          // -> {end, fromEnd} of the stressed nucleus, or null
+  const n=latinNuclei(w);
+  if(n.length<2) return null;
+  let idx=0;
+  if(n.length>2){
+    const pen=n[n.length-2], last=n[n.length-1];
+    let heavy = pen.d || LATIN_LONG_PENULT.test(w);
+    if(!heavy){
+      const cl=w.slice(pen.e,last.s).replace(/qu|ch|ph|th/g,'q').replace(/x/g,'ks');
+      heavy = cl.length>=2 && !/^[bcdgptf][lr]$/.test(cl);
+    }
+    idx = heavy ? n.length-2 : n.length-3;
+  }
+  return {end:n[idx].e, fromEnd:n.length-1-idx};
+}
+function latinRespellWord(w, reg, fam, vlang){
+  const ex = (vlang && LATIN_FIX.wordsByLang[vlang] && LATIN_FIX.wordsByLang[vlang][w])
+          || (LATIN_FIX.words[fam] && LATIN_FIX.words[fam][w]);
+  if(ex) return ex;
+  let out = latinRespellCore(w, reg, fam);
+  if(fam==='es'){
+    const st = latinStress(w);
+    if(st){
+      const spanishFinal = !/[aeiouy\u00e1\u00e9\u00ed\u00f3\u00fa\u00fcns]$/.test(out);  // Spanish would stress the last syllable
+      if(spanishFinal || st.fromEnd===2){
+        const P = latinRespellCore(w.slice(0,st.end), reg, fam);
+        const m = /[aeiouy\u00fc]+$/.exec(P);
+        if(m && out.startsWith(P)){
+          const grp=m[0], at=P.length-grp.length;
+          let k=0;
+          if(grp.length>1){ const s2=grp.search(/[aeo]/); k = s2>=0 ? s2 : grp.length-1; }
+          const map={a:'\u00e1',e:'\u00e9',i:'\u00ed',o:'\u00f3',u:'\u00fa'};
+          const ch=out[at+k];
+          if(map[ch]) out = out.slice(0,at+k)+map[ch]+out.slice(at+k+1);
+        }
+      }
+    }
+  }
+  const iS = LATIN_FIX.initialS && LATIN_FIX.initialS[fam];
+  if(iS && iS!=='s') out = out.replace(/^s(?=[bcdfghjklmnpqrstvwxz])/, iS);
+  return out;
+}
+
+function latinSpokenText(text, langCode, voice){
+  try{
+    if(!text || !voice || !voice.lang) return text;
+    const m = /^(it|es|sw)[-_]/i.exec(voice.lang) || /^(it|es|sw)$/i.exec(voice.lang);
+    if(!m) return text;
+    const reg = latinRegisterFor(langCode);
+    if(!reg) return text;
+    const fam = m[1].toLowerCase();
+    const vlang = String(voice.lang).replace('_','-').toLowerCase();
+    // strip macrons / long marks: the stand-in voices read them unpredictably
+    let t = String(text).normalize('NFD').replace(/[\u0304\u0306]/g,'').normalize('NFC');
+    t = t.replace(/[A-Za-z\u00C0-\u024F]+/g, function(word){
+      const lower = word.toLowerCase();
+      const out = latinRespellWord(lower, reg, fam, vlang);
+      if(word[0]!==lower[0]) return out.charAt(0).toUpperCase() + out.slice(1);
+      return out;
+    });
+    return t;
+  }catch(e){ return text; }
+}
+
+/* ==================================================================
+   LAO -> THAI SCRIPT RESPELLING FOR THE THAI STAND-IN VOICE (2026-09-28)
+   ------------------------------------------------------------------
+   The Thai voice can't read Lao script as words, so it sounds out one
+   character at a time (the "stops after every syllable" effect). Lao and
+   Thai scripts are close relatives, so this respells Lao text into Thai
+   script just before it's spoken, and the Thai engine then reads whole
+   words with normal flow.
+   Runs ONLY when the chosen voice is a Thai voice AND the text contains
+   Lao script. On-screen text, answer-checking and every other language
+   are untouched. Lao sounds Thai doesn't have (tones' exact pitches,
+   the ny sound) stay approximate -- this fixes the flow, not the accent.
+   ================================================================== */
+const LAO_TO_THAI = {
+  'ກ':'ก','ຂ':'ข','ຄ':'ค','ງ':'ง','ຈ':'จ','ຊ':'ซ','ຍ':'ย','ດ':'ด','ຕ':'ต','ຖ':'ถ',
+  'ທ':'ท','ນ':'น','ບ':'บ','ປ':'ป','ຜ':'ผ','ຝ':'ฝ','ພ':'พ','ຟ':'ฟ','ມ':'ม','ຢ':'ย',
+  'ຣ':'ร','ລ':'ล','ວ':'ว','ສ':'ส','ຫ':'ห','ອ':'อ','ຮ':'ฮ',
+  'ໜ':'หน','ໝ':'หม','ຼ':'ล','ຽ':'ย',
+  'ະ':'ะ','ັ':'ั','າ':'า','ຳ':'ำ','ິ':'ิ','ີ':'ี','ຶ':'ึ','ື':'ื','ຸ':'ุ','ູ':'ู',
+  'ເ':'เ','ແ':'แ','ໂ':'โ','ໃ':'ใ','ໄ':'ไ','ໍ':'อ',
+  '່':'่','້':'้','໊':'๊','໋':'๋','ໆ':'ๆ','ຯ':'ฯ',
+  '໐':'๐','໑':'๑','໒':'๒','໓':'๓','໔':'๔','໕':'๕','໖':'๖','໗':'๗','໘':'๘','໙':'๙'
+};
+function laoToThai(text){
+  const C = 'ກຂຄງຈຊຍດຕຖທນບປຜຝພຟມຢຣລວສຫອຮໜໝ';   // Lao consonants
+  const CL = '['+C+']ຼ?';                          // consonant (+ optional lo ligature)
+  const TONE = '[່້໊໋]?';
+  let t = String(text);
+  // 1. Lao "ia" written with the bare semivowel (ຢ້ຽມ) moves its e-vowel in front, Thai style
+  t = t.replace(new RegExp('(?<!ເ)('+CL+')('+TONE+')ຽ','g'), 'ເ$1\uE000$2ຽ');
+  // 2. e + consonant + ia (ເມຍ, ເຮຽນ): Thai needs the long-i mark
+  t = t.replace(new RegExp('(ເ'+CL+')('+TONE+')ຽ','g'), '$1\uE000$2ຽ');
+  t = t.replace(new RegExp('(ເ'+CL+')('+TONE+')ຍ(?![ະາຳິີຶື])','g'), '$1\uE000$2ຍ');
+  // 3. short o mark: ົວ = short "ua" (ຫົວ -> หัว); a bare ົ just means the inherent o
+  t = t.replace(/ົວ/g, 'ັວ').replace(/ົ/g, '');
+  // 4. letter-by-letter mapping
+  t = Array.from(t).map(ch => LAO_TO_THAI[ch] !== undefined ? LAO_TO_THAI[ch] : ch).join('');
+  // 4b. short e/ae: Lao writes it with mai kan (ເປັນ), Thai with mai taikhu (เป็น)
+  t = t.replace(/([เแ][ก-ฮ]ล?)ั/g, '$1\u0E47');
+  // 5. Lao e+C+long-oe (ເດີ້, ເອີ້ນ): Thai spells it with ิ before a final consonant, with อ otherwise
+  t = t.replace(/เ([ก-ฮ]ล?)ี([\u0E48-\u0E4B]?)(?=[ก-ฮ])/g, 'เ$1ิ$2');
+  t = t.replace(/เ([ก-ฮ]ล?)ี([\u0E48-\u0E4B]?)(?![ก-ฮ\u0E48-\u0E4B])/g, 'เ$1$2อ');
+  // 6. Thai writes long "ue" with a trailing อ (คือ, ชื่อ, มื้อ); Lao often drops it
+  // (only when there is no leading เ: เ-ือ syllables already carry their own อ)
+  t = t.replace(/(?<!เ[ก-ฮ]ล?)ื([\u0E48-\u0E4B]?)(?![\u0E48-\u0E4B])/g, 'ื$1อ');
+  // 7. the Thai "ia" vowel placeholder set in steps 1-2
+  return t.replace(/\uE000/g, 'ี');
+}
+function laoSpokenText(text, voice){
+  try{
+    if(!text || !voice || !voice.lang) return text;
+    if(!/^th/i.test(voice.lang)) return text;
+    if(!/[\u0E80-\u0EFF]/.test(text)) return text;
+    return laoToThai(text);
+  }catch(e){ return text; }
+}
+
+
+const _nl = v => String(v.lang||'').replace('_','-').toLowerCase();
+const _firstByLang = (voices, pred) =>
+  (voices||[]).filter(v => pred(_nl(v)))
+              .sort((a,b) => a.voiceURI < b.voiceURI ? -1 : 1)[0] || null;
+const FUSED_VOICES = {
+  'Latin female 1': { respeller:'latin', register:'HV', speakLang:'es-ES', osVoiceMatch: vs => _firstByLang(vs, l => l === 'es-es') },
+  'Latin male':     { respeller:'latin', register:'HV', speakLang:'es-US', osVoiceMatch: vs => _firstByLang(vs, l => l === 'es-us') },
+  'Latin female 2': { respeller:'latin', register:'VA', speakLang:'it-IT', osVoiceMatch: vs => _firstByLang(vs, l => l === 'it-it') },
+  'Lao':            { respeller:'lao',   register:null, speakLang:'th-TH', osVoiceMatch: vs => _firstByLang(vs, l => l === 'th-th' || l === 'th') },
+};
+const FUSED_ORDER = ['Latin female 1','Latin male','Latin female 2','Lao'];
+const FUSED_PREFIX = 'fused:', PLAIN_SUFFIX = '@plain';
+const PREVIEW_SAMPLES = { latin:'Salve, amici.', lao:'\u0EAA\u0EB0\u0E9A\u0EB2\u0E8D\u0E94\u0EB5' };
+function fusedFamilyForCode(code){
+  code = String(code||'');
+  if(/^la(-|$)/i.test(code)) return 'latin';
+  if(/^lo(-|$)/i.test(code)) return 'lao';
+  return '';
+}
+function fusedOsVoice(label){ return FUSED_VOICES[label].osVoiceMatch(S.voices||[]); }
+function fusedParse(uri){
+  uri = String(uri||'');
+  if(uri.indexOf(FUSED_PREFIX)!==0) return null;
+  let base = uri.slice(FUSED_PREFIX.length), plain = false;
+  if(base.slice(-PLAIN_SUFFIX.length)===PLAIN_SUFFIX){ base = base.slice(0,-PLAIN_SUFFIX.length); plain = true; }
+  return FUSED_VOICES[base] ? {base, plain} : null;
+}
+// -> {p, use, entry, voice}; falls back to another installed voice of the same family.
+function fusedResolve(uri){
+  const p = fusedParse(uri);
+  if(!p) return null;
+  let use = p.base, voice = fusedOsVoice(use);
+  if(!voice){
+    const fam = FUSED_VOICES[use].respeller;
+    const alt = FUSED_ORDER.find(l => FUSED_VOICES[l].respeller===fam && fusedOsVoice(l));
+    if(alt){ use = alt; voice = fusedOsVoice(alt); }
+  }
+  return {p, use, entry:FUSED_VOICES[use], voice};
+}
+function fusedNormalize(uri, fam){
+  const p = fusedParse(uri);
+  if(!p) return uri;
+  return FUSED_PREFIX + p.base + (FUSED_VOICES[p.base].respeller===fam ? '' : PLAIN_SUFFIX);
+}
+function fusedSpoken(text, uri){
+  const r = fusedResolve(uri);
+  if(!r || r.p.plain || !r.voice) return text;
+  if(r.entry.respeller==='lao') return laoSpokenText(text, r.voice);
+  if(r.entry.respeller==='latin'){
+    LATIN_REG_OVERRIDE = r.entry.register;
+    try{ return latinSpokenText(text, 'la', r.voice); }
+    finally{ LATIN_REG_OVERRIDE = ''; }
+  }
+  return text;
+}
+
 function loadVoices(){
   const prevCount = S.voices.length;
   S.voices = window.speechSynthesis ? speechSynthesis.getVoices() : [];
@@ -3186,11 +3611,23 @@ function populateVoiceSelect(selectId, code, previousURI, gender){
   // everything else is alphabetized below them by on-screen name, rather
   // than left in whatever order the OS/browser happened to report voices
   // in — nothing is ever hidden, this only changes where it sorts.
-  const rest = voices.filter(v=>!matchSet.has(v))
-    .slice()
-    .sort((a,b)=> (a.name||'').localeCompare(b.name||''));
-  const ordered = [...matches, ...rest];
-
+  // v3.3: the four new voices. Own-family ones are pinned + checkmarked at
+  // the very top (Latin -> 3 Latin voices, Lao -> Lao); the others are
+  // alphabetized in with everything else. All 3.2 ranking below is unchanged.
+  const fam = fusedFamilyForCode(code);
+  const loadedV = voices.length>0;
+  const fusedItem = label=>{
+    const own = FUSED_VOICES[label].respeller===fam;
+    const missing = loadedV && !fusedOsVoice(label);
+    return {value: FUSED_PREFIX+label+(own?'':PLAIN_SUFFIX), own, missing,
+            text: label+(missing?' \u2014 voice not installed':''), sortName: label};
+  };
+  const fusedAll = FUSED_ORDER.map(fusedItem);
+  const pinnedFused = fusedAll.filter(it=>it.own);
+  const restItems = [
+    ...voices.filter(v=>!matchSet.has(v)).map(v=>({value:v.voiceURI, text:v.name+' ('+v.lang+')', sortName:v.name||'', v})),
+    ...fusedAll.filter(it=>!it.own)
+  ].sort((a,b)=> (a.sortName||'').localeCompare(b.sortName||''));
   // BUGFIX (2026-09): when nothing installed actually matches this
   // language, don't silently pretend one does. The full voice list below
   // is still shown and still fully selectable -- a user can always
@@ -3199,24 +3636,32 @@ function populateVoiceSelect(selectId, code, previousURI, gender){
   // language. A placeholder keeps the dropdown's own selection in sync
   // with that "nothing auto-picked" state instead of defaulting to
   // whichever voice happens to sort first.
-  if(!matches.length){
+  if(!matches.length && !pinnedFused.some(it=>!it.missing)){
     const placeholder = document.createElement('option');
     placeholder.value = '';
     placeholder.textContent = '— no installed voice matches this language —';
     sel.appendChild(placeholder);
   }
 
-  ordered.forEach(v=>{
+  const addOpt = (value, text, disabled)=>{
     const o = document.createElement('option');
-    const isMatch = matchSet.has(v);
-    o.value = v.voiceURI;
-    o.textContent = `${isMatch ? '\u2713 ' : ''}${v.name} (${v.lang})`;
+    o.value = value; o.textContent = text;
+    if(disabled) o.disabled = true;
     sel.appendChild(o);
-  });
+  };
+  pinnedFused.forEach(it=>addOpt(it.value, '\u2713 '+it.text, it.missing));
+  matches.forEach(v=>addOpt(v.voiceURI, '\u2713 '+v.name+' ('+v.lang+')'));
+  restItems.forEach(it=>addOpt(it.value, it.text, it.missing));
 
   let chosenURI = '';
-  if(previousURI && voices.some(v=>v.voiceURI===previousURI)){
-    chosenURI = previousURI;
+  const prevNorm = fusedNormalize(previousURI, fam);
+  if(previousURI && (voices.some(v=>v.voiceURI===previousURI) || (fusedParse(prevNorm) && loadedV))){
+    chosenURI = prevNorm;
+  } else if(loadedV && pinnedFused.length && pinnedFused.some(it=>!it.missing)){
+    // Lao / Latin default: the new voice(s). Latin picks by character gender.
+    const want = fam==='lao' ? 'Lao' : (gender==='female' ? 'Latin female 1' : 'Latin male');
+    const wantIt = pinnedFused.find(it=>it.sortName===want && !it.missing) || pinnedFused.find(it=>!it.missing);
+    chosenURI = wantIt.value;
   } else if(matches.length){
     chosenURI = matches[0].voiceURI;
   }
@@ -3239,6 +3684,14 @@ function updateDotAndNote(id, uri, matches, genderMatched, usingFallback, gender
   const isSrc = id.indexOf('srcVoice__')===0;
   const dot = document.getElementById('dot_'+id);
   const note = document.getElementById('note_'+id);
+  const fr = fusedResolve(uri);
+  if(fr){
+    const own = !fr.p.plain;
+    if(dot) dot.className = 'dot' + (!fr.voice ? ' danger' : own ? (isSrc?' amber':' teal') : ' white');
+    if(note) note.textContent = !fr.voice ? (fr.p.base+' — voice not installed on this device')
+      : (own ? (fr.use!==fr.p.base ? 'using '+fr.use+' — '+fr.p.base+' is not installed' : 'recommended pick') : 'custom pick');
+    return;
+  }
   const isRecommended = matches.length>0 && matches[0].voiceURI===uri;
   const noLangMatch = matches.length===0;
   if(dot) dot.className = 'dot' + (!uri ? '' : noLangMatch ? ' danger' : (isRecommended ? (isSrc?' amber':' teal') : ' white'));
@@ -3447,6 +3900,7 @@ function updateListenNote(){
    SPEECH HELPERS
    ============================================================ */
 function pickVoiceByURI(uri){
+  if(uri && String(uri).indexOf(FUSED_PREFIX)===0){ const r = fusedResolve(uri); return r ? r.voice : null; }
   return S.voices.find(v=>v.voiceURI===uri) || null;
 }
 // Seven-step pitch dropdown, replacing the old free-drag slider: Low sits
@@ -3500,7 +3954,9 @@ function previewVoice(uri, langCode, btn, pitch){
   if(!window.speechSynthesis || !uri) return;
   speechSynthesis.cancel();
   const v = pickVoiceByURI(uri);
-  const u = new SpeechSynthesisUtterance('One, two, three.');
+  const fr = fusedResolve(uri);
+  const sample = (fr && !fr.p.plain && PREVIEW_SAMPLES[fr.entry.respeller]) || 'One, two, three.';
+  const u = new SpeechSynthesisUtterance(fusedSpoken(sample, uri));
   u.rate = S.rate;
   u.pitch = pitch || 1;
   if(v){ u.voice = v; u.lang = v.lang; } else if(langCode){ u.lang = langCode; }
@@ -3602,7 +4058,7 @@ function speak(text, langCode, token, voiceURI, pitch, retryCount){
       }
     });
     function startUtterance(){
-    const u = new SpeechSynthesisUtterance(text);
+    const u = new SpeechSynthesisUtterance(fusedSpoken(text, voiceURI));
     u.rate = S.rate;
     u.pitch = pitch || 1;
     const v = pickVoiceByURI(voiceURI);
