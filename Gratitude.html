@@ -587,7 +587,7 @@ const AFRICAN_FR_REGIONS = ['CI','SN','CD','CM','ML','BF','NE','TG','BJ','GN','G
 const REGION_PROFILES = {
   en: {
     matchPrefixes:['en'], boost:['US'], primary:'US',
-    preferredNames:['English United States'],
+    preferredNames:((/iPhone|iPad|iPod/i.test(navigator.userAgent||'')||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))?['Samantha','English United States']:['English United States']), /* iPhone/iPad: Samantha is the English default (Fred is the alphabetical/male-guess pick and sounds bad) */
   },
   es: {
     matchPrefixes:['es'], boost:ES_LATAM_REGIONS, primary:'US', demote:['ES'],
