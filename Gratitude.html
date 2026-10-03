@@ -5,6 +5,21 @@
 <meta name="google" content="notranslate"> <!-- prevents iOS Safari auto-translate from stripping page content -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<!-- DARK MODE — applied before the stylesheet paints so there's no flash of
+     the wrong theme. Honors an explicit toggle choice (localStorage
+     'themeMode', same key as the template); otherwise follows the device. -->
+<script>
+(function () {
+  try {
+    var stored = localStorage.getItem('themeMode'); // 'light' | 'dark' | absent = follow system
+    var dark = stored ? stored === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
 <title>Gratitude</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700&family=Source+Code+Pro:wght@500&display=swap" rel="stylesheet">
@@ -74,7 +89,49 @@
     /* Reserved clearance for a host-injected sticky/anchor ad bar at the
        bottom of the viewport. Bump this if the ad unit is taller. */
     --ad-safe-space:90px;
+    /* Dark-mode support: former hard-coded fills are now tokens */
+    --surface:#FFFFFF;
+    --field:#FBF3F4;
+    --heart-bg:#FBDCE2;
   }
+  :root{ color-scheme: light; }
+  html[data-theme="dark"]{
+    color-scheme: dark;
+    --bg:#151012;
+    --bg-hi:#151012;
+    --card:#211A1C;
+    --card-hi:#2A2023;
+    --border:#4A2F36;
+    --border-soft:#33252A;
+    --ink:#F3ECE8;
+    --ink-soft:#C3B8B3;
+    --ink-dim:#8E8480;
+    --amber:#F2768C;
+    --amber-bright:#EE5F79;
+    --amber-dim:#5A2E39;
+    --amber-glow: rgba(242,118,140,.10);
+    --amber-glow-soft: rgba(242,118,140,.05);
+    --amber-vivid:#D81E3D;
+    --amber-vivid-glow: rgba(216,30,61,.30);
+    --amber-vivid-glow-soft: rgba(216,30,61,.14);
+    --teal:#B83A56;
+    --teal-bright:#E58AA0;
+    --teal-dim:#5A2E39;
+    --teal-glow: rgba(229,138,160,.10);
+    --teal-glow-soft: rgba(229,138,160,.05);
+    --shadow: 0 1px 0 rgba(0,0,0,.3), 0 10px 24px -14px rgba(0,0,0,.7);
+    --surface:#211A1C;
+    --field:#2A2023;
+    --heart-bg:#3A1F27;
+  }
+  /* white-on-fill buttons need a deeper fill than the light-on-dark text accent */
+  html[data-theme="dark"] .btn,
+  html[data-theme="dark"] .toggle-pill.on,
+  html[data-theme="dark"] .heart-test-btn.testing{ background:#C81E40; border-color:#C81E40; }
+  html[data-theme="dark"] .btn.secondary{ background:var(--teal); border-color:transparent; }
+  html[data-theme="dark"] .btn.ghost{ background:transparent; border-color:var(--border); }
+  html[data-theme="dark"] .note.warn{ background:#2B2118; border-color:#5C4426; color:#E8C28A; }
+  html[data-theme="dark"] .ip-badge{ background:rgba(255,255,255,0.12) !important; color:#D9CFCA !important; }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0; height:100%;}
   html{ -webkit-text-size-adjust:100%; }
@@ -106,6 +163,20 @@
     color:var(--amber);
     letter-spacing:.01em;
   }
+  /* Sun/moon toggle — top right, level with the word "Gratitude" */
+  .theme-toggle{
+    position:absolute; right:0; top:0;
+    width:34px; height:34px; padding:0; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    border:1.5px solid var(--border); background:var(--card); color:var(--amber);
+    cursor:pointer; box-shadow:var(--shadow);
+  }
+  .theme-toggle:hover{ border-color:var(--amber); }
+  .theme-toggle:focus-visible{ outline:2px solid var(--amber-bright); outline-offset:2px; }
+  .theme-toggle svg{ display:block; }
+  .theme-toggle .icon-sun{ display:none; }
+  html[data-theme="dark"] .theme-toggle .icon-sun{ display:block; }
+  html[data-theme="dark"] .theme-toggle .icon-moon{ display:none; }
   header.top p.sub{ font-size:12px; color:var(--ink-soft); margin:4px 0 0; }
 
   .card{
@@ -136,11 +207,11 @@
   select, input[type=text], input[type=number]{
     width:100%; font-family:'Inter', inherit; font-size:13.5px;
     padding:8px 10px; border-radius:9px;
-    border:1.5px solid var(--border); background:#FBF3F4;
+    border:1.5px solid var(--border); background:var(--field);
     color:var(--ink);
   }
   select:focus, input:focus{ outline:2px solid var(--amber-bright); outline-offset:1px; }
-  select option{ background:#FFFFFF; color:var(--ink); }
+  select option{ background:var(--surface); color:var(--ink); }
   select:disabled{ opacity:.4; }
 
   /* ---- language + voice combined rows: one row per slot, a heart-shaped
@@ -167,7 +238,7 @@
   .heart-test-btn{
     flex:none; width:28px; height:28px; padding:0; margin:0;
     border:1.5px solid var(--border-soft); border-radius:50%;
-    background:#FFFFFF; color:var(--amber-dim);
+    background:var(--surface); color:var(--amber-dim);
     font-size:13px; line-height:1;
     display:flex; align-items:center; justify-content:center;
     cursor:pointer;
@@ -192,7 +263,7 @@
 
   /* ---- hero "start practice" panel (now also holds the lesson grid) ---- */
   .hero-card{
-    background:#FFFFFF;
+    background:var(--surface);
     border:1.5px solid var(--border);
     border-radius:var(--radius-lg);
     box-shadow:var(--shadow);
@@ -210,7 +281,7 @@
     position:relative; flex:none; width:100px; height:100px;
     display:flex; align-items:center; justify-content:center;
     border-radius:50%;
-    background:#FBDCE2;
+    background:var(--heart-bg);
   }
   .hero-heart{ width:60px; height:54px; display:block; }
   .hero-text{ display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; }
@@ -232,7 +303,7 @@
   .toggle-row{ display:flex; gap:6px; }
   .toggle-pill{
     flex:1; padding:8px 10px; border-radius:9px; border:1.5px solid var(--border);
-    background:#FBF3F4; color:var(--ink-soft); font-size:12.5px; font-weight:600; cursor:pointer;
+    background:var(--field); color:var(--ink-soft); font-size:12.5px; font-weight:600; cursor:pointer;
   }
   .toggle-pill.on{ background:var(--amber); border-color:var(--amber); color:#FFFFFF; box-shadow:0 0 16px -7px var(--amber-glow); }
 
@@ -328,6 +399,10 @@
 
   <header class="top">
     <h1>Gratitude</h1>
+    <button type="button" class="theme-toggle" id="themeToggleBtn" title="Toggle dark mode" aria-label="Toggle dark mode">
+      <svg class="icon-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+      <svg class="icon-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><line x1="12" y1="2" x2="12" y2="4.5"></line><line x1="12" y1="19.5" x2="12" y2="22"></line><line x1="4.5" y1="12" x2="2" y2="12"></line><line x1="22" y1="12" x2="19.5" y2="12"></line><line x1="18.36" y1="5.64" x2="16.6" y2="7.4"></line><line x1="7.4" y1="16.6" x2="5.64" y2="18.36"></line><line x1="18.36" y1="18.36" x2="16.6" y2="16.6"></line><line x1="7.4" y1="7.4" x2="5.64" y2="5.64"></line></svg>
+    </button>
     <p class="sub">Gratitude &amp; Abundance — affirmations in the languages you choose</p>
   </header>
 
@@ -429,7 +504,7 @@
 
   <div class="ad-safe-spacer"></div>
 
-  <div style="text-align:center; padding:4px 5% 6px 5%;"><span style="display:inline-block; background:rgba(255,255,255,0.65); color:#2a2320; font-size:9px; padding:2px 10px; border-radius:999px; user-select:none;">Intellectual property of Fayne Milner</span></div>
+  <div style="text-align:center; padding:4px 5% 6px 5%;"><span class="ip-badge" style="display:inline-block; background:rgba(255,255,255,0.65); color:#2a2320; font-size:9px; padding:2px 10px; border-radius:999px; user-select:none;">Intellectual property of Fayne Milner</span></div>
 
 </div>
 
@@ -1412,6 +1487,22 @@ document.getElementById('newSetupBtn').addEventListener('click', ()=>{
   document.getElementById('doneScreen').classList.add('hidden');
   document.querySelectorAll('.setup-card').forEach(c=>c.classList.remove('hidden'));
 });
+
+// ---- DARK MODE TOGGLE ----
+// Tapping flips the theme and remembers the explicit choice. Until then the
+// page follows the device's light/dark setting and updates live if it changes.
+document.getElementById('themeToggleBtn').addEventListener('click', function(){
+  var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  try { localStorage.setItem('themeMode', next); } catch(e){}
+});
+if (window.matchMedia) {
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e){
+    var hasExplicitChoice = false;
+    try { hasExplicitChoice = !!localStorage.getItem('themeMode'); } catch(err){}
+    if (!hasExplicitChoice) document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+  });
+}
 </script>
 </body>
 </html>
