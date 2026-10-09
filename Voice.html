@@ -1,0 +1,162 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Voice Ladder Tool</title>
+<style>
+:root{--bg:#fff;--card:#f2f3f5;--ink:#15171a;--dim:#666d78;--acc:#0a7d6b;--bd:#d3d7dc;--warn:#b3261e;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111316;--card:#1c1f24;--ink:#eceef1;--dim:#9aa1ab;--acc:#3ccfb4;--bd:#333943;--warn:#ff8a80}}
+:root[data-theme="dark"]{--bg:#111316;--card:#1c1f24;--ink:#eceef1;--dim:#9aa1ab;--acc:#3ccfb4;--bd:#333943;--warn:#ff8a80}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,Roboto,sans-serif;padding:10px 12px 60px}
+h1{font-size:19px;margin:6px 0}h2{font-size:15px;margin:14px 0 6px}
+.tabs{display:flex;gap:6px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding:6px 0;z-index:5}
+.tabs button{flex:1}
+button,select,input,textarea{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px;max-width:100%}
+button{min-height:44px}button.on,button.p{background:var(--acc);color:#000;border-color:var(--acc);font-weight:700}
+select,input,textarea{width:100%}textarea{min-height:200px;font:12px/1.3 ui-monospace,monospace}
+.card{background:var(--card);border-radius:12px;padding:10px;margin:8px 0}.dim{color:var(--dim);font-size:13px}
+.row{display:flex;gap:6px;align-items:center;margin:4px 0}.row>span{flex:1;min-width:0;overflow-wrap:anywhere}.row button{flex:none;min-width:44px;padding:6px}
+#banner{display:none;position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));background:var(--warn);color:#fff;padding:12px;border-radius:12px;font-weight:700;z-index:9}
+.ok{color:var(--acc)}.bad{color:var(--warn)}.pane{display:none}.pane.on{display:block}
+</style></head><body>
+<h1>Voice Ladder Tool</h1>
+<div class="tabs"><button data-t="scan" class="on">1 Scan</button><button data-t="lad">2 Ladders</button><button data-t="rep">3 Report</button></div>
+
+<div id="scan" class="pane on">
+ <div class="card"><b>Device</b>
+  <label class="dim">Phone model (edit if wrong; iPhones can't report it)</label><input id="model">
+  <label class="dim">OS + version</label><input id="os">
+  <div id="devinfo" class="dim"></div></div>
+ <div class="card"><b>Installed voices: <span id="vcount">0</span></b>
+  <div class="dim">If 0, wait a few seconds or tap Rescan (voices load late on some phones).</div>
+  <button id="rescan" class="p" style="width:100%">Rescan voices</button><div id="rescanmsg" class="dim"></div><div id="vlist" class="dim"></div></div>
+ <div class="card"><b>Load test</b>
+  <div class="dim">Silently tries to load a voice for every language in the catalog and records what worked or failed. Takes about a minute.</div>
+  <button id="deep" class="p">Run load test</button><div id="deepout" class="dim"></div></div>
+</div>
+
+<div id="lad" class="pane">
+ <label class="dim">Language</label><select id="lang"></select>
+ <div id="langstat" class="dim"></div>
+ <h2>Tap a voice name to hear it. Tap 1–5 to rank it for the gender selected above (1 = first).</h2><div class="dim">If a gender's ladder has nothing available, the other gender's ladder is used before any backup.</div><div class="dim">Tap a number again to clear it. Red rows share a number — fix those.</div><div class="row"><button id="gf" class="on" style="flex:1">♀ Female ladder</button><button id="gm" style="flex:1">♂ Male ladder</button></div>
+ <button id="showall" style="width:100%;margin:6px 0"></button><div id="ladder"></div>
+ <h2>If every ladder rung is missing</h2>
+ <select id="backup">
+  <option value="auto">Auto: native voice, then nearest stand-in language, then device default</option>
+  <option value="default">Device default voice (whatever the phone picks)</option>
+  <option value="text">Show text on screen with a warning (no sound)</option></select>
+ <div class="dim">Stand-in order for this language: <span id="fbinfo"></span></div>
+ <h2>Test</h2><input id="phrase"><button id="test" class="p" style="width:100%;margin-top:4px">▶ Speak with full fallback</button>
+ <div id="testres" class="card dim">Nothing tested yet.</div>
+</div>
+
+<div id="rep" class="pane">
+ <p class="dim">Copy this and paste it back to Claude. It contains the device, all voices, load-test results, and your ladders.</p>
+ <button id="gen" class="p" style="width:100%">Build report</button>
+ <textarea id="out" readonly></textarea>
+ <div class="row"><button id="copy" style="flex:1">Copy</button><button id="share" style="flex:1">Share…</button></div>
+ <h2>Restore ladders</h2><div class="dim">Paste a previous report to reload its ladders.</div>
+ <textarea id="in" style="min-height:90px"></textarea><button id="imp" style="width:100%">Import ladders</button>
+ <div id="msg" class="dim"></div>
+</div>
+<div id="banner"></div>
+
+<script>
+const LANGS=[{"code": "es", "label": "Spanish (South American)", "vl": "es-419", "ph": "Yo hablo español"}, {"code": "pt-BR", "label": "Portuguese (Brazilian)", "vl": "pt-BR", "ph": "Eu falo português"}, {"code": "am", "label": "Amharic", "vl": "am-ET", "ph": "አማርኛ እናገራለሁ"}, {"code": "ar", "label": "Arabic", "vl": "ar-SA", "ph": "أتحدث العربية"}, {"code": "ar-GLF", "label": "Arabic Gulf", "vl": "ar-GLF", "ph": "أتكلم خليجي"}, {"code": "ar-IQ", "label": "Arabic Iraqi", "vl": "ar-IQ", "ph": "أحچي عراقي"}, {"code": "ar-LEV", "label": "Arabic Levantine", "vl": "ar-LEV", "ph": "بحكي عربي شامي"}, {"code": "ar-SA", "label": "Arabic Saudi", "vl": "ar-SA", "ph": "أتكلم سعودي"}, {"code": "ar-YE", "label": "Arabic Yemeni", "vl": "ar-YE", "ph": "أتكلم يمني"}, {"code": "cs", "label": "Czech", "vl": "cs-CZ", "ph": "Mluvím česky"}, {"code": "ar-MA", "label": "Darija Arabic (Arabizi/Latin script)", "vl": "ar-MA", "ph": "Kanhder Darija"}, {"code": "prs", "label": "Dari", "vl": "prs-AF", "ph": "ÙÙ Ø¯Ø±Û ØµØ­Ø¨Øª ÙÛ‌Ú©ÙÙ"}, {"code": "fa", "label": "Farsi", "vl": "fa-IR", "ph": "ÙÙ ÙØ§Ø±Ø³Û ØµØ­Ø¨Øª ÙÛ‌Ú©ÙÙ"}, {"code": "fr-AFR", "label": "French (African)", "vl": "fr-FR", "ph": "Je parle français"}, {"code": "fr-FR", "label": "French (Parisian)", "vl": "fr-FR", "ph": "Je parle français"}, {"code": "de", "label": "German", "vl": "de-DE", "ph": "Ich spreche Deutsch"}, {"code": "ha", "label": "Hausa", "vl": "ha-NG", "ph": "Ina jin Hausa"}, {"code": "haw", "label": "Hawaiian", "vl": "haw-US", "ph": "ʻŌlelo Hawaiʻi au"}, {"code": "nah-HUA", "label": "Huasteca Nahuatl", "vl": "nah", "ph": "Ninahuatlahtoa"}, {"code": "ig", "label": "Igbo", "vl": "ig-NG", "ph": "Ana m asụ Igbo"}, {"code": "it", "label": "Italian", "vl": "it-IT", "ph": "Parlo italiano"}, {"code": "ja-formal", "label": "Japanese (Formal)", "vl": "ja-JP", "ph": "日本語を話します"}, {"code": "ja-casual", "label": "Japanese (Informal)", "vl": "ja-JP", "ph": "日本語話すよ"}, {"code": "km", "label": "Khmer", "vl": "km-KH", "ph": "ខ្ញុមនិយាយភាសាខ្មែរ"}, {"code": "kmr", "label": "Kurdish Kurmanji", "vl": "kmr-TR", "ph": "Ez bi Kurmancî diaxivim"}, {"code": "ckb", "label": "Kurdish Sorani", "vl": "ckb-IQ", "ph": "من بە کوردی سۆرانی قسە دەکەم"}, {"code": "sdh", "label": "Kurdish Southern", "vl": "sdh-IQ", "ph": "ÙÙ Ø¨Ù Ú©ÙØ±Ø¯Û Ø®ÙØ§Ø±Ú¯ ÙØ³Ù Ú©Ù‌Ù"}, {"code": "lo", "label": "Lao", "vl": "lo-LA", "ph": "ຂ້ອຍເວ້າພາສາລາວ"}, {"code": "la-CI", "label": "Latin (Classical)", "vl": "la", "ph": "Latine loquor"}, {"code": "la-HV", "label": "Latin (Hispania Vulgaris)", "vl": "la", "ph": "Latine loquor"}, {"code": "la-VA", "label": "Latin (Modern Ecclesiastical)", "vl": "la", "ph": "Latine loquor"}, {"code": "ln", "label": "Lingala", "vl": "ln-CD", "ph": "Nalobaka Lingala"}, {"code": "mi", "label": "Māori", "vl": "mi-NZ", "ph": "Kōrero Māori ahau"}, {"code": "nv", "label": "Navajo", "vl": "nv", "ph": "Naabeehó yáshtʼí"}, {"code": "pl", "label": "Polish", "vl": "pl-PL", "ph": "Mówię po polsku"}, {"code": "pt-AFR", "label": "Portuguese (African)", "vl": "pt-PT", "ph": "Eu falo português"}, {"code": "pt-PT", "label": "Portuguese (European)", "vl": "pt-PT", "ph": "Eu falo português"}, {"code": "ro", "label": "Romanian", "vl": "ro-RO", "ph": "Vorbesc română"}, {"code": "ru", "label": "Russian", "vl": "ru-RU", "ph": "Я говорю по-русски"}, {"code": "sm", "label": "Samoan", "vl": "sm-WS", "ph": "Ou te tautala Samoa"}, {"code": "sk", "label": "Slovak", "vl": "sk-SK", "ph": "Hovorím po slovensky"}, {"code": "quz", "label": "Southern Quechua", "vl": "quz", "ph": "Runasimita rimani"}, {"code": "es-GQ", "label": "Spanish (Equatoguinean African)", "vl": "es-GQ", "ph": "Yo hablo español"}, {"code": "es-ES", "label": "Spanish (Spain)", "vl": "es-ES", "ph": "Yo hablo español"}, {"code": "sus", "label": "Susu", "vl": "sus-GN", "ph": "N'fala Sosoxui"}, {"code": "sw", "label": "Swahili", "vl": "sw-KE", "ph": "Ninaongea Kiswahili"}, {"code": "sv", "label": "Swedish", "vl": "sv-SE", "ph": "Jag talar svenska"}, {"code": "tl", "label": "Tagalog", "vl": "fil-PH", "ph": "Nagsasalita ako ng Tagalog"}, {"code": "tg", "label": "Tajik", "vl": "tg-TJ", "ph": "Ман тоҷикӣ гап мезанам"}, {"code": "th", "label": "Thai", "vl": "th-TH", "ph": "ฉันพูดภาษาไทย"}, {"code": "to", "label": "Tongan", "vl": "to-TO", "ph": "'Oku ou lea faka-Tonga"}, {"code": "uk", "label": "Ukrainian", "vl": "uk-UA", "ph": "Я розмовляю українською"}, {"code": "vi", "label": "Vietnamese", "vl": "vi-VN", "ph": "Tôi nói tiếng Việt"}, {"code": "yo", "label": "Yoruba", "vl": "yo-NG", "ph": "Mo n sọ Yorùbá"}, {"code": "xh", "label": "isiXhosa", "vl": "xh-ZA", "ph": "Ndithetha isiXhosa"}, {"code": "zu", "label": "isiZulu", "vl": "zu-ZA", "ph": "Ngikhuluma isiZulu"}, {"code": "en", "label": "English", "vl": "en-US", "ph": "I speak English"}];
+// Stand-in languages (base codes) tried when no native voice exists. Closest-sounding first.
+const FB={lo:['th'],'la-CI':['it','es'],'la-VA':['it','es'],'la-HV':['es','it'],km:['th'],'ar-GLF':['ar'],'ar-IQ':['ar'],'ar-LEV':['ar'],'ar-YE':['ar'],'ar-SA':['ar'],'ar-MA':['ar','fr'],'fr-AFR':['fr'],'pt-AFR':['pt'],'es-GQ':['es'],
+ ha:['en'],ig:['en'],yo:['en'],ln:['fr','sw'],zu:['sw','en'],xh:['sw','en'],haw:['mi','en'],mi:['en'],sm:['mi','en'],to:['mi','en'],'nah-HUA':['es'],quz:['es'],nv:['en'],sus:['fr'],
+ prs:['fa','ar'],kmr:['tr','fa','ar'],ckb:['fa','ar'],sdh:['fa','ar'],tg:['ru','fa'],am:['ar'],sw:['en'],tl:['es','en']};
+const $=id=>document.getElementById(id),SS=window.speechSynthesis;
+let S={ladders:{},backup:{},tried:[],model:'',os:''},cur=LANGS[0].code,hi={};
+try{const x=JSON.parse(localStorage.getItem('vlt')||'null');if(x)S=Object.assign(S,x)}catch(e){}
+let showAll=false,G='f';
+const sync=id=>{S.ladders[id]=Object.entries(S.ranks[id]||{}).sort((a,b)=>a[1]-b[1]).map(e=>e[0])};
+const toRanks=lad=>{const r={};for(const id in lad){const m=Object.fromEntries(lad[id].map((k,i)=>[k,i+1]));if(id.includes(':'))r[id]=m;else{r[id+':f']=m;r[id+':m']={...m}}}return r};
+if(!S.ranks)S.ranks=toRanks(S.ladders);
+for(const c of Object.keys(S.ranks))if(!c.includes(':')){S.ranks[c+':f']=S.ranks[c+':f']||S.ranks[c];S.ranks[c+':m']=S.ranks[c+':m']||{...S.ranks[c]};delete S.ranks[c]}
+S.ladders={};for(const id in S.ranks)sync(id);
+const save=()=>{try{localStorage.setItem('vlt',JSON.stringify(S))}catch(e){}};
+const norm=l=>(l||'').replace('_','-').toLowerCase();
+const base=l=>norm(l).split('-')[0].replace('fil','tl');
+const vk=v=>v.name+'|'+v.lang;
+const vs=()=>SS?SS.getVoices():[];
+const L=c=>LANGS.find(l=>l.code===c);
+function native(c){const t=norm(L(c).vl),b=base(t);const a=vs();
+ return a.filter(v=>norm(v.lang)===t).concat(a.filter(v=>norm(v.lang)!==t&&base(v.lang)===b))}
+function standins(c){const out=[];(FB[c]||[]).forEach(b=>vs().forEach(v=>{if(base(v.lang)===b)out.push({v,r:'stand-in ('+v.lang+')'})}));return out}
+// Ordered rungs: ladder -> backup policy. Always ends with something audible or a visible warning.
+function rungs(c,g){g=g||'f';const og=g==='f'?'m':'f';const R=[],seen=new Set(),add=(v,r)=>{if(v&&!seen.has(vk(v))){seen.add(vk(v));R.push({v,r})}};
+ (S.ladders[c+':'+g]||[]).forEach((k,i)=>add(vs().find(v=>vk(v)===k),'ladder #'+(i+1)));
+ (S.ladders[c+':'+og]||[]).forEach((k,i)=>add(vs().find(v=>vk(v)===k),(og==='f'?'female':'male')+' ladder #'+(i+1)+' (other gender)'));
+ const b=S.backup[c]||'auto';
+ if(b==='auto'){native(c).forEach(v=>add(v,'native match'));standins(c).forEach(x=>add(x.v,x.r))}
+ if(b!=='text'){const d=vs().find(v=>v.default)||vs()[0];R.push({v:d||null,r:'device default'+(d?'':' (no voice list)')})}
+ return R}
+function banner(m){const e=$('banner');e.textContent=m;e.style.display='block';clearTimeout(banner.t);banner.t=setTimeout(()=>e.style.display='none',7000)}
+// Speak with automatic retry down the rungs; reports which one finally worked.
+function speak(c,text,cb,g){const R=rungs(c,g);let i=0;if(!SS){banner('Speech not supported here. Text: '+text);cb&&cb(null,'no speech engine');return}
+ const tryNext=()=>{if(i>=R.length){banner('No voice worked for '+L(c).label+'. Text: '+text);cb&&cb(null,'ALL FAILED');return}
+  const x=R[i++];SS.cancel();const u=new SpeechSynthesisUtterance(text);if(x.v){u.voice=x.v;u.lang=x.v.lang}else u.lang=L(c).vl;
+  let started=false,dead=false;const fail=()=>{if(dead)return;dead=true;tryNext()};
+  u.onstart=()=>{started=true;cb&&cb(x.v,x.r);if(!/^(ladder|native)/.test(x.r))banner(L(c).label+': using '+x.r+(x.v?' – '+x.v.name:''))};
+  u.onerror=e=>{if(!started&&e.error!=='interrupted'&&e.error!=='canceled')fail()};
+  setTimeout(()=>{if(!started)fail()},3000);SS.speak(u)};
+ tryNext()}
+function status(c){const l=[':f',':m'].some(g=>(S.ladders[c+g]||[]).some(k=>vs().find(v=>vk(v)===k))),n=native(c).length;return l?'✅':n?'🟢':standins(c).length?'🟡':'🔴'}
+function fillLang(){const s=$('lang');s.innerHTML='';LANGS.forEach(l=>{const o=document.createElement('option');o.value=l.code;o.textContent=status(l.code)+' '+l.label;s.appendChild(o)});s.value=cur}
+function ladderUI(){$('gf').className=G==='f'?'on':'';$('gm').className=G==='m'?'on':'';const c=cur,l=L(c),n=native(c).length,k=S.ladders[c]||[];
+ $('langstat').textContent='✅ ladder set · 🟢 native voice exists · 🟡 stand-in only · 🔴 nothing. This language wants '+l.vl+'; native voices found: '+n;
+ $('fbinfo').textContent=(FB[c]||[]).join(' → ')||'none defined';$('backup').value=S.backup[c]||'auto';$('phrase').value=l.ph;
+ const d=$('ladder'),lid=c+':'+G,R=S.ranks[lid]=S.ranks[lid]||{},l2=l,sc=v=>norm(v.lang)===norm(l2.vl)?0:base(v.lang)===base(l2.vl)?1:(FB[c]||[]).includes(base(v.lang))?2:3;
+ const cnt={};Object.values(R).forEach(n=>cnt[n]=(cnt[n]||0)+1);
+ const a=vs().filter(v=>showAll||sc(v)<3||R[vk(v)]).sort((x,y)=>sc(x)-sc(y)||x.name.localeCompare(y.name));
+ $('showall').textContent=showAll?'Showing all voices – tap for likely matches only':'Showing likely matches – tap to show all '+vs().length+' voices';
+ d.innerHTML=a.length?'':'<div class="dim">No voices on this device match. Show all, or rely on the backup below.</div>';
+ a.forEach(v=>{const key=vk(v),r=R[key],dup=r&&cnt[r]>1,row=document.createElement('div');row.className='row';
+  if(dup)row.style.cssText='background:var(--warn);color:#fff;border-radius:10px;padding:2px 4px';
+  const nb=document.createElement('button');nb.style.cssText='flex:1;min-width:0;text-align:left;font-size:13px;padding:6px 8px;overflow-wrap:anywhere';
+  nb.innerHTML='▶ '+['★ ','☆ ','~ ',''][sc(v)]+v.name+'<br><span style="opacity:.7;font-size:11px">'+v.lang+(v.localService?'':' · online')+'</span>';
+  nb.onclick=()=>{if(!SS)return;SS.cancel();const u=new SpeechSynthesisUtterance(L(c).ph);u.voice=v;u.lang=v.lang;
+   const off=()=>nb.classList.remove('on');u.onstart=()=>nb.classList.add('on');u.onend=off;u.onerror=off;SS.speak(u)};
+  row.appendChild(nb);
+  for(let n=1;n<=5;n++){const b=document.createElement('button');b.textContent=n;b.style.cssText='min-width:34px;padding:6px 0';if(r===n){b.className='on';if(dup)b.style.cssText+=';background:#fff;color:#000'}
+   b.onclick=()=>{if(R[key]===n)delete R[key];else R[key]=n;sync(lid);save();fillLang();ladderUI()};row.appendChild(b)}
+  d.appendChild(row)});
+ const dups=Object.keys(cnt).filter(n=>cnt[n]>1);
+ if(dups.length)d.insertAdjacentHTML('afterbegin','<div class="bad"><b>Two voices share number '+dups.join(', ')+'. They will both be tried, in list order — change one.</b></div>')}
+function scanUI(){const a=vs();$('vcount').textContent=a.length;
+ $('vlist').innerHTML=a.map(v=>v.name+' · '+v.lang+(v.localService?'':' · online')+(v.default?' · default':'')).join('<br>');
+ fillLang();ladderUI()}
+async function devinfo(){const n=navigator,u=n.userAgent;let h={};
+ try{if(n.userAgentData)h=await n.userAgentData.getHighEntropyValues(['model','platformVersion','architecture'])}catch(e){}
+ const ios=/iPhone|iPad/.test(u),and=/Android/.test(u);
+ if(!S.model)S.model=h.model||(ios?(/iPad/.test(u)?'iPad':'iPhone')+' (model not exposed – type it)':'');
+ if(!S.os)S.os=ios?'iOS '+((/OS (\d+[_\d]*)/.exec(u)||[])[1]||'?').replace(/_/g,'.'):and?'Android '+(h.platformVersion||(/Android ([\d.]+)/.exec(u)||[])[1]||'?'):(n.platform||'');
+ $('model').value=S.model;$('os').value=S.os;S.dev={ua:u,platform:n.platform,uaData:h,languages:n.languages,screen:screen.width+'x'+screen.height,dpr:devicePixelRatio,speech:!!SS,time:new Date().toISOString()};
+ $('devinfo').textContent=(/CriOS|Chrome/.test(u)?'Chrome-based':/Safari/.test(u)?'Safari':'browser')+' · '+(n.languages||[]).join(',')+' · speech '+(SS?'available':'MISSING')}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+$('deep').onclick=async()=>{const o=$('deepout');S.tried=[];o.textContent='';
+ for(let i=0;i<LANGS.length;i++){const l=LANGS[i],R=rungs(l.code).slice(0,3).filter(x=>x.v);o.textContent='Testing '+(i+1)+'/'+LANGS.length+': '+l.label;
+  if(!R.length){S.tried.push({lang:l.code,wanted:l.vl,voice:null,result:'no voice available'});continue}
+  for(const x of R){const res=await new Promise(rs=>{SS.cancel();const u=new SpeechSynthesisUtterance(l.ph);u.voice=x.v;u.lang=x.v.lang;u.volume=0;let d=0;const f=r=>{if(!d){d=1;SS.cancel();rs(r)}};u.onstart=()=>f('loaded');u.onerror=e=>f('error:'+e.error);setTimeout(()=>f('timeout'),2500);SS.speak(u)});
+   S.tried.push({lang:l.code,wanted:l.vl,voice:vk(x.v),rung:x.r,result:res});if(res==='loaded')break}}
+ save();const bad=S.tried.filter(t=>t.result!=='loaded').length;o.textContent='Done. '+S.tried.length+' attempts, '+bad+' failed or empty.'};
+function report(){S.model=$('model').value;S.os=$('os').value;save();
+ return JSON.stringify({tool:'voice-ladder-tool v2 (ladder keys are langcode:f or langcode:m)',device:{model:S.model,os:S.os,info:S.dev},
+  voices:vs().map(v=>({name:v.name,lang:v.lang,uri:v.voiceURI,local:v.localService,default:v.default})),
+  loadTest:S.tried,ladders:S.ladders,backup:S.backup,
+  languagesWithNoNativeVoice:LANGS.filter(l=>!native(l.code).length).map(l=>l.code)},null,1)}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button,.pane').forEach(e=>e.classList.remove('on'));b.classList.add('on');$(b.dataset.t).classList.add('on');if(b.dataset.t==='lad'){fillLang();ladderUI()}});
+$('rescan').onclick=()=>{const was=vs().length;scanUI();setTimeout(()=>{scanUI();$('rescanmsg').textContent='Rescanned at '+new Date().toLocaleTimeString()+': '+vs().length+' voices (was '+was+'). If you just changed phone settings and nothing moved, fully close the browser (swipe it away) and reopen this page.'},600)};$('lang').onchange=e=>{cur=e.target.value;ladderUI()};
+$('gf').onclick=()=>{G='f';ladderUI()};$('gm').onclick=()=>{G='m';ladderUI()};
+$('showall').onclick=()=>{showAll=!showAll;ladderUI()};
+$('backup').onchange=e=>{S.backup[cur]=e.target.value;save()};
+$('test').onclick=()=>{$('testres').textContent='Trying…';speak(cur,$('phrase').value,(v,r)=>$('testres').innerHTML=v?'<span class="ok">Played</span> via '+r+': '+v.name+' ('+v.lang+')':'<span class="bad">'+r+'</span>',G)};
+$('gen').onclick=()=>{$('out').value=report()};
+$('copy').onclick=async()=>{$('out').value=report();$('out').select();try{await navigator.clipboard.writeText($('out').value);$('msg').textContent='Copied.'}catch(e){document.execCommand('copy');$('msg').textContent='Copied (or long-press to copy).'}};
+$('share').onclick=()=>{$('out').value=report();navigator.share?navigator.share({title:'Voice report',text:$('out').value}).catch(()=>{}):$('msg').textContent='Share not supported; use Copy.'};
+$('imp').onclick=()=>{try{const j=JSON.parse($('in').value);S.backup=j.backup||{};S.ranks=toRanks(j.ladders||{});S.ladders={};for(const id in S.ranks)sync(id);save();$('msg').textContent='Imported.';fillLang();ladderUI()}catch(e){$('msg').textContent='Could not read that JSON.'}};
+$('model').oninput=$('os').oninput=()=>{S.model=$('model').value;S.os=$('os').value;save()};
+if(SS)SS.onvoiceschanged=scanUI;
+devinfo();scanUI();setTimeout(scanUI,800);setTimeout(scanUI,2500);
+</script></body></html>
