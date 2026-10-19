@@ -717,7 +717,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     </div>
 
     <footer style="text-align:center; padding:6% 5% 8% 5%; font-size:clamp(11px, 1.5vw, 13px); color:var(--footer-color);">
-      <a href="SOP.html" style="color:var(--footer-color); text-decoration:underline; font-weight:600;">A note to instructors</a>
+      <a href="#instructor-guide" id="instructorGuideFootLink" style="color:var(--footer-color); text-decoration:underline; font-weight:600;">A note to instructors</a>
+      <div style="margin-top:0.6em;"><a href="#student-guide" id="studentGuideFootLink" style="color:var(--footer-color); text-decoration:underline; font-weight:600;">How to use this (for students)</a></div>
       <div style="margin-top:0.8em;"><span style="display:inline-block; background:var(--ip-badge-bg); color:var(--ip-badge-color); font-size:12px; font-weight:700; line-height:1.35; padding:6px 18px; border:1px solid rgba(255,255,255,0.55); border-radius:999px; user-select:none;">Intellectual property of Fayne Milner<br>Not for public use</span></div>
     </footer>
   </main>
@@ -783,5 +784,263 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     });
   }
 </script>
+
+<!-- ===================== GUIDE PAGES (3-5-12): student "How to use this" + instructor SOP =====================
+     Same text in every app and in index.html. Each opens as an overlay inside this same HTML file (no separate page).
+     Student: round ? button (top row, right) and footer link. Instructor: footer link. Phone Back button closes them. -->
+<style>
+  .sg-overlay{
+    --sg-bg: var(--bg, var(--bg-page, #FAFAFA));
+    --sg-ink: var(--ink, var(--header-title-color, #141414));
+    --sg-soft: var(--ink-soft, var(--footer-color, #5B5652));
+    --sg-accent: var(--amber, var(--brand-accent, #F05A22));
+    --sg-card: var(--surface, var(--icon-btn-bg, #FFFFFF));
+    --sg-line: var(--border-strong, var(--photo-border, #E7E1DC));
+    position:fixed; inset:0; z-index:9000; display:none; flex-direction:column;
+    background:var(--sg-bg); color:var(--sg-ink); font-family:'Inter', system-ui, -apple-system, sans-serif;
+  }
+  .sg-overlay.open{ display:flex; }
+  .sg-bar{ flex:none; display:flex; align-items:center; gap:12px; padding:12px max(12px, calc((100% - 520px)/2)); background:var(--sg-accent); color:#fff; }
+  .sg-back{ flex:none; width:36px; height:36px; border-radius:50%; border:1.5px solid rgba(255,255,255,.85); background:transparent; color:#fff; font-size:20px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; }
+  .sg-bar-title{ font-weight:800; font-size:16px; letter-spacing:-.01em; }
+  .sg-scroll{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:20px max(18px, calc((100% - 520px)/2)) 40px; }
+  .sg-scroll h2{ margin:0 0 6px; font-size:22px; font-weight:800; letter-spacing:-.01em; }
+  .sg-scroll h3{ margin:22px 0 8px; font-size:13px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--sg-accent); }
+  .sg-scroll p{ margin:0 0 10px; font-size:15.5px; line-height:1.5; }
+  .sg-flow{ display:flex; flex-direction:column; gap:6px; margin:6px 0 4px; }
+  .sg-step{ display:flex; align-items:center; gap:10px; background:var(--sg-card); border:1.5px solid var(--sg-line); border-radius:12px; padding:9px 12px; font-size:14.5px; }
+  .sg-step b{ flex:none; width:24px; height:24px; border-radius:50%; background:var(--sg-accent); color:#fff; font-size:12px; display:flex; align-items:center; justify-content:center; }
+  .sg-step.pause{ border-style:dashed; color:var(--sg-soft); }
+  .sg-rule{ background:var(--sg-card); border:1.5px solid var(--sg-line); border-radius:14px; padding:12px 14px; margin-bottom:10px; }
+  .sg-rule .rn{ display:inline-block; font-weight:800; color:var(--sg-accent); margin-right:6px; }
+  .sg-rule p{ margin:4px 0 0; font-size:14.5px; color:var(--sg-soft); }
+  .help-page-btn{ font-family:'Inter', sans-serif; font-size:16px; font-weight:800; letter-spacing:0; line-height:1; text-transform:none; }
+  /* make room for the ? button in the progress row so the pill labels are not clipped */
+  .milestone .help-page-btn{ width:30px; height:30px; }
+  .milestone{ gap:5px; }
+  .milestone .road{ flex:0 0 15%; min-width:46px; }
+  .milestone .toggle-row{ gap:3px; }
+  .milestone .toggle-pill{ font-size:10.5px; padding:0 3px; }
+  .milestone .cap{ font-size:10px; padding:0 2px; overflow:hidden; }
+  .milestone .toggle-pill[data-val="exposure"]{ flex:1.25; }
+  .milestone .toggle-pill[data-val="judge"]{ flex:1; }
+  .milestone .toggle-pill[data-val="playthrough"]{ flex:1.3; }
+
+  /* ---- instructor guide (SOP) page; scoped so it can't touch the student page ---- */
+  #instructorGuide .sg-scroll{ --ig-tint: rgba(240,90,34,.12); --ig-edge: rgba(240,90,34,.38); }
+  #instructorGuide h1.doc-title{ margin:0 0 2px; font-size:22px; font-weight:800; letter-spacing:-.01em; text-align:center; }
+  #instructorGuide .doc-subtitle{ text-align:center; color:var(--sg-soft); font-size:13px; font-weight:600; margin-bottom:16px; }
+  #instructorGuide .meta-table{ width:100%; border-collapse:collapse; margin-bottom:18px; font-size:13.5px; }
+  #instructorGuide .meta-table td{ border:1px solid var(--ig-edge); padding:8px 10px; vertical-align:top; }
+  #instructorGuide .meta-table td:first-child{ background:var(--ig-tint); font-weight:800; color:var(--sg-accent); width:30%; }
+  #instructorGuide h2{ margin:26px 0 8px; padding-bottom:4px; border-bottom:2px solid var(--ig-edge); color:var(--sg-accent); font-size:17px; font-weight:800; }
+  #instructorGuide h3{ margin:16px 0 6px; font-size:15px; font-weight:800; letter-spacing:0; text-transform:none; color:var(--sg-ink); }
+  #instructorGuide .sg-scroll p, #instructorGuide p{ margin:8px 0; font-size:15px; line-height:1.55; }
+  #instructorGuide ul{ margin:6px 0 12px; padding-left:20px; }
+  #instructorGuide li{ margin-bottom:5px; font-size:15px; line-height:1.55; }
+  #instructorGuide .callout{ background:var(--ig-tint); border:1px solid var(--ig-edge); border-radius:10px; padding:10px 14px; font-weight:700; color:var(--sg-accent); margin:14px 0; font-size:15px; }
+  #instructorGuide .pattern-box{ background:#1f374a; color:#fff; border-radius:12px; padding:14px 16px; text-align:center; font-weight:800; font-size:14px; margin:12px 0; }
+  #instructorGuide .dos-donts{ display:flex; gap:10px; flex-wrap:wrap; margin:8px 0 14px; }
+  #instructorGuide .dos-donts > div{ flex:1; min-width:200px; border-radius:12px; padding:12px 14px; }
+  #instructorGuide .do-col{ background:rgba(42,145,80,.14); border:1px solid rgba(42,145,80,.45); }
+  #instructorGuide .dont-col{ background:rgba(210,69,60,.14); border:1px solid rgba(210,69,60,.45); }
+  #instructorGuide .do-col h3{ color:#2a9150; margin-top:0; }
+  #instructorGuide .dont-col h3{ color:#d2453c; margin-top:0; }
+  #instructorGuide .dos-donts ul{ padding-left:18px; margin-bottom:0; }
+  #instructorGuide .dos-donts li{ font-size:14px; }
+  #instructorGuide .ip-note{ margin-top:26px; padding:12px 14px; background:rgba(128,128,128,.10); border:1px dashed var(--sg-soft); border-radius:10px; font-size:13.5px; color:var(--sg-soft); line-height:1.55; }
+  #instructorGuide .ip-note strong{ color:var(--sg-ink); }
+</style>
+<div class="sg-overlay" id="studentGuide" role="dialog" aria-modal="true" aria-label="How to use this">
+  <div class="sg-bar">
+    <button type="button" class="sg-back" id="studentGuideBack" aria-label="Back" title="Back">&#8249;</button>
+    <span class="sg-bar-title">How to use this</span>
+  </div>
+  <div class="sg-scroll">
+    <h2>For students</h2>
+    <p>Each app is its own set of lessons with its own focus. One app alone won&rsquo;t teach you a whole language.</p>
+
+    <h3>The routine</h3>
+    <p>Pick one app. Pick one lesson in it. Listen to that lesson every day for about a week. Most are only around 7 minutes.</p>
+    <p>Even better, make a sandwich: your lesson, any other random lesson, then your lesson again.</p>
+
+    <h3>What you&rsquo;ll hear</h3>
+    <div class="sg-flow">
+      <div class="sg-step"><b>1</b>The phrase in your source language (the one you speak)</div>
+      <div class="sg-step pause">&#8230; pause &#8230;</div>
+      <div class="sg-step"><b>2</b>The phrase in your target language (the one you&rsquo;re learning)</div>
+      <div class="sg-step pause">&#8230; pause &#8230;</div>
+      <div class="sg-step"><b>3</b>The target language again</div>
+      <div class="sg-step pause">&#8230; pause &#8230;</div>
+    </div>
+
+    <h3>Three rules</h3>
+    <div class="sg-rule"><span class="rn">1.</span><b>Guess in the first pause.</b>
+      <p>Say your guess out loud, even the very first time. You may get part of it, or none. Guessing still works your memory and recall.</p></div>
+    <div class="sg-rule"><span class="rn">2.</span><b>Always repeat the target language.</b>
+      <p>Say it every time, however well or badly it comes out. Making the sounds is what helps you memorize.</p></div>
+    <div class="sg-rule"><span class="rn">3.</span><b>One language at a time, for at least a month.</b>
+      <p>Don&rsquo;t jump around.</p></div>
+  </div>
+</div>
+<div class="sg-overlay" id="instructorGuide" role="dialog" aria-modal="true" aria-label="Instructor SOP">
+  <div class="sg-bar">
+    <button type="button" class="sg-back" id="instructorGuideBack" aria-label="Back" title="Back">&#8249;</button>
+    <span class="sg-bar-title">Instructor SOP</span>
+  </div>
+  <div class="sg-scroll">
+<h1 class="doc-title">Standard Operating Procedure</h1>
+        <div class="doc-subtitle">Instructor Guide • Workplace Language Course</div>
+
+        <table class="meta-table">
+          <tr><td>Document Title</td><td>Instructor SOP — Workplace Language Course</td></tr>
+          <tr><td>Purpose</td><td>Provide a consistent weekly format for instructors leading workplace language course sessions.</td></tr>
+          <tr><td>Course Length</td><td>20 lessons • approximately 20 weeks</td></tr>
+        </table>
+
+        <h2>I. The Goal</h2>
+        <p>The Workplace Language Course is <strong>not intended to be a complete ESL course.</strong> It is designed for quick learning of some of the most important language a factory worker needs to know on the job.</p>
+        <p>The website contains several language-learning web apps, each with its own focus. The Workplace Language Course is <strong>primarily designed for Spanish-speaking ESL students.</strong> For the class, the instructor should focus on this workplace-specific course. Many of the other apps support multiple languages, so students whose first language is not Spanish may use them independently on their own device with earbuds, if their language is available.</p>
+        <p>Each week, students listen to the language, have time to recall and say it themselves, ask questions, and then hear it again.</p>
+        <div class="callout">The pauses are an important part of the lesson. Do not interrupt them.</div>
+
+        <h2>II. Weekly Procedure</h2>
+        <h3>1. Review Last Week</h3>
+        <ul>
+          <li>Play last week's lesson once.</li>
+          <li>Students should try to say the target language during the pauses.</li>
+          <li>After the lesson, allow students to ask questions and discuss what they heard.</li>
+          <li>Answer questions and explain anything they don't understand. Keep this informal and conversational. Do not lecture.</li>
+        </ul>
+
+        <h3>2A. This Week's Lesson — Hands-Free Mode</h3>
+        <ul>
+          <li>Play this week's lesson in hands-free mode. The lesson will run at its normal pace and take its normal runtime.</li>
+          <li>Students should try to say the target language during the pauses, even if they aren't sure of the answer.</li>
+          <li>Afterward, allow students to ask questions and discuss the lesson.</li>
+        </ul>
+
+        <h3>2B. This Week's Lesson — Slow Mode / Extended Practice</h3>
+        <ul>
+          <li>If there is additional time, the lesson may be played in slow mode.</li>
+          <li>Slow mode gives the group time after each sentence to discuss, practice, and think about what they heard before continuing.</li>
+          <li>The group can use this as an extended practice activity, moving through the lesson one section at a time.</li>
+          <li>When useful, the lesson can be displayed on a projector or shared screen so the group can follow along together.</li>
+        </ul>
+
+        <h3>3. Hear This Week's Lesson Again</h3>
+        <ul>
+          <li>Play this week's lesson one more time.</li>
+          <li>Students should again try to say the answers during the pauses.</li>
+          <li>Do not stop for explanations afterward. When the lesson is finished, they're done for the week.</li>
+        </ul>
+
+        <h2>III. The Weekly Pattern</h2>
+        <div class="pattern-box">LAST WEEK → DISCUSS → THIS WEEK → DISCUSS → THIS WEEK</div>
+        <p>Keep this pattern consistent from week to week.</p>
+
+        <h2>IV. The Three Pauses</h2>
+        <p>The lessons deliberately give students time to respond.</p>
+        <p>Do not rescue them during the pauses. Encourage students to say the answer out loud, even when they aren't sure.</p>
+        <ul>
+          <li>If they remember it correctly, they reinforce that memory.</li>
+          <li>If they say it incorrectly, hearing the correct answer gives them an opportunity to correct and strengthen the connection.</li>
+          <li>On the first time through a new lesson, they may not be able to answer at all. That's okay. The pause gives them time to think and begin making connections.</li>
+          <li>With repeated exposure, they should increasingly be able to recall and say the language themselves.</li>
+        </ul>
+
+        <h2>V. Why the Pauses Matter</h2>
+        <p>The pauses are not empty time. They are part of the teaching method. They give the brain time to train new connections between what students hear and what they are learning to recall and say.</p>
+        <p>Saying the wrong thing is not a failure. The attempt gets the student thinking about the language, and hearing the correct answer immediately afterward helps connect their attempt with the correct idea and build stronger memories.</p>
+        <p>As students become familiar with a lesson, the first pause — the moment when they anticipate and say the target language themselves — becomes especially important. That act of recalling and producing the language helps train those connections through repeated use.</p>
+        <div class="callout">Do not fill the pauses for them. Give them time to think, recall, and speak.</div>
+
+        <h2>VI. Instructor Responsibilities</h2>
+        <div class="dos-donts">
+          <div class="do-col">
+            <h3>DO</h3>
+            <ul>
+              <li>Keep the weekly routine moving.</li>
+              <li>Protect the pauses.</li>
+              <li>Encourage students to speak, even when uncertain.</li>
+              <li>Answer questions.</li>
+              <li>Explain things when students ask.</li>
+              <li>Let discussion be natural and conversational.</li>
+            </ul>
+          </div>
+          <div class="dont-col">
+            <h3>DON'T</h3>
+            <ul>
+              <li>Interrupt students during the pauses.</li>
+              <li>Give lectures about grammar or vocabulary.</li>
+              <li>Stop the recording to explain every phrase.</li>
+              <li>Require students to get every answer right.</li>
+              <li>Turn the session into a traditional classroom lesson.</li>
+            </ul>
+          </div>
+        </div>
+        <p><strong>Instructor Role:</strong> The recordings provide the instruction. Your job is to give students structure, protect the practice, and help them when they have questions.</p>
+
+        <h2>VII. Practice During the Week</h2>
+        <p>Students are encouraged to practice their current lesson once or twice each day during the week. A lesson takes approximately ten minutes, making regular practice easy to fit into the workday.</p>
+        <p>The site also contains additional language-learning content that is continually being developed and updated. Students are welcome to explore those materials if they wish, but their primary focus should remain on practicing the current workplace lesson.</p>
+
+        <h2>VIII. Course Schedule</h2>
+        <p>The workplace course contains 20 lessons, with one lesson introduced each week. The normal sequence therefore takes approximately 20 weeks (about five months).</p>
+        <p>Students have access to the other materials on the site as well, but the workplace course should be the primary focus of the weekly group sessions.</p>
+
+        <h2>IX. Important — Personal Project</h2>
+        <div class="ip-note">
+          This is Fayne's personal project and intellectual property. The website, web apps, course materials, recordings, and related content are part of that project and are not intended for distribution or use outside this class. Please do not share or distribute access outside the class. The current server capacity is limited, and wider distribution could overwhelm the system.<br><br>
+          Questions or feedback can be given to your instructor and funneled back to <strong>Fayne</strong> through Teams.
+        </div>
+  </div>
+</div>
+<script>
+/* 3-5-12: guide pages (student + instructor) open/close. Self-contained; touches nothing else on the page. */
+(function(){
+  var G = [
+    {hash:'#student-guide',    ov:document.getElementById('studentGuide'),    back:'studentGuideBack',    links:['studentHelpBtn','studentGuideFootLink']},
+    {hash:'#instructor-guide', ov:document.getElementById('instructorGuide'), back:'instructorGuideBack', links:['instructorGuideFootLink']}
+  ].filter(function(g){ return g.ov; });
+  if(!G.length) return;
+  function sync(){
+    var any = false;
+    G.forEach(function(g){
+      var on = (location.hash === g.hash);
+      var was = g.ov.classList.contains('open');
+      g.ov.classList.toggle('open', on);
+      if(on && !was){ var s = g.ov.querySelector('.sg-scroll'); if(s) s.scrollTop = 0; }
+      if(on) any = true;
+    });
+    document.documentElement.style.overflow = any ? 'hidden' : '';
+  }
+  function hideAll(){ G.forEach(function(g){ g.ov.classList.remove('open'); }); document.documentElement.style.overflow = ''; }
+  function openG(g, e){
+    if(e && e.preventDefault) e.preventDefault();
+    if(location.hash !== g.hash){ try{ history.pushState({sg:1}, '', g.hash); }catch(err){} }
+    G.forEach(function(x){ x.ov.classList.toggle('open', x === g); });
+    document.documentElement.style.overflow = 'hidden';
+    var s = g.ov.querySelector('.sg-scroll'); if(s) s.scrollTop = 0;
+  }
+  function closeG(){
+    var onHash = G.some(function(g){ return location.hash === g.hash; });
+    if(onHash){
+      var before = location.href;
+      try{ history.back(); }catch(err){}
+      setTimeout(function(){ if(location.href === before) hideAll(); }, 250);
+    } else hideAll();
+  }
+  window.addEventListener('popstate', sync);
+  window.addEventListener('hashchange', sync);
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && G.some(function(g){ return g.ov.classList.contains('open'); })) closeG(); });
+  G.forEach(function(g){
+    g.links.forEach(function(id){ var el = document.getElementById(id); if(el) el.addEventListener('click', function(e){ openG(g, e); }); });
+    document.getElementById(g.back).addEventListener('click', closeG);
+  });
+  sync();
+})();
+</script>
+<!-- ===================== END GUIDE PAGES ===================== -->
 </body>
 </html>
