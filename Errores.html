@@ -61,7 +61,7 @@ list to copy entries from.
 =====================================================================
 -->
 <!-- build:JysnMlnrMthd -->
-<!-- template_arch_3-5-19 + Errores.product (0 patch(es)) -->
+<!-- template_arch_3-5-20 + Errores.product (0 patch(es)) -->
 <!DOCTYPE html>
 <html lang="en" translate="no" class="notranslate">
 <head>
@@ -1078,7 +1078,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 </style>
 </head>
 <body>
-<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.19</div>
+<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.20</div>
 
 <!-- MEDIA SESSION ANCHOR (2026-09): a silent, looping, ~0.5s audio element
      with no visible UI. Some phones (this was added after reports of
@@ -2157,6 +2157,47 @@ if (window.matchMedia) {
    the session doesn't drop between sentences) and off when the session
    actually ends.
    ============================================================ */
+/* 3-5-20: OLDER iPHONES ONLY (iOS before 16; found on an iPhone SE 1st gen, iOS 13.3.1). Safari there lets speech start only if the FIRST
+   speak() happens directly inside a tap. This app waits (voicesReady, then timers) before its first speak(), so the speech was queued and
+   stayed silent until a later touch released one sentence. Fix: on the very first tap anywhere, speak one SILENT utterance right inside
+   the tap (unlockSpeechInGesture); the Start button also starts the silent anchor inside the tap. Nothing runs on iOS 16+ or on Android/desktop
+   (OLD_IOS is false there), so newer devices behave exactly as before. If the UA cannot be read, OLD_IOS is false.
+   SAFETY STOP: on those phones, if 3 lines in a row never produce any sound, playback pauses and a notice appears instead of retrying forever
+   (a retry storm on a 2 GB phone is the suspected cause of Safari's "A problem repeatedly occurred" page crash). */
+const OLD_IOS = (function(){
+  try{ var m = /\b(?:iPhone|iPad|iPod)\b[^)]*\bOS (\d+)_/.exec(navigator.userAgent); return !!m && parseInt(m[1], 10) < 16; }catch(e){ return false; }
+})();
+let _silentStreak = 0;
+function unlockSpeechInGesture(){
+  try{
+    if(!window.speechSynthesis || typeof SpeechSynthesisUtterance === 'undefined') return;
+    var u = new SpeechSynthesisUtterance('a'); u.volume = 0;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+if(OLD_IOS){
+  var _onFirstTap = function(){
+    unlockSpeechInGesture();
+    document.removeEventListener('touchend', _onFirstTap, true);
+    document.removeEventListener('click', _onFirstTap, true);
+  };
+  document.addEventListener('touchend', _onFirstTap, true);
+  document.addEventListener('click', _onFirstTap, true);
+}
+function stopForNoSound(){
+  try{ if(S.running && !S.paused) document.getElementById('playPauseBtn').click(); }catch(e){}
+  try{
+    var el = document.getElementById('noAudioNotice');
+    if(!el){
+      el = document.createElement('div');
+      el.id = 'noAudioNotice';
+      el.style.cssText = 'background:#f8d7da;color:#58151c;border:1px solid #f1aeb5;border-radius:8px;padding:12px 14px;margin:12px 0;font-size:14px;line-height:1.4;';
+      var card = document.getElementById('drillScreen');
+      if(card) card.prepend(el);
+    }
+    el.innerHTML = "Sound didn't start on this iPhone, so playback was paused. Check the side switch (ring, not silent) and the volume, tap the screen once, then press play.<br>El sonido no comenz\u00F3 en este iPhone y se paus\u00F3. Revisa el interruptor lateral y el volumen, toca la pantalla una vez y presiona reproducir.";
+  }catch(e){}
+}
 /* 3-5-9-2 -- DO NOT CHANGE the anchor track (<audio id="mediaSessionAnchor">, 0.5 s silent loop) or make this code
    depend on it being longer. A 10 s track caused speech to stall for ~20 s and cut lines off (iPhone + Samsung).
    See the warning above the audio element near the top of <body>. Only change it with a NEW, owner-tested
@@ -5160,7 +5201,7 @@ function speak(text, langCode, token, voiceURI, pitch, retryCount){
       }
       finish();
     };
-    u.onstart = ()=>{ started = true; startedAt = Date.now(); S.anyAudioStarted = true; };
+    u.onstart = ()=>{ started = true; startedAt = Date.now(); S.anyAudioStarted = true; _silentStreak = 0; };
     u.onboundary = (e)=>{ if(firstBoundaryIdx===null) firstBoundaryIdx = e.charIndex; };
     u.onend = finishOrRetry;
     u.onerror = (e)=>{ console.warn('[speech] utterance error', {langCode, voiceURI, error: e && e.error}); finish(); };
@@ -5261,6 +5302,7 @@ function speak(text, langCode, token, voiceURI, pitch, retryCount){
         console.warn('[speech] watchdog: utterance never finished, cancelling', {langCode, voiceURI, started});
         speechSynthesis.cancel();
         finish();
+        if(OLD_IOS && !started){ _silentStreak++; if(_silentStreak >= 3){ _silentStreak = 0; stopForNoSound(); } }   // 3-5-20 safety stop
       }, ms);
     };
     scheduleCeiling(Math.min(15000, estimateMs(text)*3 + 4000));
@@ -5577,6 +5619,7 @@ function checkAudioActuallyPlaying(){
 }
 document.getElementById('startBtn').addEventListener('click', async ()=>{
   if(S.activeLines.length===0){ alert('No lines available for that language combination.'); return; }
+  if(OLD_IOS){ unlockSpeechInGesture(); anchorAudioStart(); }   // 3-5-20: inside the tap, before any waiting (older iPhones only)
   await voicesReady();
   document.querySelectorAll('.setup-card').forEach(c=>c.classList.add('hidden'));
   show('drillScreen');
