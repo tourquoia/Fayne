@@ -102,7 +102,7 @@ RULES FOR ANYONE (OR ANY CLAUDE) EDITING OR REPLACING THIS TEMPLATE:
 =====================================================================
 -->
 <!-- build:JysnMlnrMthd -->
-<!-- template_arch_3-5-15 + LeeJonas.product (0 patch(es)) -->
+<!-- template_arch_3-5-18 + LeeJonas.product (0 patch(es)) -->
 <!DOCTYPE html>
 <html lang="en" translate="no" class="notranslate">
 <head>
@@ -3924,9 +3924,21 @@ function preferExactNamesFirst(list, profile){
    renderCharacterCards() -> pitch code immediately, and a const declared
    later in the script would still be uninitialized ("Cannot access
    'PITCH_MID' before initialization"), aborting the whole script. */
+/* 3-5-17: a startup crash on iPhone/Safari (voices load synchronously there) came from PITCH_LEVELS and VARIANT_CODE being
+   declared AFTER the first loadVoices() call. Keep every const that renderCharacterCards() touches up here. */
 const PITCH_MID = 1.00;
-const PITCH_MALE_COLLISION = 0.90;
-const PITCH_FEMALE_COLLISION = 1.10;
+const PITCH_MALE_COLLISION = 0.95;   /* 3-5-17: subtler nudge (was 0.90) */
+const PITCH_FEMALE_COLLISION = 1.05; /* 3-5-17: subtler nudge (was 1.10) */
+const PITCH_LEVELS = [
+  {value:1.30, label:'High'},
+  {value:1.20, label:'▲▲'},
+  {value:1.10, label:'▲'},
+  {value:1.00, label:'Mid'},
+  {value:0.90, label:'▼'},
+  {value:0.80, label:'▼▼'},
+  {value:0.70, label:'Low'},
+];
+const VARIANT_CODE = '__variant';
 
 /* ============================================================
    v3.3 NEW VOICES (added on top of the 3.2 voice system, which is
@@ -4157,7 +4169,8 @@ function laoToThai(text){
   const TONE = '[່້໊໋]?';
   let t = String(text);
   // 1. Lao "ia" written with the bare semivowel (ຢ້ຽມ) moves its e-vowel in front, Thai style
-  t = t.replace(new RegExp('(?<!ເ)('+CL+')('+TONE+')ຽ','g'), 'ເ$1\uE000$2ຽ');
+  /* 3-5-17-1: no regex lookbehind (Safari/iOS before 16.4 cannot parse it). Optional-prefix capture + callback instead. */
+  t = t.replace(new RegExp('(ເ?)('+CL+')('+TONE+')ຽ','g'), (m, pre, c, tone) => pre ? m : 'ເ'+c+'\uE000'+tone+'ຽ');
   // 2. e + consonant + ia (ເມຍ, ເຮຽນ): Thai needs the long-i mark
   t = t.replace(new RegExp('(ເ'+CL+')('+TONE+')ຽ','g'), '$1\uE000$2ຽ');
   t = t.replace(new RegExp('(ເ'+CL+')('+TONE+')ຍ(?![ະາຳິີຶື])','g'), '$1\uE000$2ຍ');
@@ -4172,7 +4185,8 @@ function laoToThai(text){
   t = t.replace(/เ([ก-ฮ]ล?)ี([\u0E48-\u0E4B]?)(?![ก-ฮ\u0E48-\u0E4B])/g, 'เ$1$2อ');
   // 6. Thai writes long "ue" with a trailing อ (คือ, ชื่อ, มื้อ); Lao often drops it
   // (only when there is no leading เ: เ-ือ syllables already carry their own อ)
-  t = t.replace(/(?<!เ[ก-ฮ]ล?)ื([\u0E48-\u0E4B]?)(?![\u0E48-\u0E4B])/g, 'ื$1อ');
+  /* 3-5-17-1: was a regex LITERAL with lookbehind, which stops the WHOLE script from loading on Safari/iOS before 16.4. */
+  t = t.replace(/(เ[ก-ฮ]ล?)?ื([\u0E48-\u0E4B]?)(?![\u0E48-\u0E4B])/g, (m, pre, tone) => pre ? m : 'ื'+tone+'อ');
   // 7. the Thai "ia" vowel placeholder set in steps 1-2
   return t.replace(/\uE000/g, 'ี');
 }
@@ -4546,7 +4560,7 @@ function renderCharacterCards(){
    (exactly the old behaviour). If a voice is picked for it, every variant line (not the main-form line) is spoken
    with that voice -- e.g. a narrator or a more neutral voice. All voices also sets it.
    ============================================================ */
-const VARIANT_CODE = '__variant';
+/* 3-5-17: VARIANT_CODE is declared up near PITCH_MID (must exist before the first loadVoices() call). */
 function renderAllVoices(){
   const course = currentCourse();
   const row = document.getElementById('allVoicesRow');
@@ -4973,15 +4987,7 @@ function pickVoiceByURI(uri){
 // Seven-step pitch dropdown, replacing the old free-drag slider: Low sits
 // at the bottom of the opened list, Mid (the default/neutral pitch) in the
 // middle, High at the top — the rest are unlabeled step marks between them.
-const PITCH_LEVELS = [
-  {value:1.30, label:'High'},
-  {value:1.20, label:'▲▲'},
-  {value:1.10, label:'▲'},
-  {value:1.00, label:'Mid'},
-  {value:0.90, label:'▼'},
-  {value:0.80, label:'▼▼'},
-  {value:0.70, label:'Low'},
-];
+/* 3-5-17: PITCH_LEVELS is declared up near PITCH_MID (must exist before the first loadVoices() call). */
 function nearestPitchLevel(v){
   let best = PITCH_LEVELS[3].value, bestDiff = Infinity;
   PITCH_LEVELS.forEach(p=>{
@@ -6041,7 +6047,7 @@ document.addEventListener('keydown', e=>{
                             forms (v1 = other binary form, v2 = neutral). Plays main form, then each variant, saying
                             Masculine / Feminine / Neutral (or the source language's words, GENDER_LABEL_DEFAULTS /
                             course.genderLabels) before each. The spreadsheet loader fills these from the Excel template's
-                            "(Variant 1)", "(Variant 2)" and "Main Form" columns. Older fem/latn/latnFem data still works.
+                            "<Language> Variant", "<Language> Variant 2" and "Main Form" columns (plus "<Language> Latin" and its Variant columns). Older fem/latn/latnFem data still works.
    ============================================================ */
 function applyCourseFlags(course){
   const byId = id => document.getElementById(id);
@@ -6460,7 +6466,7 @@ function uiTranslate(text, lang){
     for(const e of UI_RX[lang]){
       const m = norm.match(e.rx);
       if(m){ const isVoiceNote = /voice installed/.test(e.en);
-      out = e.tr.replace(/\{(\d)\}/g, (_, k) => { const v = m[e.order.indexOf(+k) + 1] ?? ''; return isVoiceNote ? uiLabelText(v, lang) : v; }); break; }
+      out = e.tr.replace(/\{(\d)\}/g, (_, k) => { const v = (m[e.order.indexOf(+k) + 1] == null ? '' : m[e.order.indexOf(+k) + 1]); /* 3-5-18: was a nullish-coalescing operator, a syntax error on iOS before 13.4 that stopped the whole script */ return isVoiceNote ? uiLabelText(v, lang) : v; }); break; }
     }
   }
   return out === undefined ? text : lead + out + trail;
