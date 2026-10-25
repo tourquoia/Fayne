@@ -20,7 +20,7 @@ you at runtime.
 =====================================================================
 -->
 <!-- build:JysnMlnrMthd -->
-<!-- template_arch_3-5-18 + smalltalk.product (0 patch(es)) -->
+<!-- template_arch_3-5-19 + smalltalk.product (0 patch(es)) -->
 <!DOCTYPE html>
 <html lang="en" translate="no" class="notranslate">
 <head>
@@ -1029,9 +1029,15 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   body.ml-mode header.topbar{ display:none; }
   body.ml-mode .source-line{ font-size:13px; font-style:italic; color:var(--ink-dim); order:2; }
   body.ml-mode .target-line{ order:1; }
+  /* 3-5-19: PERMANENT VERSION LABEL, bottom-right of every player. The build replaces the token inside it with the template's
+     version (template_arch_3-5-19.html -> 3.5.19), so it can never go stale. Click-through, small, theme-aware. Do not remove. */
+  #appVersionBadge{ position:fixed; right:6px; bottom:4px; right:calc(6px + env(safe-area-inset-right, 0px)); bottom:calc(4px + env(safe-area-inset-bottom, 0px));
+    z-index:40; font:11px/1 'Source Code Pro', ui-monospace, Menlo, monospace; color:var(--ink-dim, #888); opacity:.9; text-shadow:0 0 3px var(--bg, #fff);
+    pointer-events:none; user-select:none; -webkit-user-select:none; }
 </style>
 </head>
 <body>
+<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.19</div>
 
 <!-- MEDIA SESSION ANCHOR (2026-09): a silent, looping, ~0.5s audio element
      with no visible UI. Some phones (this was added after reports of
@@ -2057,11 +2063,20 @@ document.getElementById('themeToggleBtn').addEventListener('click', function(){
   try { localStorage.setItem('themeMode', next); } catch(e){}
 });
 if (window.matchMedia) {
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e){
-    var hasExplicitChoice = false;
-    try { hasExplicitChoice = !!localStorage.getItem('themeMode'); } catch(err){}
-    if (!hasExplicitChoice) document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
-  });
+  /* 3-5-19: Safari/iOS before 14 has no addEventListener on a MediaQueryList (only the old addListener); calling it threw at startup and
+     stopped the rest of this script, so on those iPhones the page showed but nothing worked. Newer browsers still take the first branch. */
+  (function(){
+    var mq = window.matchMedia('(prefers-color-scheme: dark)');
+    var onSchemeChange = function(e){
+      var hasExplicitChoice = false;
+      try { hasExplicitChoice = !!localStorage.getItem('themeMode'); } catch(err){}
+      if (!hasExplicitChoice) document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+    };
+    try {
+      if (mq.addEventListener) mq.addEventListener('change', onSchemeChange);
+      else if (mq.addListener) mq.addListener(onSchemeChange);
+    } catch(err){}
+  })();
 }
 
 /* ============================================================
