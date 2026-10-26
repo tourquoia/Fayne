@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Screen-off test</title>
+<style>
+ body{margin:0;padding:10px;background:#fff;color:#000;font:15px/1.35 -apple-system,Helvetica,Arial,sans-serif}
+ h1{font-size:18px;margin:0 0 6px}
+ label{display:block;margin:6px 0;font-size:16px}
+ input[type=checkbox]{width:20px;height:20px;vertical-align:middle;margin-right:8px}
+ button{font-size:18px;padding:10px 16px;margin:6px 6px 6px 0}
+ pre{white-space:pre-wrap;word-break:break-word;font:13px/1.3 ui-monospace,Menlo,monospace;background:#f2f2f2;padding:8px;border-radius:6px;margin:6px 0}
+ #verdict{font-size:20px;font-weight:700;padding:8px;border-radius:6px;background:#ffe9a8}
+</style></head><body>
+<h1>Screen-off test</h1>
+<label><input type="checkbox" id="kaTick" checked>Keep screen on</label>
+<label><input type="checkbox" id="bgTick" checked>Keep playing when screen is off</label>
+<label>Anchor strategy: <select id="strat" style="font-size:16px"><option value="A">A: none (as before)</option><option value="B">B: restart anchor when screen locks</option><option value="C">C: restart anchor whenever the phone pauses it</option><option value="E">E: tell iOS this page is media playback (audioSession)</option><option value="F">F: anchor only, NO speech</option><option value="G">G: anchor + audible quiet tone, NO speech</option></select></label>
+<button id="go">Start test</button><button id="stop">Stop</button>
+<div id="verdict">Press Start, then lock the screen for about 30 seconds, then unlock.</div>
+<pre id="dev"></pre>
+<pre id="live"></pre>
+<pre id="last"></pre>
+<pre id="events"></pre>
+<audio id="tone" loop preload="auto" style="display:none"></audio>
+<audio id="anchor" loop preload="auto" style="display:none" src="data:audio/wav;base64,UklGRsQPAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YaAPAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA"></audio>
+<script>
+const $ = id => document.getElementById(id);
+const T0 = Date.now();
+const ts = () => ((Date.now()-T0)/1000).toFixed(1)+'s';
+const events = [];
+function ev(m){ events.push(ts()+' '+m); if(events.length>40) events.shift(); render(); }
+
+let running=false, line=0, beats=0, beatsHidden=0, lastBeat=Date.now(), speechEnds=0, speechEndsHidden=0, speechStarts=0, speechErrors=0;
+function makeToneUrl(){ const sr=8000, n=sr; const buf=new ArrayBuffer(44+n*2), v=new DataView(buf); const w=(o,t)=>{ for(let i=0;i<t.length;i++) v.setUint8(o+i,t.charCodeAt(i)); }; w(0,'RIFF'); v.setUint32(4,36+n*2,true); w(8,'WAVE'); w(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true); v.setUint32(24,sr,true); v.setUint32(28,sr*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true); w(36,'data'); v.setUint32(40,n*2,true); for(let i=0;i<n;i++) v.setInt16(44+i*2,Math.round(Math.sin(2*Math.PI*220*i/sr)*3000),true); return URL.createObjectURL(new Blob([buf],{type:'audio/wav'})); }
+let rearms=0, lastRearm=0, speakAt=0, startedAt=0, stallFlag=false;
+function rearm(why){ const t=Date.now(); if(t-lastRearm<300) return; lastRearm=t; const a=$('anchor'); a.play().then(()=>{ rearms++; ev('re-armed anchor ('+why+') ok'); }).catch(e=>ev('re-arm ('+why+') refused: '+(e&&e.name))); }
+let wake=null, wakeNote='not requested', hide=null, lastReport='No screen-off recorded yet.', speakTimer=null, curVoice='n/a';
+
+function device(){
+  const ua=navigator.userAgent, m=/\bOS (\d+)[_.](\d+)(?:[_.](\d+))?/.exec(ua);
+  let sa=false; try{ sa=!!(navigator.standalone||matchMedia('(display-mode: standalone)').matches);}catch(e){}
+  const inapp=(/(FBAN|FBAV|Instagram|Line\/|MicroMessenger|GSA\/|CriOS|FxiOS|EdgiOS)/.exec(ua)||[])[1]||'no';
+  return 'iOS '+(m?m[1]+'.'+m[2]+(m[3]?'.'+m[3]:''):'n/a')+' | Safari '+((/Version\/([\d.]+)/.exec(ua)||[])[1]||'n/a')+
+   '\nhome-screen app: '+sa+' | other browser/in-app: '+inapp+
+   '\nscreen '+screen.width+'x'+screen.height+' @'+devicePixelRatio+' | cores '+(navigator.hardwareConcurrency||'n/a')+
+   '\nwakeLock API: '+('wakeLock' in navigator)+' | secure: '+isSecureContext+' | mediaSession: '+('mediaSession' in navigator)+
+   '\naudioSession API: '+('audioSession' in navigator?('yes, type='+navigator.audioSession.type):'no')+'\nvoice: '+curVoice;
+}
+function state(){
+  const a=$('anchor'); let sp='n/a'; try{ sp='speaking='+speechSynthesis.speaking+' paused='+speechSynthesis.paused+' pending='+speechSynthesis.pending; }catch(e){}
+  let ps='n/a'; try{ ps=navigator.mediaSession.playbackState; }catch(e){}
+  return {anchorPaused:a.paused, speech:sp, session:ps, wake:wake?'held':wakeNote};
+}
+function render(){
+  const s=state();
+  $('dev').textContent='DEVICE\n'+device();
+  $('live').textContent='NOW ('+ts()+')\nrunning: '+running+' | line: '+line+' | visible: '+document.visibilityState+
+   '\nheartbeats: '+beats+' (while hidden: '+beatsHidden+')'+
+   '\nspeech started: '+speechStarts+' | ended: '+speechEnds+' (ended while hidden: '+speechEndsHidden+') | errors: '+speechErrors+
+   '\nanchor paused: '+s.anchorPaused+' | speech: '+s.speech+'\nmediaSession: '+s.session+' | wake lock: '+s.wake+
+   '\nticks: keep-screen-on='+$('kaTick').checked+' keep-playing='+$('bgTick').checked;
+  $('last').textContent='LAST SCREEN-OFF\n'+lastReport;
+  $('events').textContent='EVENTS\n'+events.join('\n');
+}
+async function getWake(){
+  if(!$('kaTick').checked||wake) return;
+  if(!('wakeLock' in navigator)){ wakeNote='API missing'; return; }
+  try{ wake=await navigator.wakeLock.request('screen'); wakeNote='held'; wake.addEventListener('release',()=>{ wake=null; wakeNote='released'; ev('wake lock released'); }); ev('wake lock granted'); }
+  catch(e){ wake=null; wakeNote='refused: '+(e&&e.name); ev('wake lock refused: '+(e&&e.name)); }
+}
+function pickVoice(){
+  try{ const v=speechSynthesis.getVoices().filter(x=>/^en/i.test(x.lang)); const p=v.find(x=>x.default&&/^en/i.test(x.lang))||v[0]; if(p){ curVoice=p.name+' ('+p.lang+', '+(p.localService?'on-device':'network')+')'; return p; } }catch(e){}
+  return null;
+}
+function speakNext(){
+  if(!running) return;
+  line++; speakAt=Date.now(); startedAt=0; stallFlag=false;
+  const u=new SpeechSynthesisUtterance('Line '+line+'. This is a test sentence for the screen off check.');
+  const v=pickVoice(); if(v){ u.voice=v; u.lang=v.lang; } else u.lang='en-US';
+  u.onstart=()=>{ speechStarts++; startedAt=Date.now(); };
+  u.onend=()=>{ speechEnds++; if(document.visibilityState==='hidden') speechEndsHidden++; clearTimeout(speakTimer); speakTimer=setTimeout(speakNext,400); };
+  u.onerror=e=>{ speechErrors++; ev('speech error: '+(e&&e.error)); clearTimeout(speakTimer); speakTimer=setTimeout(speakNext,1500); };
+  try{ speechSynthesis.speak(u); }catch(e){ ev('speak threw: '+e.message); }
+}
+function start(){
+  if(running) return; running=true; line=0;
+  if($('strat').value==='E'){ if('audioSession' in navigator){ try{ navigator.audioSession.type='playback'; ev('audioSession.type='+navigator.audioSession.type); }catch(e){ ev('audioSession set failed: '+e.message); } } else ev('audioSession API missing on this phone'); }
+  const a=$('anchor'); a.volume=0.01; a.play().then(()=>ev('anchor playing')).catch(e=>ev('anchor refused: '+(e&&e.name)));
+  try{ navigator.mediaSession.playbackState='playing'; }catch(e){}
+  getWake(); try{ speechSynthesis.cancel(); }catch(e){}
+  if($('strat').value==='G'){ const t=$('tone'); t.src=makeToneUrl(); t.volume=0.5; t.play().then(()=>ev('tone playing')).catch(e=>ev('tone refused: '+(e&&e.name))); }
+  if($('strat').value==='F'||$('strat').value==='G') ev('no speech in this strategy'); else setTimeout(speakNext,400); ev('started (strategy '+$('strat').value+')');
+  $('verdict').textContent='Running. Lock the screen for about 30 seconds, then unlock.';
+}
+function stop(){
+  running=false; clearTimeout(speakTimer);
+  try{ speechSynthesis.cancel(); }catch(e){} try{ $('anchor').pause(); }catch(e){} try{ $('tone').pause(); }catch(e){}
+  if(wake){ try{ wake.release(); }catch(e){} } ev('stopped');
+}
+$('go').onclick=start; $('stop').onclick=stop;
+$('kaTick').onchange=()=>{ if($('kaTick').checked) getWake(); else if(wake){ try{wake.release();}catch(e){} } };
+['play','pause','ended','stalled','waiting'].forEach(n=>$('tone').addEventListener(n,()=>ev('tone '+n)));
+['play','pause','ended','stalled','waiting'].forEach(n=>$('anchor').addEventListener(n,()=>{ ev('anchor '+n+(n==='pause'?' (speech speaking='+(function(){try{return speechSynthesis.speaking}catch(e){return 'n/a'}})()+')':'')); if(n==='pause' && running && $('strat').value==='C') rearm('OS paused it'); }));
+['pagehide','pageshow','freeze','resume'].forEach(n=>{ window.addEventListener(n,()=>ev('page '+n)); document.addEventListener(n,()=>ev('doc '+n)); });
+
+setInterval(()=>{ if(!running||document.visibilityState!=='visible'||!speakAt||stallFlag) return; const n=Date.now(); let why=''; if(!startedAt && n-speakAt>5000) why='never started'; else if(startedAt && n-startedAt>20000) why='started but never ended'; if(why){ stallFlag=true; ev('SPEECH STALLED: '+why+' (line '+line+')'); $('verdict').textContent='SPEECH STALLED with the screen on: '+why+' (line '+line+'), strategy '+$('strat').value; } },1000);
+setInterval(()=>{ beats++; lastBeat=Date.now(); if(document.visibilityState==='hidden') beatsHidden++; if(document.visibilityState==='visible') render(); },1000);
+
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden'){
+    ev('HIDDEN');
+    if(!running){ hide=null; return; }
+    hide={t:Date.now(), beatsHidden0:beatsHidden, ends0:speechEnds, endsHidden0:speechEndsHidden, line0:line, s:state()};
+    ev('at lock: anchor paused='+$('anchor').paused+' tone paused='+$('tone').paused);
+    if($('bgTick').checked && $('strat').value!=='A'){ rearm('screen locked'); setTimeout(()=>ev('1 s after lock: anchor paused='+$('anchor').paused),1000); }
+    if(!$('bgTick').checked){ ev('keep-playing is OFF -> pausing'); stop(); hide.pausedByTick=true; }
+  } else {
+    ev('VISIBLE (anchor paused='+$('anchor').paused+' tone paused='+$('tone').paused+')');
+    getWake();
+    if(hide){
+      const h=hide; hide=null; const ms=Date.now()-h.t, exp=Math.floor(ms/1000), bh=beatsHidden-h.beatsHidden0, eh=speechEnds-h.ends0, now=state();
+      let v;
+      if(h.pausedByTick) v='PAUSED BY THE TICK BOX (keep-playing was off)';
+      else if(ms<6000) v='TOO SHORT TO TELL (under 6 s)';
+      else if(bh>=Math.max(2,exp*0.5)||eh>=2) v='KEPT RUNNING in the background';
+      else v='FROZEN by the phone';
+      $('verdict').textContent='Screen was off '+Math.round(ms/1000)+' s: '+v;
+      lastReport='off for '+Math.round(ms/1000)+' s -> '+v+
+       '\nheartbeats while off: '+bh+' of ~'+exp+' expected'+
+       '\nsentences finished while off: '+eh+' (line '+h.line0+' -> '+line+')'+
+       '\nat lock:   anchor paused='+h.s.anchorPaused+' | '+h.s.speech+' | session='+h.s.session+' | wake='+h.s.wake+
+       '\non return: anchor paused='+now.anchorPaused+' | '+now.speech+' | session='+now.session+' | wake='+now.wake+
+       '\nticks at lock: keep-screen-on='+$('kaTick').checked+' keep-playing='+$('bgTick').checked+'\nanchor strategy: '+$('strat').value+' | re-arms so far: '+rearms;
+    }
+    render();
+  }
+});
+try{ speechSynthesis.onvoiceschanged=pickVoice; pickVoice(); }catch(e){}
+try{ const sv=localStorage.getItem('strat'); if(sv) $('strat').value=sv; }catch(e){}
+$('strat').onchange=()=>{ try{ localStorage.setItem('strat',$('strat').value); }catch(e){} location.reload(); };
+render();
+</script></body></html>
