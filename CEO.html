@@ -123,7 +123,7 @@ RULES FOR ANYONE (OR ANY CLAUDE) EDITING OR REPLACING THIS TEMPLATE:
 =====================================================================
 -->
 <!-- build:JysnMlnrMthd -->
-<!-- template_arch_3-5-27 + CEO.product (0 patch(es)) -->
+<!-- template_arch_3-5-28 + CEO.product (0 patch(es)) -->
 <!DOCTYPE html>
 <html lang="en" translate="no" class="notranslate">
 <head>
@@ -1176,7 +1176,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 </style>
 </head>
 <body>
-<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.27</div>
+<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.28</div>
 <script>/* 3-5-26-1: if the build never ran on this file, the version token is still in the label -> say so in red instead of showing the raw token. (Token is split here so the build does not rewrite it.) */
 (function(){ try{ var b=document.getElementById('appVersionBadge'); if(b && b.textContent.indexOf('__APP_'+'VERSION__')>-1){ b.textContent='UNBUILT COPY - no product file'; b.style.color='#d92d20'; b.style.fontWeight='800'; b.style.textShadow='none'; } }catch(e){} })();
 </script>
@@ -1272,6 +1272,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
   <!-- ===================== DRILL SCREEN ===================== -->
   <section id="drillScreen" class="drill-wrap hidden">
+    <!-- 3-5-28: iPhone/iPad sound hint. Static UI only; touches no playback or anchor-audio code. Hidden on non-Apple devices (see script near the guide pages). -->
+    <div id="noSoundBar" class="hidden" style="display:none;">
+      <div id="noSoundHint" role="note"><span id="noSoundHintText"></span> <a href="#sound-help" id="noSoundMoreLink"></a><button type="button" id="noSoundClose" aria-label="Close">&times;</button></div>
+      <div id="noSoundLinkRow"><a href="#sound-help" id="soundHelpLink"></a></div>
+    </div>
     <!-- Line-progress bar — moved right above the stage card (2026-09):
          previously sat below Advanced, out of the way; now it's one of
          the first things visible, with its "Line X of Y" label sitting
@@ -7428,6 +7433,27 @@ function uiRefresh(force){
       <p>Don&rsquo;t jump around.</p></div>
   </div>
 </div>
+<style>
+  /* 3-5-28: iPhone sound hint + help page */
+  #noSoundBar{ margin:0 0 8px; text-align:center; }
+  #noSoundHint{ position:relative; display:block; background:var(--card); border:1.5px solid var(--border-soft); border-radius:10px; padding:7px 30px 7px 10px; font-size:13px; line-height:1.35; color:var(--ink-soft); text-align:left; transition:opacity .6s ease, max-height .6s ease, margin .6s ease, padding .6s ease; max-height:120px; overflow:hidden; }
+  #noSoundHint a, #soundHelpLink{ color:var(--ink-soft); text-decoration:underline; font-weight:700; }
+  #noSoundClose{ position:absolute; top:3px; right:4px; width:24px; height:24px; border:0; background:transparent; color:var(--ink-soft); font-size:18px; line-height:1; cursor:pointer; }
+  #noSoundHint.gone{ opacity:0; max-height:0; padding-top:0; padding-bottom:0; border-width:0; pointer-events:none; }
+  #noSoundLinkRow{ font-size:12.5px; line-height:1.6; }
+  #soundHelpBody .sg-step{ align-items:flex-start; }
+  #soundHelpBody .sg-step > b{ margin-top:1px; }
+  #soundHelpBody .sg-step > span{ flex:1; min-width:0; line-height:1.4; }
+  #soundHelpBody .sg-step strong{ display:block; font-weight:800; margin-bottom:2px; }
+  #noSoundLinkRow a{ color:var(--ink-soft); text-decoration:underline; font-weight:600; }
+</style>
+<div class="sg-overlay" id="soundHelp" role="dialog" aria-modal="true" aria-label="No sound">
+  <div class="sg-bar">
+    <button type="button" class="sg-back" id="soundHelpBack" aria-label="Back" title="Back">&#8249;</button>
+    <span class="sg-bar-title" id="soundHelpTitle"></span>
+  </div>
+  <div class="sg-scroll" id="soundHelpBody"></div>
+</div>
 <div class="sg-overlay" id="instructorGuide" role="dialog" aria-modal="true" aria-label="Instructor SOP">
   <div class="sg-bar">
     <button type="button" class="sg-back" id="instructorGuideBack" aria-label="Back" title="Back">&#8249;</button>
@@ -7546,13 +7572,14 @@ function uiRefresh(force){
 (function(){
   var G = [
     {hash:'#student-guide',    ov:document.getElementById('studentGuide'),    back:'studentGuideBack',    links:['studentHelpBtn','studentGuideFootLink']},
-    {hash:'#instructor-guide', ov:document.getElementById('instructorGuide'), back:'instructorGuideBack', links:['instructorGuideFootLink']}
+    {hash:'#instructor-guide', ov:document.getElementById('instructorGuide'), back:'instructorGuideBack', links:['instructorGuideFootLink']},
+    {hash:'#sound-help',       ov:document.getElementById('soundHelp'),       back:'soundHelpBack',       links:['soundHelpLink','noSoundMoreLink']}
   ].filter(function(g){ return g.ov; });
   if(!G.length) return;
   /* 3-5-13: the student guide text is translated by the interface-language table (UI_TABLE, rows added in 3-5-13);
      it follows the source language the learner picked, English before any pick. Arabic reads right-to-left. */
   function dirFix(g){
-    if(g.ov.id !== 'studentGuide') return;
+    if(g.ov.id !== 'studentGuide' && g.ov.id !== 'soundHelp') return;
     var s = g.ov.querySelector('.sg-scroll');
     if(s) s.setAttribute('dir', document.documentElement.lang === 'ar' ? 'rtl' : 'ltr');
   }
@@ -7596,6 +7623,80 @@ function uiRefresh(force){
 })();
 </script>
 <!-- ===================== END GUIDE PAGES ===================== -->
+<script>
+/* 3-5-28: iPhone/iPad "no sound?" hint. Static UI only: it never calls speak/cancel, never touches the silent anchor track or
+   any playback code; it only READS S.running / S.paused. Shown on Apple touch devices only (the ringer switch does not exist on
+   Android). Short hint at the top of the drill screen fades after ~20 s of actual playback or when closed (and returns each time
+   Start is pressed); a small permanent "No sound?" link under it opens a troubleshooting page. Text follows the source language
+   (UI.lang) for the languages below; any other language shows English. */
+(function(){
+  var isApple = false;
+  try{ isApple = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }catch(e){}
+  try{ if(/[?&]soundhint=1(&|$)/.test(location.search)) isApple = true; }catch(e){}   /* TEST ONLY: add ?soundhint=1 to the page address to see the hint on any device */
+  var bar = document.getElementById('noSoundBar');
+  if(!bar) return;
+  if(!isApple) return;                       // stays display:none everywhere else
+  bar.style.display = ''; bar.classList.remove('hidden');
+  var T = {
+    en:{hint:'No sound? Turn your ringer ON (no orange showing), turn the volume up, and check earbuds you are not wearing.', more:'More help', link:'No sound?', title:'No sound?',
+        intro:'On iPhone, speech can be muted even when music and videos play. Check these in order:',
+        steps:['<b>Ringer switch.</b> Flip the side switch so no orange shows (or set the Action button away from Silent).','<b>Volume.</b> Press volume up on the side of the phone.','<b>Earbuds and Bluetooth.</b> If earbuds, a speaker, or a car are connected, the sound may be going there. Put them in, turn them off, or disconnect them.','<b>Pick a voice.</b> Open Advanced / voices, press &ldquo;Try&rdquo; next to each voice list. If it says &ldquo;choose a voice&rdquo; or stays silent, pick a voice.','<b>Download a better voice.</b> Settings &rarr; Accessibility &rarr; Spoken Content &rarr; Voices, download an Enhanced voice for your language, then reload this page.','<b>Try the other browser.</b> If you are in Chrome, try Safari (or the reverse).','<b>Close other audio apps</b> (calls, video, music), then reload this page.'],
+        end:'Still nothing? Tell your instructor which phone and iOS version you have.'},
+    es:{hint:'¿No oyes nada? Activa el timbre (que no se vea naranja), sube el volumen y revisa si hay audífonos puestos o conectados que no llevas.', more:'Más ayuda', link:'¿Sin sonido?', title:'¿Sin sonido?',
+        intro:'En iPhone, la voz puede quedar en silencio aunque la música y los videos sí suenen. Revisa en este orden:',
+        steps:['<b>Interruptor del timbre.</b> Mueve el interruptor lateral para que no se vea naranja (o cambia el botón de acción para que no esté en Silencio).','<b>Volumen.</b> Sube el volumen con el botón lateral del teléfono.','<b>Audífonos y Bluetooth.</b> Si hay audífonos, una bocina o un auto conectados, el sonido puede estar saliendo por ahí. Póntelos, apágalos o desconéctalos.','<b>Elige una voz.</b> Abre Avanzado / voces y pulsa &ldquo;Probar&rdquo; junto a cada lista de voces. Si dice &ldquo;elige una voz&rdquo; o no suena, elige una voz.','<b>Descarga una voz mejor.</b> Ajustes &rarr; Accesibilidad &rarr; Contenido leído &rarr; Voces, descarga una voz mejorada de tu idioma y vuelve a cargar esta página.','<b>Prueba el otro navegador.</b> Si usas Chrome, prueba Safari (o al revés).','<b>Cierra otras apps de audio</b> (llamadas, video, música) y vuelve a cargar esta página.'],
+        end:'¿Sigue sin sonar? Dile a tu instructor qué teléfono y qué versión de iOS tienes.'},
+    pt:{hint:'Sem som? Ative o toque (sem laranja aparecendo), aumente o volume e veja se há fones conectados que você não está usando.', more:'Mais ajuda', link:'Sem som?', title:'Sem som?',
+        intro:'No iPhone, a voz pode ficar muda mesmo quando música e vídeos tocam. Verifique nesta ordem:',
+        steps:['<b>Chave do toque.</b> Mova a chave lateral para que não apareça laranja (ou tire o botão de ação do modo Silencioso).','<b>Volume.</b> Aumente o volume pelo botão lateral.','<b>Fones e Bluetooth.</b> Se houver fones, caixa de som ou carro conectados, o som pode estar indo para lá. Coloque-os, desligue ou desconecte.','<b>Escolha uma voz.</b> Abra Avançado / vozes e toque em &ldquo;Testar&rdquo; ao lado de cada lista. Se disser &ldquo;escolha uma voz&rdquo; ou ficar mudo, escolha uma voz.','<b>Baixe uma voz melhor.</b> Ajustes &rarr; Acessibilidade &rarr; Conteúdo Falado &rarr; Vozes, baixe uma voz Aprimorada do seu idioma e recarregue a página.','<b>Tente o outro navegador.</b> Se estiver no Chrome, tente o Safari (ou o contrário).','<b>Feche outros apps de áudio</b> (chamadas, vídeo, música) e recarregue a página.'],
+        end:'Ainda sem som? Diga ao seu instrutor qual é o celular e a versão do iOS.'},
+    fr:{hint:'Pas de son ? Activez la sonnerie (sans orange visible), montez le volume et vérifiez les écouteurs connectés que vous ne portez pas.', more:"Plus d'aide", link:'Pas de son ?', title:'Pas de son ?',
+        intro:"Sur iPhone, la voix peut être coupée même si la musique et les vidéos fonctionnent. Vérifiez dans cet ordre :",
+        steps:['<b>Interrupteur de sonnerie.</b> Poussez l\'interrupteur latéral pour que l\'orange ne soit plus visible (ou réglez le bouton Action hors du mode Silence).','<b>Volume.</b> Montez le volume avec le bouton latéral.','<b>Écouteurs et Bluetooth.</b> Si des écouteurs, une enceinte ou une voiture sont connectés, le son peut y aller. Mettez-les, éteignez-les ou déconnectez-les.','<b>Choisissez une voix.</b> Ouvrez Avancé / voix et appuyez sur &laquo;&nbsp;Essayer&nbsp;&raquo; à côté de chaque liste. Si c\'est écrit &laquo;&nbsp;choisis une voix&nbsp;&raquo; ou silencieux, choisissez une voix.','<b>Téléchargez une meilleure voix.</b> Réglages &rarr; Accessibilité &rarr; Contenu énoncé &rarr; Voix, téléchargez une voix améliorée puis rechargez la page.','<b>Essayez l\'autre navigateur.</b> Si vous êtes dans Chrome, essayez Safari (ou l\'inverse).','<b>Fermez les autres apps audio</b> (appels, vidéo, musique), puis rechargez la page.'],
+        end:'Toujours rien ? Dites à votre instructeur quel téléphone et quelle version d\'iOS vous avez.'},
+    it:{hint:'Nessun suono? Attiva la suoneria (senza arancione visibile), alza il volume e controlla eventuali auricolari collegati che non stai usando.', more:'Più aiuto', link:'Nessun suono?', title:'Nessun suono?',
+        intro:"Su iPhone la voce può essere muta anche se musica e video si sentono. Controlla in quest'ordine:",
+        steps:['<b>Interruttore della suoneria.</b> Sposta l\'interruttore laterale in modo che non si veda l\'arancione (o imposta il tasto Azione fuori da Silenzioso).','<b>Volume.</b> Alza il volume con il tasto laterale.','<b>Auricolari e Bluetooth.</b> Se sono collegati auricolari, un altoparlante o un\'auto, il suono può andare lì. Indossali, spegnili o scollegali.','<b>Scegli una voce.</b> Apri Avanzate / voci e premi &ldquo;Prova&rdquo; accanto a ogni elenco. Se dice &ldquo;scegli una voce&rdquo; o è muto, scegli una voce.','<b>Scarica una voce migliore.</b> Impostazioni &rarr; Accessibilità &rarr; Contenuto pronunciato &rarr; Voci, scarica una voce migliorata e ricarica la pagina.','<b>Prova l\'altro browser.</b> Se usi Chrome, prova Safari (o viceversa).','<b>Chiudi altre app audio</b> (chiamate, video, musica) e ricarica la pagina.'],
+        end:'Ancora niente? Dì al tuo istruttore quale telefono e quale versione di iOS hai.'},
+    de:{hint:'Kein Ton? Klingeln einschalten (kein Orange sichtbar), Lautstärke erhöhen und angeschlossene Kopfhörer prüfen, die Sie nicht tragen.', more:'Mehr Hilfe', link:'Kein Ton?', title:'Kein Ton?',
+        intro:'Auf dem iPhone kann Sprache stumm sein, obwohl Musik und Videos laufen. Prüfen Sie der Reihe nach:',
+        steps:['<b>Klingelschalter.</b> Schieben Sie den Schalter an der Seite so, dass kein Orange zu sehen ist (oder stellen Sie die Aktionstaste nicht auf Lautlos).','<b>Lautstärke.</b> Erhöhen Sie die Lautstärke mit der Taste an der Seite.','<b>Kopfhörer und Bluetooth.</b> Sind Kopfhörer, ein Lautsprecher oder ein Auto verbunden, geht der Ton eventuell dorthin. Aufsetzen, ausschalten oder trennen.','<b>Stimme wählen.</b> Öffnen Sie Erweitert / Stimmen und tippen Sie neben jeder Liste auf &bdquo;Testen&ldquo;. Steht dort &bdquo;Stimme wählen&ldquo; oder bleibt es stumm, wählen Sie eine Stimme.','<b>Bessere Stimme laden.</b> Einstellungen &rarr; Bedienungshilfen &rarr; Gesprochene Inhalte &rarr; Stimmen, eine erweiterte Stimme laden und die Seite neu laden.','<b>Anderen Browser testen.</b> In Chrome? Versuchen Sie Safari (oder umgekehrt).','<b>Andere Audio-Apps schließen</b> (Anrufe, Video, Musik) und die Seite neu laden.'],
+        end:'Immer noch nichts? Sagen Sie Ihrem Kursleiter, welches Telefon und welche iOS-Version Sie haben.'}
+  };
+  var cur = null;
+  function render(){
+    var lg = (typeof UI !== 'undefined' && UI && UI.lang && T[UI.lang]) ? UI.lang : 'en';
+    if(lg === cur) return; cur = lg;
+    var x = T[lg];
+    document.getElementById('noSoundHintText').innerHTML = x.hint;
+    document.getElementById('noSoundMoreLink').textContent = x.more;
+    document.getElementById('soundHelpLink').textContent = x.link;
+    document.getElementById('soundHelpTitle').textContent = x.title;
+    var h = '<p>' + x.intro + '</p><div class="sg-flow">';
+    x.steps.forEach(function(s, i){ s = s.replace(/<b>/g, '<strong>').replace(/<\/b>/g, '</strong>'); h += '<div class="sg-step"><b>' + (i + 1) + '</b><span>' + s + '</span></div>'; });   /* titles use <strong>: the page style turns every <b> inside a step into an orange number circle */
+    h += '</div><p style="margin-top:14px;color:var(--sg-soft);">' + x.end + '</p>';
+    document.getElementById('soundHelpBody').innerHTML = h;
+    var ov = document.getElementById('soundHelp'); if(ov) ov.setAttribute('dir', lg === 'ar' ? 'rtl' : 'ltr');
+  }
+  var hint = document.getElementById('noSoundHint');
+  function hideHint(){ hint.classList.add('gone'); }
+  function showHint(){ hint.classList.remove('gone'); }
+  document.getElementById('noSoundClose').addEventListener('click', hideHint);
+  var playedMs = 0, wasRunning = false;
+  setInterval(function(){
+    try{
+      render();
+      var running = !!(typeof S !== 'undefined' && S && S.running && !S.paused);
+      var started = !!(typeof S !== 'undefined' && S && S.running);
+      if(started && !wasRunning){ playedMs = 0; showHint(); }      // each new Start brings the short hint back
+      wasRunning = started;
+      if(running){ playedMs += 500; if(playedMs >= 20000) hideHint(); }
+    }catch(e){}
+  }, 500);
+  render();
+})();
+</script>
+
 <script type="text/plain" id="productsrc">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</script>
 </body>
 </html>
