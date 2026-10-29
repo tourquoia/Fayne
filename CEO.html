@@ -109,21 +109,20 @@ RULES FOR ANYONE (OR ANY CLAUDE) EDITING OR REPLACING THIS TEMPLATE:
  2. Never put course content (lessons, dialogues, titles) in the template. It belongs in _build/products/<Name>.product.txt.
  3. If you develop the template separately and hand it back: keep every slot line, keep the course flags
     (search "COURSE FLAGS" and "MULTI-LANGUAGE MODE"), then give the zip + template to Claude to swap in.
- 4. Version rule: template number = zip number, +1 per promoted round (3-5-8 -> 3-5-9; zip/folder 359). Exactly one
-    template_arch_*.html may exist in the folder. Rename it, delete the old one, run: python3 _build/build.py (add --check to test only).
-    SUB-VERSION SCHEME (keep using this for small updates): while testing, make tiny steps and number them 3-5-N-k
-    (3-5-8-1, 3-5-8-2 ... 3-5-8-12), one fix or change per step, and tag the code comment with that number ("3-5-8-11: ...").
-    When a step is confirmed working well, promote it to the next stable number (3-5-8-12 -> 3-5-9), rename the template
-    template_arch_3-5-9.html (the build only accepts three numbers) and rebuild every course. Then start the next
-    series at 3-5-9-1, 3-5-9-2 ...
- 5. Layout: the zip and its top folder are named by the revision (359). Inside that folder: the template, _build, arch (everything built) and non-arch (hand-kept files, Luna only; never written).
+ 4. VERSION RULE (owner decision, final): a version is ALWAYS three numbers, 3-5-N. 3 = version, 5 = subversion, N = the working number (30 now).
+    EVERY time anything changes (a fix, a test, a tiny edit) N goes up by exactly one: 3-5-30 -> 3-5-31 -> 3-5-32. NEVER a fourth number (no 3-5-30-1),
+    NEVER the digits run together (not 3530). The one number names everything: the template (template_arch_3-5-31.html), the zip (3-5-31.zip), the
+    zip's top folder (3-5-31) and the code-comment tag ("3-5-31: ..."). Exactly one template_arch_*.html may exist in the folder: rename it, delete
+    the old one, run python3 _build/build.py (add --check to test only) and rebuild every course. The on-screen label (v3.5.31) is read from the file name.
+    This rule replaces every older numbering note in this file (sub-version scheme, 3-5-N-k, "test step", "next test series").
+ 5. Layout: the zip and its top folder are named by the revision (3-5-30), with hyphens. Inside that folder: the template, _build, arch (everything built) and non-arch (hand-kept files, Luna only; never written).
  6. After a change, compare old vs new playback on every course before handing back; do not print big data to the screen.
  7. NEVER CHANGE THE SILENT ANCHOR TRACK (the 0.5 s <audio id="mediaSessionAnchor"> loop). A longer one makes speech
     stall and cut off. Locked at 3-5-9-2; it may change only with a new, owner-tested fix for the audio-cutting-out problem.
 =====================================================================
 -->
 <!-- build:JysnMlnrMthd -->
-<!-- template_arch_3-5-28 + CEO.product (0 patch(es)) -->
+<!-- template_arch_3-5-30 + CEO.product (0 patch(es)) -->
 <!DOCTYPE html>
 <html lang="en" translate="no" class="notranslate">
 <head>
@@ -1176,7 +1175,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 </style>
 </head>
 <body>
-<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.28</div>
+<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.30</div>
 <script>/* 3-5-26-1: if the build never ran on this file, the version token is still in the label -> say so in red instead of showing the raw token. (Token is split here so the build does not rewrite it.) */
 (function(){ try{ var b=document.getElementById('appVersionBadge'); if(b && b.textContent.indexOf('__APP_'+'VERSION__')>-1){ b.textContent='UNBUILT COPY - no product file'; b.style.color='#d92d20'; b.style.fontWeight='800'; b.style.textShadow='none'; } }catch(e){} })();
 </script>
@@ -1272,7 +1271,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
   <!-- ===================== DRILL SCREEN ===================== -->
   <section id="drillScreen" class="drill-wrap hidden">
-    <!-- 3-5-28: iPhone/iPad sound hint. Static UI only; touches no playback or anchor-audio code. Hidden on non-Apple devices (see script near the guide pages). -->
+    <!-- 3-5-29: iPhone/iPad sound hint. Static UI only; touches no playback or anchor-audio code. Hidden on non-Apple devices (see script near the guide pages). -->
     <div id="noSoundBar" class="hidden" style="display:none;">
       <div id="noSoundHint" role="note"><span id="noSoundHintText"></span> <a href="#sound-help" id="noSoundMoreLink"></a><button type="button" id="noSoundClose" aria-label="Close">&times;</button></div>
       <div id="noSoundLinkRow"><a href="#sound-help" id="soundHelpLink"></a></div>
@@ -6955,8 +6954,7 @@ function initKeepAwake(){
      sheet.passes            - override for one lesson
      narration/intro sheets  - 1 unless overridden
    A pass counts when the lesson reaches its end (loop wrap, playthrough
-   advance, or the end of a non-looping session) AND at least half the
-   lesson's estimated time has elapsed (so skipping to the end does not count).
+   advance, or the end of a non-looping session). 3-5-30: no minimum time.
    Saved in this browser only: APP_ID + ':progress', keyed by lesson name. */
 const PROGRESS_KEY = APP_ID + ':progress';
 let progressData = null, progressSaveOK = true;
@@ -7112,10 +7110,7 @@ function recordPass(){
   try{
     if(!S.passStart) return;
     const course = currentCourse(), sh = course.sheets[S.sheetIdx]; if(!sh) return;
-    const minMs = 0.5 * S.activeLines.length * 9000;          // half of estimateSessionMinutes()'s basis
-    const elapsed = Date.now() - S.passStart;
-    S.passStart = 0;
-    if(elapsed < minMs) return;                                // skipped through, not a real pass
+    S.passStart = 0;                                           // 3-5-30: no time gate. Reaching the end of the lesson counts as a pass, however fast.
     loadProgress();
     const need = passesNeeded(course, sh), before = passesDone(course, S.sheetIdx);
     if(before >= need) return;                                 // already finished; nothing new to celebrate
@@ -7434,7 +7429,7 @@ function uiRefresh(force){
   </div>
 </div>
 <style>
-  /* 3-5-28: iPhone sound hint + help page */
+  /* 3-5-29: iPhone sound hint + help page */
   #noSoundBar{ margin:0 0 8px; text-align:center; }
   #noSoundHint{ position:relative; display:block; background:var(--card); border:1.5px solid var(--border-soft); border-radius:10px; padding:7px 30px 7px 10px; font-size:13px; line-height:1.35; color:var(--ink-soft); text-align:left; transition:opacity .6s ease, max-height .6s ease, margin .6s ease, padding .6s ease; max-height:120px; overflow:hidden; }
   #noSoundHint a, #soundHelpLink{ color:var(--ink-soft); text-decoration:underline; font-weight:700; }
@@ -7624,7 +7619,7 @@ function uiRefresh(force){
 </script>
 <!-- ===================== END GUIDE PAGES ===================== -->
 <script>
-/* 3-5-28: iPhone/iPad "no sound?" hint. Static UI only: it never calls speak/cancel, never touches the silent anchor track or
+/* 3-5-29: iPhone/iPad "no sound?" hint. Static UI only: it never calls speak/cancel, never touches the silent anchor track or
    any playback code; it only READS S.running / S.paused. Shown on Apple touch devices only (the ringer switch does not exist on
    Android). Short hint at the top of the drill screen fades after ~20 s of actual playback or when closed (and returns each time
    Start is pressed); a small permanent "No sound?" link under it opens a troubleshooting page. Text follows the source language
@@ -7694,6 +7689,95 @@ function uiRefresh(force){
     }catch(e){}
   }, 500);
   render();
+})();
+</script>
+<script>
+/* 3-5-29: FIXED-SIZE STAGE CARD. The card that shows the line being spoken used to resize to its text, so Back / Play / Next
+   moved on every line. Now the card is given a min-height equal to the TALLEST line it will ever hold, plus a small margin,
+   so the buttons stay put.
+   - "Tallest" = every line of every lesson in the course, in the current language pair and drill style, laid out invisibly at
+     the card's real width with the same CSS (in Practice it includes the mic button and "your turn" area). Re-measured when the
+     width, language pair, style or course changes.
+   - A narration/intro lesson (long paragraphs) is measured on its own, so it does not make every drill card huge.
+   - Safety net: if a card ever turns out taller than predicted, the height only grows (until the lesson/pair/style changes).
+   - Reads course data via buildActiveLines() for each lesson and puts the state back immediately (nothing is displayed or spoken).
+   Tune the margin with STAGE_PAD (pixels). */
+(function(){
+  var STAGE_PAD = 10, MIN_H = 150;
+  var st = document.querySelector('.stage');
+  if(!st || typeof S === 'undefined') return;
+  var lastSig = '', fitted = 0, clone = null;
+
+  function gather(onlyIdx){
+    var course = currentCourse();
+    if(!course || course.multiLang || !course.sheets) return null;
+    var save = {sheetIdx:S.sheetIdx, narrationMode:S.narrationMode, lineNarr:S.lineNarr, activeLines:S.activeLines,
+                tg:S.targetLangGuess, sg:S.sourceLangGuess, nv:S.narrationVoiceLang};
+    var out = [];
+    try{
+      for(var i = 0; i < course.sheets.length; i++){
+        var sh = course.sheets[i];
+        if(!sheetAvailable(sh)) continue;
+        var nar = (sh.mode === 'narration');
+        if(onlyIdx !== null ? i !== onlyIdx : nar) continue;
+        S.sheetIdx = i; buildActiveLines();
+        (S.activeLines || []).forEach(function(e){
+          out.push({source:e.source || '', target:e.target || '', head:e.headerLabel || '', tone:e.tone || '', plain:(nar || !!e.srcOnly)});
+        });
+      }
+    }catch(err){ out = null; }
+    S.sheetIdx = save.sheetIdx; S.narrationMode = save.narrationMode; S.lineNarr = save.lineNarr; S.activeLines = save.activeLines;
+    S.targetLangGuess = save.tg; S.sourceLangGuess = save.sg; S.narrationVoiceLang = save.nv;
+    return out;
+  }
+
+  function measure(lines){
+    var w = st.getBoundingClientRect().width;
+    clone = st.cloneNode(true);
+    clone.removeAttribute('id');
+    [].forEach.call(clone.querySelectorAll('[id]'), function(n){ n.removeAttribute('id'); });
+    clone.className = 'stage';
+    clone.setAttribute('aria-hidden', 'true');
+    clone.style.cssText = 'position:absolute;left:0;top:0;visibility:hidden;pointer-events:none;margin:0;min-height:0;width:' + w + 'px;';
+    var q = function(s){ return clone.querySelector(s); };
+    var tag = q('.speaker-tag'), tone = q('.tone-tag'), src = q('.source-line'), tgt = q('.target-line'),
+        turn = q('.your-turn'), heard = q('.heard');
+    st.parentNode.appendChild(clone);
+    var max = 0;
+    for(var i = 0; i < lines.length; i++){
+      var L = lines[i], judge = (S.style === 'judge' && !L.plain);
+      clone.classList.toggle('judge-mode', judge);
+      if(turn) turn.classList.toggle('show', judge);
+      if(heard) heard.textContent = judge ? L.target : '';
+      if(tag) tag.textContent = L.head || 'MMMMMMMMMMMM';
+      if(tone) tone.textContent = L.tone || '\u00A0';
+      if(src) src.textContent = L.source;
+      if(tgt) tgt.textContent = L.target;
+      var h = clone.offsetHeight; if(h > max) max = h;
+    }
+    st.parentNode.removeChild(clone); clone = null;
+    return max;
+  }
+
+  function refit(){
+    var course = currentCourse(), sh = course && course.sheets ? course.sheets[S.sheetIdx] : null;
+    var lines = gather(sh && sh.mode === 'narration' ? S.sheetIdx : null);
+    if(lines && lines.length){
+      fitted = Math.max(MIN_H, Math.ceil(measure(lines) + STAGE_PAD));
+      st.style.minHeight = fitted + 'px';
+    } else { fitted = 0; st.style.minHeight = ''; }
+  }
+
+  setInterval(function(){
+    try{
+      if(!st.offsetWidth) return;                       // drill screen not showing
+      var course = currentCourse(), sh = course && course.sheets ? course.sheets[S.sheetIdx] : null;
+      var sig = [S.courseIdx, S.srcCode, S.tgtCode, S.style, Math.round(st.getBoundingClientRect().width),
+                 (sh && sh.mode === 'narration') ? S.sheetIdx : -1, (document.fonts ? document.fonts.status : '')].join('|');
+      if(sig !== lastSig){ lastSig = sig; refit(); return; }
+      if(fitted && st.offsetHeight > fitted + 1){ fitted = st.offsetHeight + 2; st.style.minHeight = fitted + 'px'; }   // safety net: grow only
+    }catch(e){}
+  }, 400);
 })();
 </script>
 
