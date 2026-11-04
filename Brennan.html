@@ -1,5 +1,5 @@
 <!-- build:JysnMlnrMthd -->
-<!-- template_arch_3-5-30 + Brennan.product (0 patch(es)) -->
+<!-- template_arch_3-5-34 + Brennan.product (0 patch(es)) -->
 <!DOCTYPE html>
 <html lang="en" translate="no" class="notranslate">
 <head>
@@ -1052,7 +1052,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 </style>
 </head>
 <body>
-<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.30</div>
+<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.34</div>
 <script>/* 3-5-26-1: if the build never ran on this file, the version token is still in the label -> say so in red instead of showing the raw token. (Token is split here so the build does not rewrite it.) */
 (function(){ try{ var b=document.getElementById('appVersionBadge'); if(b && b.textContent.indexOf('__APP_'+'VERSION__')>-1){ b.textContent='UNBUILT COPY - no product file'; b.style.color='#d92d20'; b.style.fontWeight='800'; b.style.textShadow='none'; } }catch(e){} })();
 </script>
@@ -1661,6 +1661,7 @@ const S = {
 };
 
 function shuffleOrder(){
+  S.order = S.order.filter(i => !(S.activeLines[i] && S.activeLines[i].recall));   // 3-5-31: recall breaks only make sense in lesson order
   const arr = S.order;
   for(let i=arr.length-1; i>0; i--){
     const j = Math.floor(Math.random()*(i+1));
@@ -1703,6 +1704,227 @@ function guessVoiceGender(voice){
   if(words.some(w=>VOICE_GENDER_NAME_TOKENS.female.includes(w))) return 'female';
   if(words.some(w=>VOICE_GENDER_NAME_TOKENS.male.includes(w))) return 'male';
   return 'unknown';
+}
+
+/* ============================================================
+   3-5-33: CALLBACKS / RECALL BREAKS ("How do you say ...?") -- Pimsleur-style forced recall. ("Callback" and "recall break" are the same feature.)
+   DEFAULT ON for every course. A course without callbacks sets BUILT_IN_COURSE.recall = {off:true}.
+   LESSON 1 (the first real lesson) ALWAYS gets "how do you say" added as its FIRST and LAST line (source + target, read by the first character's voice). No check, no symbol,
+       no sheet edit. Lesson 1 has no callbacks. CALLBACKS START IN LESSON 2. They need a distinct source language and a HDYS entry for both languages; otherwise nothing is added.
+   WHERE THEY HAPPEN: a marker row is an ordinary row whose SPEAKER cell (column A) holds a marker and whose language cells are EMPTY. The symbol is a diamond (\u25C6) or a star (\u2605):
+       \u25C6R      callback to something heard in the last minute or two (the last rWindow phrases actually heard in this pass, before the marker)
+       \u25C6L      something earlier in the same lesson (older than the R window)
+       \u25C6P12    one random phrase from lesson 12 (the lesson number the learner sees); a bad number falls back to plain \u25C6P
+       \u25C6P      one random phrase from any earlier real lesson (the intro / Lesson 0 never counts)
+       \u25C6       (symbol alone) one random phrase heard before this point, in ANY lesson (this one included)
+   The marker lives in column A only, so TTS can never read it. (Automatic placement without marker rows is not defined yet: the spreadsheet addition is still to come.)
+   PLAYBACK of one callback (all in the learner's chosen pair): 1. "How do you say" in the TARGET language (HDYS table below; always the target language)
+       2. the phrase in the SOURCE language (its text appears only once it has been spoken)  3. the think pause = thinkBaseMs + thinkPerWordMs per source word, capped at thinkMaxMs
+       (3.5 to 7 seconds: 3 s + half a second per word, capped at 7 s)  4. the target phrase (text shown only now), the normal short pause (estimateMs x 1.2, same as every normal line), the target phrase again, the same short pause.
+       Gendered lines play the whole set.
+   PAUSE / RESUME: resume within resumeMs (15 s) = same phrase, the interrupted step starts again; later = same phrase (until keepMs, 2 min), the whole callback again.
+   WHAT IS PICKED: only phrases the learner actually heard in this pass; both source and target <= longWords words, short ones (<= shortWords) preferred; one-sided,
+       voiceEs and srcOnly rows are never used. Never-quizzed phrases first (last recentCap picks kept in the learner's browser, APP_ID + ':recall'; nothing is added to the
+       course file); plain \u25C6P leans toward lessons quizzed least recently. Randomness = Math.random() mixed with the millisecond clock.
+   Not used by multi-language mode or format:'narrator'.
+   TUNING KNOBS: the numbers that control callbacks live in RECALL_CFG below (one place), and a course can override any of them through BUILT_IN_COURSE.recall =
+       {rWindow, shortWords, longWords, thinkBaseMs, thinkPerWordMs, thinkMaxMs, recentCap, resumeMs, keepMs, off:true}.
+   ONBOARDING A LANGUAGE: every time a language is added, define its HDYS ("how do you say") entry too (same codes as BASE_LANGS). build.py prints a NOTE for any code without one.
+   ============================================================ */
+const RECALL_CFG = { rWindow:8, shortWords:7, longWords:12, thinkBaseMs:3000, thinkPerWordMs:500, thinkMaxMs:7000, recentCap:20, resumeMs:15000, keepMs:120000 };
+const RECALL_KEY = APP_ID + ':recall';
+// "How do you say" in each language, written WITHOUT closing punctuation (it is followed by the phrase). Languages marked in
+// HDYS_NEEDS_CHECK are drafts: have a native speaker confirm them before shipping. An empty string = no draft yet = recall stays off for that language.
+const HDYS = {
+  'en':'How do you say', 'es':'Cómo se dice', 'es-ES':'Cómo se dice', 'es-GQ':'Cómo se dice',
+  'pt-BR':'Como se diz', 'pt-PT':'Como se diz', 'pt-AFR':'Como se diz',
+  'fr-FR':'Comment dit-on', 'fr-AFR':'Comment dit-on', 'it':'Come si dice', 'ro':'Cum se spune', 'de':'Wie sagt man',
+  'ru':'Как сказать', 'uk':'Як сказати', 'pl':'Jak się mówi', 'cs':'Jak se řekne', 'sk':'Ako sa povie',
+  'la-CI':'Quomodo dicitur', 'la-HV':'Quomodo dicitur', 'la-VA':'Quomodo dicitur',
+  'ar':'كيف تقول', 'ar-MA':'Kifach kanqolo', 'am':'እንዴት ይባላል',
+  'ja-formal':'どう言いますか', 'ja-casual':'どう言う', 'th':'พูดว่าอย่างไร', 'vi':'Nói thế nào',
+  'km':'តើនិយាយយ៉ាងម៉េច', 'lo':'ເວົ້າແນວໃດ',
+  'sw':'Unasemaje', 'ha':'Yaya ake cewa', 'ig':'Kedu ka esi asị', 'yo':'Báwo ni a ṣe ń sọ', 'xh':'Uthi njani', 'zu':'Uthi kanjani', 'ln':'Ndenge nini bakoloba',
+  'haw':'Pehea e ʻōlelo ai', 'mi':'Me pēhea te kī', 'sm':'E faʻapefea ona e fai atu', 'to':'Ko e anga fēfē hono lea ʻaki',
+  'quz':'Imaynatan ninku',
+  'nah-HUA':'', 'nv':'', 'sus':'',
+};
+const HDYS_NEEDS_CHECK = ['ar-MA','am','km','lo','sw','ha','ig','yo','xh','zu','ln','haw','mi','sm','to','quz','ja-casual','nah-HUA','nv','sus'];
+function recallCfg(){ const c = currentCourse(); return Object.assign({}, RECALL_CFG, (c && c.recall) || {}); }
+function hdysFor(code){ if(!code) return ''; return HDYS[code] || ''; }
+function recallMarkerOf(cell){
+  // 3-5-32: diamond or star; the letter is optional (a bare symbol = anything heard so far, in any lesson)
+  const m = /^\s*[\u25C6\u2605]\s*([RLPrlp])?\s*(\d+)?\s*$/.exec(String(cell==null ? '' : cell));
+  if(!m) return null;
+  const kind = m[1] ? m[1].toUpperCase() : 'A';
+  return {kind, num:(kind === 'P' && m[2]) ? parseInt(m[2],10) : 0};
+}
+function courseHasRecall(course){
+  return !(course && course.recall && course.recall.off);   // 3-5-33: callbacks are the default; BUILT_IN_COURSE.recall = {off:true} makes a course without them
+}
+function recallNorm(s){ return String(s==null ? '' : s).normalize('NFD').replace(/\p{M}/gu,'').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim(); }
+function recallWords(text){
+  const t = String(text||'').trim(); if(!t) return 0;
+  let w = t.split(/\s+/).filter(Boolean).length;
+  if(/[\u3040-\u30FF\u3400-\u9FFF\u0E00-\u0EFF\u0E80-\u0EFF\u1780-\u17FF]/.test(t) && w <= 3) w = Math.ceil(t.replace(/\s/g,'').length / 2.5);
+  return w;
+}
+// Where "how do you say" (target language) is taught: -1 = before this lesson (the intro), r = row r of this lesson, Infinity = never.
+// 3-5-33: recallTaughtAt removed. Lesson 1 no longer checks whether "how do you say" is already there; it is always added.
+function recallBuildCtx(course, sh){
+  if(!courseHasRecall(course)) return null;
+  const c = course;
+  if(c.multiLang || c.format === 'narrator' || sh.mode === 'narration') return null;
+  const hT = hdysFor(S.tgtCode), hS = hdysFor(S.srcCode);
+  if(!hT || !hS || !S.srcCode || S.srcCode === S.tgtCode) return null;
+  const num = lessonNumberFor(c, S.sheetIdx);
+  return {num, hT, hS, needFrame: (num === 1)};   // 3-5-33: lesson 1 ALWAYS gets "how do you say" as its first and last line
+}
+function recallMakeMarker(mk, ri, ctx){
+  if(!ctx) return null;
+  if(ctx.num === 1) return null;   // 3-5-33: lesson 1 teaches the phrase and has no callbacks; they start in lesson 2
+  return {recall:true, kind:mk.kind, pNum:mk.num, rid:ri, speaker:'', tone:'', source:'', target:''};
+}
+function recallEligible(e){
+  const cfg = recallCfg();
+  return !!(e && !e.recall && !e.frame && !e.srcOnly && !e.voiceEs && !e.isVariant && e.rid !== undefined && e.source && e.target &&
+            recallWords(e.source) <= cfg.longWords && recallWords(e.target) <= cfg.longWords);
+}
+function recallGroups(list, sheetIdx, lessonNum){
+  const cfg = recallCfg(), out = []; let cur = null;
+  for(const e of list){
+    if(e.isVariant){ if(cur) cur.forms.push(e); continue; }
+    cur = null;
+    if(!recallEligible(e)) continue;
+    cur = {main:e, forms:[e], id:sheetIdx + ':' + e.rid, sheetIdx, lesson:lessonNum,
+           short: recallWords(e.source) <= cfg.shortWords && recallWords(e.target) <= cfg.shortWords};
+    out.push(cur);
+  }
+  return out;
+}
+function recallAddFrames(list, ctx){
+  // 3-5-33: lesson 1 ALWAYS gets it (no check for it being present already). Old note: lesson 1 never teaches "how do you say" -> add it as the FIRST and LAST line of the lesson (source + target), read by the first
+  // character's voice (whatever voice is available). No symbol and no sheet edit needed.
+  const base = list.find(e => !e.recall && !e.srcOnly && !e.isVariant && e.speaker !== undefined && e.rid !== undefined);
+  if(!base) return;
+  const mk = () => Object.assign({}, base, {tone:'', source:ctx.hS, sourceSpoken:ctx.hS, target:ctx.hT, targetSpoken:ctx.hT, headerLabel:'', genderLabel:'', genderForm:undefined, rid:undefined, frame:true});
+  list.unshift(mk()); list.push(mk());
+}
+function recallPool(course, i){
+  const key = i + '|' + S.srcCode + '|' + S.tgtCode;
+  course._rcPool = course._rcPool || {};
+  if(course._rcPool[key]) return course._rcPool[key];
+  const save = {sheetIdx:S.sheetIdx, narrationMode:S.narrationMode, lineNarr:S.lineNarr, activeLines:S.activeLines,
+                tg:S.targetLangGuess, sg:S.sourceLangGuess, nv:S.narrationVoiceLang};
+  let out = [];
+  try{ S.sheetIdx = i; buildActiveLines(); out = recallGroups(S.activeLines, i, lessonNumberFor(course, i)); }catch(e){ out = []; }
+  S.sheetIdx = save.sheetIdx; S.narrationMode = save.narrationMode; S.lineNarr = save.lineNarr; S.activeLines = save.activeLines;
+  S.targetLangGuess = save.tg; S.sourceLangGuess = save.sg; S.narrationVoiceLang = save.nv;
+  course._rcPool[key] = out;
+  return out;
+}
+function recallPrevGroups(course, curNum, onlyNum){
+  let out = [];
+  course.sheets.forEach((sh, i) => {
+    if(!sh || sh.mode === 'narration' || !sheetAvailable(sh)) return;
+    const ln = lessonNumberFor(course, i);
+    if(ln >= curNum || ln < 1) return;
+    if(onlyNum && ln !== onlyNum) return;
+    out = out.concat(recallPool(course, i));
+  });
+  return out;
+}
+let recallMem = [];
+function recallRecent(){
+  let a = [];
+  try{ a = JSON.parse(localStorage.getItem(RECALL_KEY) || '[]'); if(!Array.isArray(a)) a = []; }catch(e){ a = []; }
+  return a.concat(recallMem.filter(x => a.indexOf(x) < 0));
+}
+function recallRemember(id){
+  const cap = recallCfg().recentCap;
+  recallMem = recallMem.filter(x => x !== id); recallMem.push(id); while(recallMem.length > cap) recallMem.shift();
+  try{
+    const a = (JSON.parse(localStorage.getItem(RECALL_KEY) || '[]') || []).filter(x => x !== id); a.push(id);
+    while(a.length > cap) a.shift();
+    localStorage.setItem(RECALL_KEY, JSON.stringify(a));
+  }catch(e){}
+}
+function recallRandom(arr){ return arr[Math.floor((Math.random() * 1e9 + Date.now()) % arr.length)]; }
+function recallChoose(groups){
+  if(!groups || !groups.length) return null;
+  const rec = recallRecent(), perLesson = {};
+  rec.forEach(id => { const l = String(id).split(':')[0]; perLesson[l] = (perLesson[l] || 0) + 1; });
+  const fresh = groups.filter(g => rec.indexOf(g.id) < 0);
+  if(fresh.length){
+    const min = Math.min.apply(null, fresh.map(g => perLesson[g.sheetIdx] || 0));
+    return recallRandom(fresh.filter(g => (perLesson[g.sheetIdx] || 0) === min));
+  }
+  const oldest = groups.slice().sort((a, b) => rec.indexOf(a.id) - rec.indexOf(b.id));
+  return recallRandom(oldest.slice(0, Math.min(3, oldest.length)));
+}
+function recallResolve(entry){
+  const course = currentCourse(), cfg = recallCfg();
+  const pos = S.activeLines.indexOf(entry), num = lessonNumberFor(course, S.sheetIdx);
+  const prefer = a => { const s = a.filter(g => g.short); return s.length ? s : a; };
+  let all = recallGroups(S.activeLines.slice(0, pos < 0 ? 0 : pos), S.sheetIdx, num);
+  // 3-5-32: only phrases the learner actually heard in this pass (falls back to everything before the marker if nothing was tracked, e.g. started mid-lesson)
+  const hr = (S.heardR && S.heardR.sheet === S.sheetIdx) ? S.heardR.set : null;
+  if(hr){ const h = all.filter(g => hr[g.main.rid]); if(h.length) all = h; }
+  const here = prefer(all);
+  const R = here.slice(-cfg.rWindow), L = here.slice(0, Math.max(0, here.length - cfg.rWindow));
+  let pick = null;
+  if(entry.kind === 'A' && num > 1) pick = recallChoose(prefer(here.concat(recallPrevGroups(course, num, 0))));   // bare symbol: anything before this point, any lesson
+  if(!pick && entry.kind === 'P' && num > 1){
+    pick = recallChoose(prefer(recallPrevGroups(course, num, entry.pNum)));
+    if(!pick && entry.pNum) pick = recallChoose(prefer(recallPrevGroups(course, num, 0)));
+  }
+  if(!pick && (entry.kind === 'L' || entry.kind === 'P' || entry.kind === 'A')) pick = recallChoose(L.length ? L : R);
+  if(!pick) pick = recallChoose(R);
+  return pick;
+}
+function recallThinkMs(text){
+  const cfg = recallCfg();
+  return Math.min(cfg.thinkMaxMs, cfg.thinkBaseMs + cfg.thinkPerWordMs * Math.max(1, recallWords(text)));
+}
+async function runRecallLine(entry, token){
+  // 3-5-32: stepped so a pause can resume. Resume within resumeMs: same phrase, restart the step that was interrupted. Longer: same phrase
+  // (within keepMs), whole callback again from "how do you say". The phrase text stays hidden until it has been spoken.
+  const cfg = recallCfg(), now = Date.now();
+  let pick = null, from = 0;
+  const rp = S.recallPick;
+  if(rp && rp.entry === entry && now - rp.t < cfg.keepMs){ pick = rp.pick; if(now - rp.t < cfg.resumeMs) from = rp.step || 0; }
+  else { pick = recallResolve(entry); if(pick) recallRemember(pick.id); }
+  if(!pick){ advance(); return; }
+  const rec = {entry, pick, t:now, step:from}; S.recallPick = rec;
+  const m = pick.main, hT = hdysFor(S.tgtCode), v = voicesForEntry(m);
+  const sG = S.sourceLangGuess, tG = S.targetLangGuess;
+  const sEl = document.getElementById('sourceLineEl'), tEl = document.getElementById('targetLineEl');
+  const live = () => token === S.token;
+  const steps = [
+    async () => { setPhase('Listen'); sEl.textContent = ''; tEl.textContent = hT; await speak(hT, tG, token, v.tgtURI, v.tgtPitch); if(!live()) return; await sleep(350, token); },
+    async () => { sEl.textContent = ''; tEl.textContent = hT; await speak(sSay(m), sG, token, v.srcURI, v.srcPitch, 0, S.srcRate); if(!live()) return; sEl.textContent = m.source; },
+    async () => { sEl.textContent = m.source; tEl.textContent = hT; setPhase('Your turn'); await sleep(recallThinkMs(m.source), token); }
+  ];
+  pick.forms.forEach(f => steps.push(async () => {
+    const fv = voicesForEntry(f);
+    sEl.textContent = f.source || '';
+    if(pick.forms.length > 1 && f.genderLabel){ await speakGenderLabel(f, sG, token, fv.srcURI, fv.srcPitch); if(!live()) return; }
+    setPhase('Listen'); tEl.textContent = f.target;
+    await speak(tSay(f), tG, token, fv.tgtURI, fv.tgtPitch); if(!live()) return;
+    await sleep(estimateMs(tSay(f)) * 1.2, token); if(!live()) return;
+    setPhase('Once more');
+    await speak(tSay(f), tG, token, fv.tgtURI, fv.tgtPitch); if(!live()) return;
+    await sleep(estimateMs(tSay(f)) * 1.2, token);
+  }));
+  for(let k = from; k < steps.length; k++){
+    rec.step = k; rec.t = Date.now();
+    if(k > 0) sEl.textContent = (k >= 2) ? m.source : '';
+    await steps[k]();
+    if(!live()){ rec.t = Date.now(); return; }   // paused or skipped: stamp the moment it stopped
+  }
+  if(S.recallPick === rec) S.recallPick = null;
+  S.linesCompleted++;
+  advance();
 }
 
 function stripTags(raw){
@@ -2806,7 +3028,10 @@ function buildActiveLines(){
       });
     }
   } else {
+    const rc = recallBuildCtx(course, sh);   // 3-5-31: recall breaks (null = course has no markers / feature off)
     sh.rows.forEach((row, ri)=>{
+      const _mk = recallMarkerOf(row[0]);
+      if(_mk){ const _re = recallMakeMarker(_mk, ri, rc); if(_re) list.push(_re); return; }
       const flag = rowFlags[ri];
       if(flag === 'srcOnly'){
         // Plays once in the learner's source language only (no target repeat).
@@ -2865,6 +3090,7 @@ function buildActiveLines(){
         if(latnText) shown = stripTags(latnText).clean;
         const form = (k===null) ? undefined : formKeys[k];
         return {
+          rid: ri,   // 3-5-31: row index, used by recall breaks
           speaker: row[0] || '',
           tone: t.tags[0] || s.tags[0] || '',
           source: withNote(s.clean, S.srcCode, row),
@@ -2881,6 +3107,7 @@ function buildActiveLines(){
       if(hasSet){ list.push(mkEntry(0)); if(exists(1)) list.push(mkEntry(1)); if(exists(2)) list.push(mkEntry(2)); }
       else list.push(mkEntry(null));
     });
+    if(rc && rc.needFrame) recallAddFrames(list, rc);   // 3-5-33: lesson 1 always gets "how do you say" as first and last line
   }
   S.activeLines = list;
   const tgtLang = langByCode(course, S.tgtCode);
@@ -3563,6 +3790,10 @@ const REGION_PROFILES = {
   // step-by-step instructions, since none of the usual OS install paths
   // (System Settings → Manage voices, etc.) actually offer Lao, so
   // walking through them here would be misleading busywork.
+  'km-th': {   // 3-5-32: Khmer had no fallback chain, so a device without a Khmer voice played in silence. Thai, then English, stand in.
+    matchPrefixes:['km','th','en'],
+    label:{ en:'Khmer (Thai or English stands in if no Khmer voice is installed)', es:'jemer (el tailand\u00e9s o el ingl\u00e9s lo sustituyen si no hay voz en jemer)' },
+  },
   'lo-th': {
     matchPrefixes:['lo','th'], alwaysApproximate:true, boost:['TH'], primary:'TH',
     label:{ en:'Thai (standing in for Lao, which has no dedicated voice)', es:'tailand\u00e9s (para el lao)' },
@@ -3780,6 +4011,7 @@ const CODE_TO_REGION_KEY = {
   'fr-FR':'fr-FR', 'fr-AFR':'fr-AFR', 'fr':'fr-FR',
   'la-CI':'la-classical', 'la-HV':'la-hisp', 'la-VA':'la-ecc', 'la':'la-ecc',
   'lo':'lo-th',
+  'km':'km-th',
   // Yoruba, isiZulu, isiXhosa, Igbo, and Susu have NO dedicated voice in
   // Google's on-device Android TTS engine as of this check (2026-09) — so
   // unlike sw/ha/am (which got their own profiles once a real voice was
@@ -3910,7 +4142,20 @@ function findUncoveredLanguages(course){
 // Shows a hard-to-miss banner (and logs to console) naming any language
 // in the active course that fails the rule above, so a silent,
 // untestable voice gap can't ship unnoticed.
-function renderVoiceCoverageWarning(course){
+function renderVoiceCoverageWarning(course){ renderVoiceCoverageWarning0(course); renderNoVoiceNotice(course); }
+// 3-5-32: plain notice when the chosen source/target language has no installed voice (it plays with a stand-in; any voice can be picked below).
+function renderNoVoiceNotice(course){
+  const host = document.getElementById('voiceCoverageWarning'); if(!host) return;
+  let el = document.getElementById('noVoiceNotice');
+  if(!el){ el = document.createElement('div'); el.id = 'noVoiceNotice'; el.style.cssText = 'margin:8px 0;padding:10px 12px;border:1px solid currentColor;border-radius:10px;font-size:13px;line-height:1.4'; host.insertAdjacentElement('afterend', el); }
+  let miss = [];
+  try{ if(S.voices && S.voices.length) miss = [S.srcCode, S.tgtCode].filter((c,i,a)=>c && a.indexOf(c)===i && !getVoiceCandidates(c).matches.length).map(c=>{ const l=(course.langs||[]).find(x=>x.code===c); return (l && l.label) || c; }); }catch(e){}
+  if(!miss.length){ el.style.display = 'none'; el.innerHTML = ''; return; }
+  const n = escapeHtml(miss.join(', '));
+  el.innerHTML = `<b>No ${n} voice on this device.</b> It will play with another voice, so it may not sound right. To fix it, install a ${n} voice in your device’s text-to-speech settings and reload — or pick any voice yourself in the voice menu.`;
+  el.style.display = '';
+}
+function renderVoiceCoverageWarning0(course){
   const el = document.getElementById('voiceCoverageWarning');
   if(!el) return;
   const problems = findUncoveredLanguages(course);
@@ -4754,7 +4999,17 @@ function getVoiceCandidates(code, gender){
   const hasPreference = !!(profile && profile.boost && profile.boost.length);
   const regionMatched = !hasPreference || matches.length===0 ? true : regionRank(matches[0], profile)===0;
   const alwaysApproximate = !!(profile && profile.alwaysApproximate);
-  return {matches, usingFallback, voices, genderMatched, regionMatched, profile, alwaysApproximate};
+  const standIn = matches.length ? null : voiceStandIn(voices);   // 3-5-32
+  return {matches, usingFallback, voices, genderMatched, regionMatched, profile, alwaysApproximate, standIn};
+}
+// 3-5-32: last-resort voice for a language nothing installed matches: device default, else English, else anything. Better an imperfect voice than silence.
+function voiceStandIn(voices){
+  if(!voices || !voices.length) return null;
+  const en = v => /^en([-_]|$)/i.test(v.lang || '');
+  return voices.find(v=>v.default && v.localService) || voices.find(v=>v.default) || voices.find(v=>en(v) && v.localService) || voices.find(en) || voices[0];
+}
+function fallbackVoiceFor(langCode){
+  try{ if(!langCode || !S.voices || !S.voices.length) return null; return getVoiceCandidates(langCode).matches.length ? null : voiceStandIn(S.voices); }catch(e){ return null; }
 }
 
 /* Populates a <select> with every installed voice — matches for `code`
@@ -4767,7 +5022,7 @@ function populateVoiceSelect(selectId, code, previousURI, gender){
   const sel = document.getElementById(selectId);
   if(!sel) return {chosenURI:'', matches:[], usingFallback:false, genderMatched:false};
   sel.innerHTML = '';
-  const {matches, usingFallback, voices, genderMatched} = getVoiceCandidates(code, gender);
+  const {matches, usingFallback, voices, genderMatched, standIn} = getVoiceCandidates(code, gender);
   const matchSet = new Set(matches);
   // Most-appropriate voices (checkmarked) keep their ranked order up top;
   // everything else is alphabetized below them by on-screen name, rather
@@ -4798,7 +5053,7 @@ function populateVoiceSelect(selectId, code, previousURI, gender){
   // language. A placeholder keeps the dropdown's own selection in sync
   // with that "nothing auto-picked" state instead of defaulting to
   // whichever voice happens to sort first.
-  if(!matches.length && !pinnedFused.some(it=>!it.missing)){
+  if(!matches.length && !standIn && !pinnedFused.some(it=>!it.missing)){
     const placeholder = document.createElement('option');
     placeholder.value = '';
     placeholder.textContent = '— no installed voice matches this language —';
@@ -4826,6 +5081,8 @@ function populateVoiceSelect(selectId, code, previousURI, gender){
     chosenURI = wantIt.value;
   } else if(matches.length){
     chosenURI = matches[0].voiceURI;
+  } else if(standIn){
+    chosenURI = standIn.voiceURI;   // 3-5-32: no voice for this language -> a stand-in so it still speaks (the note under the menu says so)
   }
   // NOTE: intentionally NO "else if(voices.length) chosenURI = voices[0]"
   // fallback here anymore. Root cause of the "Arabic line plays in French
@@ -4864,13 +5121,14 @@ function updateDotAndNote(id, uri, matches, genderMatched, usingFallback, gender
     // (see the populateVoiceSelect bugfix note above) -- distinguish them.
     text = matches.length===0 ? `no ${langLabel || 'matching'} voice installed — pick one below to override` : 'no voice available on this device';
   } else if(noLangMatch){
-    text = `no ${langLabel || 'matching'} voice installed on this device`;
+    text = `no ${langLabel || 'matching'} voice installed — using this one instead, so it may not sound right. Install a ${langLabel || 'matching'} voice in your device’s text-to-speech settings, then reload.`;
   } else if(usingFallback){
     text = `no ${langLabel || 'this'} voice found — using a related language instead`;
   } else if(isRecommended){
     text = 'recommended pick';
   } else {
-    text = 'custom pick';
+    const pv = pickVoiceByURI(uri), mv = matches[0], fam = x => String((x && x.lang) || '').toLowerCase().split(/[-_]/)[0];
+    text = (pv && mv && fam(pv) !== fam(mv)) ? `This voice isn’t ideal for ${langLabel || 'this language'} and may not sound right.` : 'custom pick';   // 3-5-32
   }
   if(note) note.textContent = text;
 }
@@ -5438,7 +5696,7 @@ function speak(text, langCode, token, voiceURI, pitch, retryCount, rate){
       const p = new SpeechSynthesisUtterance('a');
       p.volume = 0;
       p.rate = RATE;
-      const v = pickVoiceByURI(voiceURI);
+      const v = pickVoiceByURI(voiceURI) || fallbackVoiceFor(langCode);
       if(v){ p.voice = v; p.lang = v.lang; } else { p.lang = langCode; }
       let primed = false;
       const done = ()=>{ if(primed) return; primed = true; cb(); };
@@ -5473,7 +5731,7 @@ function speak(text, langCode, token, voiceURI, pitch, retryCount, rate){
     const u = new SpeechSynthesisUtterance(pronFixSpoken(fusedSpoken(text, voiceURI), pickVoiceByURI(voiceURI), langCode));
     u.rate = RATE;
     u.pitch = pitch || 1;
-    const v = pickVoiceByURI(voiceURI);
+    const v = pickVoiceByURI(voiceURI) || fallbackVoiceFor(langCode);   // 3-5-32: no matching voice -> stand-in, never silence
     if(v){ u.voice = v; u.lang = v.lang; } else { u.lang = langCode; }
     let done = false, check, hardCeiling, started = false, missCount = 0;
     let startedAt = 0, firstBoundaryIdx = null;
@@ -6031,6 +6289,8 @@ async function runLine(i){
   if(i === 0) S.passStart = Date.now();
   const myToken = ++S.token;
   const entry = S.activeLines[S.order[i]];
+  if(i === 0) S.heardR = null;   // 3-5-32: which phrases were actually heard this pass (recall breaks quiz only those)
+  if(entry && !entry.recall && entry.rid !== undefined){ if(!S.heardR || S.heardR.sheet !== S.sheetIdx) S.heardR = {sheet:S.sheetIdx, set:{}}; S.heardR.set[entry.rid] = 1; }
   savePosition(S.order[i]);
   S.lineNarr = !!entry.srcOnly;   // per-row source-only line (e.g. False Friends intro)
   updateMilestone();
@@ -6059,7 +6319,9 @@ async function runLine(i){
     document.querySelector('.stage').classList.toggle('gender-female', isRose);
   }
 
-  if(S.ml){
+  if(entry.recall){
+    await runRecallLine(entry, myToken);   // 3-5-31
+  } else if(S.ml){
     await runMultiLangLine(entry, myToken);
   } else if(S.narrationMode || entry.srcOnly){
     await runNarrationLine(entry, myToken);
@@ -6828,6 +7090,19 @@ function fireworks(bursts){
   }
 }
 
+/* 3-5-34: home-page flag. index.html reads 'fayneCourseState:<this file's name>' ('started' | 'done') to number/check its course cards.
+   Written from the saved progress, so it is also right for people who finished lessons before this version (called on page open and after each pass).
+   No passes saved = flag removed. Same browser + same site only. */
+function syncCourseFlag(course){
+  try{
+    const f = decodeURIComponent(location.pathname.split('/').pop() || 'index.html'), key = 'fayneCourseState:' + f;
+    const av = availableIdxs(course);
+    const any = av.some(i => passesDone(course, i) > 0);
+    if(!any){ localStorage.removeItem(key); return; }
+    localStorage.setItem(key, nextUpIdx(course) < 0 ? 'done' : 'started');
+  }catch(e){}
+}
+
 /* Called when a lesson reaches its natural end. Counts at most once per pass. */
 function recordPass(){
   try{
@@ -6841,6 +7116,7 @@ function recordPass(){
     const nextWasLocked = nxt!=null && !lessonUnlocked(course, nxt);
     progressData.passes[lessonKey(sh)] = before + 1;
     saveProgress();
+    syncCourseFlag(course);
     renderProgressCard();
     const finished = before + 1 >= need;
     showPassBanner(course.multiLang ? sh.name + ' finished' : 'Lesson ' + lessonNumberFor(course, S.sheetIdx) + ' finished',
@@ -6854,6 +7130,7 @@ let _pcResize = 0;
 function initProgress(){
   try{ localStorage.removeItem(APP_ID+':remember'); localStorage.removeItem(APP_ID+':position'); }catch(e){}   // old, removed feature
   loadProgress();
+  syncCourseFlag(currentCourse());   // 3-5-34: bring the home-page flag up to date with progress saved by earlier versions
   const nx = nextUpIdx(currentCourse());
   if(nx >= 0 && nx !== S.sheetIdx) selectHomeLesson(nx); else renderProgressCard();   // open on the lowest unfinished lesson
   window.addEventListener('resize', ()=>{ clearTimeout(_pcResize); _pcResize = setTimeout(renderProgressCard, 150); });
@@ -7445,6 +7722,7 @@ function uiRefresh(force){
         if(onlyIdx !== null ? i !== onlyIdx : nar) continue;
         S.sheetIdx = i; buildActiveLines();
         (S.activeLines || []).forEach(function(e){
+          if(e.recall) return;   // 3-5-31
           out.push({source:e.source || '', target:e.target || '', head:e.headerLabel || '', tone:e.tone || '', plain:(nar || !!e.srcOnly)});
         });
       }

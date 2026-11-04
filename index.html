@@ -195,7 +195,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     --track-btn-bg: rgba(255, 255, 255, 0.58);
     --track-btn-border: #EFEAE5;
     --track-title-es-color: #141414;
-    --track-title-en-color: #5B5652;
+    --track-title-pt-color: #166534;
+    --track-title-en-color: #3F3A36;
     --chevron-color: #F05A22;
     --install-bg: rgba(254, 233, 221, 0.62);
     --install-color: #C2410C;
@@ -217,7 +218,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --track-btn-bg: rgba(255, 255, 255, 0.07);
       --track-btn-border: #2A2622;
       --track-title-es-color: #F2EDE8;
-      --track-title-en-color: #C9C2BA;
+      --track-title-pt-color: #B4EFCB;
+      --track-title-en-color: #D5DCE2;
       --chevron-color: #F05A22;
       --install-bg: rgba(240, 90, 34, 0.12);
       --install-color: #F05A22;
@@ -238,7 +240,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     --track-btn-bg: rgba(255, 255, 255, 0.07);
     --track-btn-border: #2A2622;
     --track-title-es-color: #F2EDE8;
-    --track-title-en-color: #C9C2BA;
+    --track-title-pt-color: #B4EFCB;
+    --track-title-en-color: #D5DCE2;
     --chevron-color: #F05A22;
     --install-bg: rgba(240, 90, 34, 0.12);
     --install-color: #F05A22;
@@ -475,12 +478,19 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     letter-spacing: 0.01em;
     line-height: 1.3;
   }
+  .track-title-pt {
+    display: block;
+    color: var(--track-title-pt-color);
+    font-weight: 700;
+    font-size: clamp(13px, 1.7vw, 16px);
+    line-height: 1.25;
+  }
   .track-title-en {
     display: block;
     color: var(--track-title-en-color);
     font-weight: 600;
-    font-size: clamp(12px, 1.5vw, 15px);
-    line-height: 1.3;
+    font-size: clamp(12px, 1.4vw, 14px);
+    line-height: 1.25;
   }
   .track-icon svg.icon-lg { width: 44px; height: 44px; }
 
@@ -490,6 +500,23 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     font-weight: 700;
     flex-shrink: 0;
   }
+
+  /* Course order + progress (numbers, next-up highlight, checks). Nothing is ever disabled. */
+  .track-icon { position: relative; }
+  .track-btn:not(.is-next) .track-icon { background: rgba(240, 90, 34, 0.5); }
+  .track-btn:not(.is-next) .track-icon svg { opacity: 0.8; }
+  .track-btn.is-next .track-icon { box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.85), 0 0 14px rgba(240, 90, 34, 0.6); }
+  .track-btn.is-next { border-color: var(--brand-accent); }
+  .track-num {
+    position: absolute; top: -6px; left: -6px;
+    min-width: 26px; height: 26px; padding: 0 5px; box-sizing: border-box;
+    border-radius: 13px; background: #141414;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    color: #A39D96; font-size: 14px; font-weight: 800; line-height: 22px; text-align: center;
+  }
+  .track-btn.is-next .track-num { color: #FFFFFF; border-color: #FFFFFF; }
+  .track-btn.is-started .track-num { border-color: var(--brand-accent); }
+  .track-btn.is-done .track-num { background: #1F9D55; border-color: #FFFFFF; color: #FFFFFF; }
 </style>
 </head>
 <body translate="no" class="notranslate">
@@ -544,6 +571,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           </div>
           <div class="track-text">
             <span class="track-title-es">PRIMEROS PASOS</span>
+            <span class="track-title-pt">PRIMEIROS PASSOS</span>
             <span class="track-title-en">1ST STEPS</span>
           </div>
           <span class="chevron">›</span>
@@ -555,6 +583,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           </div>
           <div class="track-text">
             <span class="track-title-es">LO BÁSICO</span>
+            <span class="track-title-pt">O BÁSICO</span>
             <span class="track-title-en">BASICS</span>
           </div>
           <span class="chevron">›</span>
@@ -565,7 +594,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <svg viewBox="0 0 24 24"><path d="M3 20.5h5v-5h5v-5h5v-5h3"/><path d="M2 20.5h20"/></svg>
           </div>
           <div class="track-text">
-            <span class="track-title-es">FOUNDATION</span>
+            <span class="track-title-es">FUNDAMENTOS</span>
+            <span class="track-title-pt">FUNDAMENTOS</span>
+            <span class="track-title-en">FOUNDATION</span>
           </div>
           <span class="chevron">›</span>
         </a>
@@ -576,6 +607,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           </div>
           <div class="track-text">
             <span class="track-title-es">EJERCICIOS DE IDIOMA PARA EL TRABAJO</span>
+            <span class="track-title-pt">EXERCÍCIOS DE IDIOMA PARA O TRABALHO</span>
             <span class="track-title-en">WORK LANGUAGE EXERCISES</span>
           </div>
           <span class="chevron">›</span>
@@ -587,6 +619,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           </div>
           <div class="track-text">
             <span class="track-title-es">CURSO VIEJO</span>
+            <span class="track-title-pt">CURSO ANTIGO</span>
             <span class="track-title-en">OLD COURSE</span>
           </div>
           <span class="chevron">›</span>
@@ -598,6 +631,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           </div>
           <div class="track-text">
             <span class="track-title-es">SUENA MÁS NATURAL</span>
+            <span class="track-title-pt">SOA MAIS NATURAL</span>
             <span class="track-title-en">SOUND MORE NATURAL</span>
           </div>
           <span class="chevron">›</span>
@@ -609,6 +643,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           </div>
           <div class="track-text">
             <span class="track-title-es">ESENCIALES</span>
+            <span class="track-title-pt">ESSENCIAIS</span>
             <span class="track-title-en">ESSENTIALS</span>
           </div>
           <span class="chevron">›</span>
@@ -620,6 +655,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           </div>
           <div class="track-text">
             <span class="track-title-es">CUANDO NO ENTIENDES</span>
+            <span class="track-title-pt">QUANDO NÃO ENTENDE</span>
             <span class="track-title-en">REPAIR &amp; RECOVERY</span>
           </div>
           <span class="chevron">›</span>
@@ -641,6 +677,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           </div>
           <div class="track-text">
             <span class="track-title-es">CHARLA</span>
+            <span class="track-title-pt">BATE-PAPO</span>
             <span class="track-title-en">SMALLTALK</span>
           </div>
           <span class="chevron">›</span>
@@ -652,6 +689,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           </div>
           <div class="track-text">
             <span class="track-title-es">CONSTRUYENDO PUENTES</span>
+            <span class="track-title-pt">CONSTRUINDO PONTES</span>
             <span class="track-title-en">BUILDING BRIDGES</span>
           </div>
           <span class="chevron">›</span>
@@ -719,6 +757,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           </div>
           <div class="track-text">
             <span class="track-title-es">VACACIÓN DE BRENNAN</span>
+            <span class="track-title-pt">FÉRIAS DO BRENNAN</span>
             <span class="track-title-en">BRENNAN'S VACATION</span>
           </div>
           <span class="chevron">›</span>
@@ -1053,5 +1092,37 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 })();
 </script>
 <!-- ===================== END GUIDE PAGES ===================== -->
+<script>
+/* Course numbers + next-up highlight. Reads 'fayneCourseState:<file>' ('started' | 'done') written by each course page. Never blocks a link. */
+(function(){
+  var cards = document.querySelectorAll('.track-list .track-btn');
+  var CHECK = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block;margin:4px auto"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  function fileOf(a){
+    var h = (a.getAttribute('href') || '').split('#')[0].split('?')[0].split('/').pop();
+    try { return decodeURIComponent(h); } catch(e) { return h; }
+  }
+  function state(f){ try { return localStorage.getItem('fayneCourseState:' + f) || ''; } catch(e) { return ''; } }
+  function render(){
+    var nextFound = false;
+    Array.prototype.forEach.call(cards, function(a, i){
+      var ic = a.querySelector('.track-icon'); if(!ic) return;
+      var badge = a.querySelector('.track-num');
+      if(!badge){ badge = document.createElement('span'); badge.className = 'track-num'; badge.setAttribute('aria-hidden', 'true'); ic.appendChild(badge); }
+      if(!a.hasAttribute('data-label')) a.setAttribute('data-label', a.getAttribute('aria-label') || '');
+      var st = state(fileOf(a)), n = i + 1, isDone = (st === 'done'), isNext = !isDone && !nextFound;
+      if(isNext) nextFound = true;
+      a.classList.toggle('is-done', isDone);
+      a.classList.toggle('is-next', isNext);
+      a.classList.toggle('is-started', !isDone && st === 'started');
+      badge.innerHTML = isDone ? CHECK : String(n);
+      a.setAttribute('aria-label', a.getAttribute('data-label') + ', ' + n + (isDone ? ', completed' : (isNext ? ', next' : '')));
+    });
+  }
+  render();
+  window.addEventListener('pageshow', render);
+  window.addEventListener('storage', render);
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible') render(); });
+})();
+</script>
 </body>
 </html>
