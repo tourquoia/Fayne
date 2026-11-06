@@ -543,10 +543,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
     <div class="body-area">
       <header class="header-bar">
-        <a href="CEO.html" class="icon-btn photo" aria-label="Luna">
+        <a href="mailto:faynemilner@gmail.com" data-contact="mail" class="icon-btn photo" aria-label="Email Fayne">
           <img src="fayne.png" alt="Fayne">
         </a>
-        <h1 class="header-title"><button id="themeToggle" type="button" class="theme-toggle-btn" aria-label="FAYNE'S MINI LANGUAGE COURSES">FAYNE'S<br>MINI LANGUAGE COURSES</button></h1>
+        <h1 class="header-title"><button id="themeToggle" type="button" class="theme-toggle-btn" aria-label="FAYNE'S MINI LANGUAGE COURSES (FOR OFFICIAL TESTERS ONLY)">FAYNE'S<br>MINI LANGUAGE COURSES<span style="display:block;font-size:.6em;font-weight:700;letter-spacing:.05em;margin:.3em 0 0;">(FOR OFFICIAL TESTERS ONLY)</span></button></h1>
         <a href="Gratitude.html" class="icon-btn heart" aria-label="Gratitude">
           <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
         </a>
@@ -769,6 +769,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     <footer style="text-align:center; padding:6% 5% 8% 5%; font-size:clamp(11px, 1.5vw, 13px); color:var(--footer-color);">
       <a href="#instructor-guide" id="instructorGuideFootLink" style="color:var(--footer-color); text-decoration:underline; font-weight:600;">A note to instructors</a>
       <div style="margin-top:0.6em;"><a href="#student-guide" id="studentGuideFootLink" style="color:var(--footer-color); text-decoration:underline; font-weight:600;">How to use this (for students)</a></div>
+      <div style="margin-top:0.6em;"><a href="mailto:faynemilner@gmail.com" data-contact="mail" id="contactFootLink" style="color:var(--footer-color); text-decoration:underline; font-weight:600;">Contact</a></div>
       <div style="margin-top:0.8em;"><span style="display:inline-block; background:var(--ip-badge-bg); color:var(--ip-badge-color); font-size:12px; font-weight:700; line-height:1.35; padding:6px 18px; border:1px solid rgba(255,255,255,0.55); border-radius:999px; user-select:none;">Intellectual property of Fayne Milner<br>Not for public use</span></div>
     </footer>
   </main>
@@ -1124,5 +1125,101 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible') render(); });
 })();
 </script>
+<script>
+/* 3-5-39: CONTACT (email now, text later). One place holds the address; every "Contact" link on the page reads it from here.
+   - EMAIL: opens the person's own mail app to CONTACT.email. The subject names the course + version, and the body is left EMPTY at the top for
+     what they want to say, with a short info block UNDER it (course, version, device, browser, screen). The browser cannot read an iPhone's model
+     name, so on iPhone/iPad the block ends with a line for them to type it; the screen size printed above it identifies the model.
+   - TEXT: switched OFF. To turn it on, put the number in CONTACT.sms (with country code, like '+15551234567'). A "Text me" link then appears
+     everywhere "Contact" does (top bar of the help pages, footer, "No sound?" page). Empty = nothing shows.
+   Static UI only: touches no playback code. */
+(function(){
+  var CONTACT = { email:'faynemilner@gmail.com', sms:'' };
+  window.LP_CONTACT = CONTACT;
+  function ver(){ return ''; }   // home page has no version badge
+  function appName(){ return "Fayne's Mini Language Courses (home page)"; }
+  function info(){
+    var ua = navigator.userAgent || '', os = '', dev = '', m, ios = false;
+    if((m = /(iPhone|iPad|iPod).*? OS (\d+)[_.](\d+)/.exec(ua))){ dev = m[1]; os = 'iOS ' + m[2] + '.' + m[3]; ios = true; }
+    else if(/Macintosh/.test(ua) && navigator.maxTouchPoints > 1){ dev = 'iPad'; os = 'iPadOS'; ios = true; }
+    else if((m = /Android (\d+(?:\.\d+)*)/.exec(ua))){ os = 'Android ' + m[1]; var mm = /;\s*([^;)]+?)\s+Build/.exec(ua) || /Android[^;]*;\s*([^;)]+)\)/.exec(ua); dev = mm ? mm[1] : 'Android device'; }
+    else if(/Windows/.test(ua)) os = 'Windows'; else if(/Mac OS X/.test(ua)) os = 'macOS'; else if(/Linux/.test(ua)) os = 'Linux';
+    var br = /CriOS/.test(ua) ? 'Chrome' : /FxiOS/.test(ua) ? 'Firefox' : /EdgiOS|Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : 'unknown';
+    var standalone = false; try{ standalone = !!(navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)); }catch(e){}
+    var scr = ''; try{ scr = screen.width + 'x' + screen.height + ' @' + (window.devicePixelRatio || 1) + 'x'; }catch(e){}
+    var L = [];
+    L.push('Page: ' + appName());
+        L.push('Device: ' + (dev ? dev + ', ' : '') + (os || 'unknown'));
+    L.push('Browser: ' + br + (standalone ? ' (opened from the Home Screen icon)' : ''));
+    if(scr) L.push('Screen: ' + scr);
+    if(ios) L.push('Phone model (please type it, for example iPhone SE 2nd generation): ');
+    return L.join('\n');
+  }
+  function enc(s){ return encodeURIComponent(s).replace(/%0A/g, '%0D%0A'); }
+  function mailHref(){
+    var subj = 'Question about ' + appName();
+    var body = '\n\n\n----- Please leave the lines below so I can help you -----\n' + info() + '\n';
+    return 'mailto:' + CONTACT.email + '?subject=' + enc(subj) + '&body=' + enc(body);
+  }
+  function smsHref(){
+    var isIos = /iPhone|iPad|iPod/.test(navigator.userAgent || '') || (/Macintosh/.test(navigator.userAgent || '') && navigator.maxTouchPoints > 1);
+    var body = 'Question about ' + appName() + '\n\n\n(' + info().replace(/\n/g, '; ') + ')';
+    return 'sms:' + CONTACT.sms + (isIos ? '&' : '?') + 'body=' + encodeURIComponent(body);
+  }
+  /* one click handler for every contact link on the page (links are marked data-contact="mail" or data-contact="sms") */
+  document.addEventListener('click', function(e){
+    var t = e.target && e.target.closest ? e.target.closest('[data-contact]') : null;
+    if(!t) return;
+    var kind = t.getAttribute('data-contact');
+    if(kind === 'sms' && !CONTACT.sms) return;
+    e.preventDefault();
+    try{ location.href = (kind === 'sms') ? smsHref() : mailHref(); }catch(err){}
+  }, true);
+  /* top of every help page (student guide, instructor note, "No sound?"): a small Contact link at the right end of the colored bar */
+  function mk(kind, label){
+    var a = document.createElement('a');
+    a.href = '#'; a.setAttribute('data-contact', kind); a.textContent = label; a.className = 'sg-contact';
+    a.style.cssText = 'margin-left:auto;color:#fff;font-size:14px;font-weight:700;text-decoration:underline;white-space:nowrap;';
+    return a;
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.sg-bar'), function(bar){
+    var c = mk('mail', 'Contact'); bar.appendChild(c);
+    if(CONTACT.sms){ var t = mk('sms', 'Text'); t.style.marginLeft = '12px'; bar.appendChild(t); }
+  });
+  /* the footer link is in the page markup (id contactFootLink); the text link joins it only when a number is set */
+  if(CONTACT.sms){
+    var f = document.getElementById('contactFootLink');
+    if(f){ var s = f.cloneNode(false); s.id = 'contactSmsFootLink'; s.setAttribute('data-contact', 'sms'); s.textContent = 'Text me'; f.parentNode.insertBefore(document.createElement('br'), f.nextSibling); f.parentNode.insertBefore(s, f.nextSibling.nextSibling); }
+  }
+})();
+</script>
+
+<!-- 3-5-40: STATS for index.html. Paste just before </body>. Same switch as the template: put the GoatCounter site code in GC_CODE (empty = nothing is sent).
+     Counts: page view /index, and event open-app/<file> when a course card link is clicked. No cookies, no stored ID. -->
+<script>
+(function(){
+  var GC_CODE = 'faynemilner';   // the part before .goatcounter.com; must be the same code as GC.code in the template
+  function send(path, title, isEvent){
+    try{
+      if(!GC_CODE || location.protocol === 'file:' || /^(localhost|127\.|\[::1\])/.test(location.hostname)) return;
+      var url = 'https://' + GC_CODE + '.goatcounter.com/count?p=' + encodeURIComponent(path) + '&t=' + encodeURIComponent(title || path) +
+        (isEvent ? '&e=true' : '') + '&s=' + encodeURIComponent((screen.width||0) + ',' + (screen.height||0) + ',' + (window.devicePixelRatio||1)) +
+        '&rnd=' + Math.random().toString(36).slice(2, 8);
+      if(typeof fetch === 'function') fetch(url, {method:'GET', mode:'no-cors', keepalive:true, credentials:'omit'}).catch(function(){});
+      else new Image().src = url;
+    }catch(e){}
+  }
+  send('/index', document.title || 'index', false);
+  document.addEventListener('click', function(e){
+    try{
+      var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+      if(!a) return;
+      var m = (a.getAttribute('href') || '').match(/([^\/?#]+)\.html?(?:[?#]|$)/i);
+      if(m) send('open-app/' + m[1].toLowerCase(), 'Opened ' + m[1], true);
+    }catch(err){}
+  }, true);
+})();
+</script>
+
 </body>
 </html>

@@ -1053,5 +1053,32 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 })();
 </script>
 <!-- ===================== END GUIDE PAGES ===================== -->
+<!-- 3-5-40: STATS for index.html. Paste just before </body>. Same switch as the template: put the GoatCounter site code in GC_CODE (empty = nothing is sent).
+     Counts: page view /index, and event open-app/<file> when a course card link is clicked. No cookies, no stored ID. -->
+<script>
+(function(){
+  var GC_CODE = 'faynemilner';   // the part before .goatcounter.com; must be the same code as GC.code in the template
+  function send(path, title, isEvent){
+    try{
+      if(!GC_CODE || location.protocol === 'file:' || /^(localhost|127\.|\[::1\])/.test(location.hostname)) return;
+      var url = 'https://' + GC_CODE + '.goatcounter.com/count?p=' + encodeURIComponent(path) + '&t=' + encodeURIComponent(title || path) +
+        (isEvent ? '&e=true' : '') + '&s=' + encodeURIComponent((screen.width||0) + ',' + (screen.height||0) + ',' + (window.devicePixelRatio||1)) +
+        '&rnd=' + Math.random().toString(36).slice(2, 8);
+      if(typeof fetch === 'function') fetch(url, {method:'GET', mode:'no-cors', keepalive:true, credentials:'omit'}).catch(function(){});
+      else new Image().src = url;
+    }catch(e){}
+  }
+  send('/index', document.title || 'index', false);
+  document.addEventListener('click', function(e){
+    try{
+      var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+      if(!a) return;
+      var m = (a.getAttribute('href') || '').match(/([^\/?#]+)\.html?(?:[?#]|$)/i);
+      if(m) send('open-app/' + m[1].toLowerCase(), 'Opened ' + m[1], true);
+    }catch(err){}
+  }, true);
+})();
+</script>
+
 </body>
 </html>

@@ -19,6 +19,19 @@ template skips that, the course is then missed by every later template round, an
      (it prints RECOVERED). Handing back the product file too is optional. Never hand back a hand-edited copy of this template.
   To update an existing course: edit the data region of its product file, run step 4. Check anything at any time: build.py --check.
   A loose copy someone already made (still has the slot marker comments):  build.py --adopt <File.html>
+3-5-40: ANONYMOUS STATISTICS (GoatCounter). (1) New page "Anonymous statistics" (hash #statistics), opened from a footer link under the two guide links, same overlay style as the student guide and the instructor note; plain-language text, nothing scary. (2) Tracking script right after the CONTACT script (search "3-5-40: STATS"). It sends nothing until GC.code is set to the GoatCounter site code (empty = fully off, safe default). No cookies, no stored ID. Events carry app, lesson number, source and target language: lesson-start / lesson-half / lesson-complete / leave, plus page views for the app and its help pages. (3) Two one-line hooks only: LP_STATS.line(i) in runLine after S.idx is set, LP_STATS.pass() in recordPass after the passStart check. Playback code, silent anchor track and voices untouched. See STATS_HANDOFF_3-5-40.md for what is left to do.
+3-5-39: CONTACT + "close every lesson" SOUND STEP. (1) A small Contact link at the right end of the top bar of the student guide, the instructor note and the "No sound?" page, a Contact link in the footer under the two guide links, and an "Email me about this" button at the end of the "No sound?" page. It opens the person's mail app to the address in CONTACT.email (search "3-5-39: CONTACT"); the subject carries course + version and the body has room to type, with course, version, device, browser and screen size printed UNDER it. Texting is coded but OFF: put a number in CONTACT.sms and a "Text me" link appears in all the same places. (2) New first step on the "No sound?" page (en, es, pt, fr, it, de): close every lesson open in any browser or Home Screen icon (examples: Safari, Chrome, Firefox, Edge, Brave) and how to swipe apps away. Playback code untouched.
+3-5-38: ONE TAB AT A TIME ACROSS ALL COURSES. The stale-tab handoff used a channel named after the course (APP_ID), so opening a different course never silenced the old one; on iPhone, stacked tabs each holding the audio session left the sound dead until the ringer switch was toggled. Now every course shares one channel name ('lang-player-instance-control'), so the newest tab of ANY course wins and the others stop speech, stop the silent anchor and drop their lock-screen controls. The banner has a 'Use this tab instead' button (reload = become the newest). Works only within one browser on one site address (Safari and Chrome, or the home-screen app, cannot see each other). Anchor track and speech code untouched.
+3-5-37: (1) Thai gets an explicit default voice path ('th':'th' in CODE_TO_REGION_KEY; Thai was already in BASE_LANGS / HDYS / region profiles). (2) Two small chips in a row just below the word card: LEFT "Practice only" = shortcut for source language "none" (tap again = previous source back); RIGHT "Latin script" = shown only when the current
+target language has a Latin column (sheet.latn) in the course. It is a DISPLAY crutch: on = the Latin text is shown on screen, off = the original script. The sound is ALWAYS the original script. Remembered per app.
+(3) Callbacks: the R marker takes a number (diamond/star + R3 = pick from the last 3 phrases heard), the default R window is now 5 (was 8); "how do you say" lines are never callback material.
+3-5-36: the 'frames3' option adds NO frames when lesson 1 already opens with a "how do you say" row written in the sheet (first row's target starts with the target-language HDYS text, or its
+source with the source-language one). Hand-written frames in the sheet win; callbacks in lesson 1 still work. Nothing to set.
+3-5-35: LESSON 1 OPTIONS FOR CALLBACKS. New course option BUILT_IN_COURSE.recall.lesson1 = 'auto' (default) | 'frames3' | 'classic'. 'auto' picks 'frames3' when any dialogue sheet of the course
+already holds callback symbols (diamond/star in column A) and 'classic' otherwise. 'frames3': lesson 1 starts with THREE taught "how do you say" frames (words 1 and 2 = single words or
+the shortest phrases from the next few lines, 3 = a small sentence from the lesson, a word if none fits), each played like a callback; the plain first/last "how do you say" lines are not
+added; and callback symbols WORK in lesson 1 (the learner has just learned the pattern). 'classic' = the 3-5-33 behaviour. Knobs in RECALL_CFG: l1Look (how many lines ahead to pick from), l1WordMax,
+l1SentMin, l1SentMax. Nothing needs adding to the spreadsheet for the frames.
 3-5-34: THE SPREADSHEET LOADER IS NOT IN THIS FILE, AND THAT IS ON PURPOSE. The runtime "＋" spreadsheet loader (button, file input,
 column-picker modal, course-setup modal, XLSX-parsing code) lives in _build/modules/ and the build injects it ONLY into a course whose
 product file sets the course flag spreadsheetLoader:true (today: stub-player). Every other course is built without it and only plays the
@@ -90,7 +103,7 @@ HOME-PAGE COURSE FLAG (3-5-34): when the page opens and whenever a lesson pass i
 CALLBACKS / RECALL BREAKS (3-5-33, ON by default; BUILT_IN_COURSE.recall = {off:true} turns them off for a course): rows whose column A is a marker (diamond or star, then R, L, P, P<lesson number>, or nothing) and whose language cells are empty make the player quiz the learner
 Pimsleur-style ("How do you say ..." in the target language, the phrase in the source language, a think pause, then the target phrase twice). Full rules, tuning
 knobs and the 44-language "how do you say" table (HDYS) are in the comment block "RECALL BREAKS" above stripTags. A course with no marker rows is unaffected.
-When a language is onboarded, add it to HDYS (build.py prints a NOTE for any BASE_LANGS code that has no entry). Lesson 1 ALWAYS gets "how do you say" added as its first and last line by the player (no check); callbacks start in lesson 2.
+When a language is onboarded, add it to HDYS (build.py prints a NOTE for any BASE_LANGS code that has no entry). Lesson 1 (3-5-35/36): if the course has callback symbols it gets three taught "how do you say" frames at the top and callbacks work in lesson 1 (no frames added if the sheet's lesson 1 already opens with its own "how do you say" rows); otherwise (or recall.lesson1:'classic') "how do you say" is added as its first and last line and callbacks start in lesson 2.
 VOICES (3-5-32): when a language has no installed voice the player now speaks it with a stand-in voice (device default, else English) and shows a notice; any voice can be picked by hand, and a mismatched pick shows "not ideal" under the menu.
 BUILD SYSTEM (added in 3-5-6; multi-language mode, themes and the spreadsheet loader added in 3-5-7)): the finished course files are NOT hand-edited
 copies of this template. Each one is built by _build/build.py from this file
@@ -114,20 +127,20 @@ RULES FOR ANYONE (OR ANY CLAUDE) EDITING OR REPLACING THIS TEMPLATE:
  2. Never put course content (lessons, dialogues, titles) in the template. It belongs in _build/products/<Name>.product.txt.
  3. If you develop the template separately and hand it back: keep every slot line, keep the course flags
     (search "COURSE FLAGS" and "MULTI-LANGUAGE MODE"), then give the zip + template to Claude to swap in.
- 4. VERSION RULE (owner decision, final): a version is ALWAYS three numbers, 3-5-N. 3 = version, 5 = subversion, N = the working number (34 now).
-    EVERY time anything changes (a fix, a test, a tiny edit) N goes up by exactly one: 3-5-34 -> 3-5-35 -> 3-5-36. NEVER a fourth number (no 3-5-32-1),
-    NEVER the digits run together (not 3530). The one number names everything: the template (template_arch_3-5-34.html), the zip (3-5-34.zip), the
-    zip's top folder (3-5-34) and the code-comment tag ("3-5-34: ..."). Exactly one template_arch_*.html may exist in the folder: rename it, delete
-    the old one, run python3 _build/build.py (add --check to test only) and rebuild every course. The on-screen label (v3.5.34) is read from the file name.
+ 4. VERSION RULE (owner decision, final): a version is ALWAYS three numbers, 3-5-N. 3 = version, 5 = subversion, N = the working number (36 now).
+    EVERY time anything changes (a fix, a test, a tiny edit) N goes up by exactly one: 3-5-36 -> 3-5-37 -> 3-5-38. NEVER a fourth number (no 3-5-32-1),
+    NEVER the digits run together (not 3530). The one number names everything: the template (template_arch_3-5-36.html), the zip (3-5-36.zip), the
+    zip's top folder (3-5-36) and the code-comment tag ("3-5-36: ..."). Exactly one template_arch_*.html may exist in the folder: rename it, delete
+    the old one, run python3 _build/build.py (add --check to test only) and rebuild every course. The on-screen label (v3.5.36) is read from the file name.
     This rule replaces every older numbering note in this file (sub-version scheme, 3-5-N-k, "test step", "next test series").
- 5. Layout: the zip and its top folder are named by the revision (3-5-34), with hyphens. Inside that folder: the template, _build, arch (everything built) and non-arch (hand-kept files, Luna only; never written).
+ 5. Layout: the zip and its top folder are named by the revision (3-5-36), with hyphens. Inside that folder: the template, _build, arch (everything built) and non-arch (hand-kept files, Luna only; never written).
  6. After a change, compare old vs new playback on every course before handing back; do not print big data to the screen.
  7. NEVER CHANGE THE SILENT ANCHOR TRACK (the 0.5 s <audio id="mediaSessionAnchor"> loop). A longer one makes speech
     stall and cut off. Locked at 3-5-9-2; it may change only with a new, owner-tested fix for the audio-cutting-out problem.
 =====================================================================
 -->
 <!-- build:JysnMlnrMthd -->
-<!-- template_arch_3-5-34 + Family.product (0 patch(es)) -->
+<!-- template_arch_3-5-40 + Family.product (0 patch(es)) -->
 <!DOCTYPE html>
 <html lang="en" translate="no" class="notranslate">
 <head>
@@ -865,6 +878,18 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
   /* ---- Practice mic toggle: lives inside the stage card, right under
      the target text, only while Practice is active. ---- */
+  .stage-chip{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:6px 12px; border-radius:999px; border:1px solid var(--border-soft); background:transparent;
+    color:var(--ink-dim); font-family:'Inter', inherit; font-size:12px; font-weight:600; cursor:pointer; opacity:.85;
+  }
+  .chip-row{ display:flex; flex-wrap:wrap; gap:8px; margin:8px 2px 0; }
+  .chip-row #latnAudioChip{ margin-left:auto; }
+  .stage-chip.hidden{ display:none; }
+  .stage-chip .chip-tick{ width:13px; height:13px; border-radius:3px; border:1.5px solid var(--ink-dim); display:inline-block; position:relative; }
+  .stage-chip.on{ color:var(--ink); opacity:1; border-color:var(--border-strong); }
+  .stage-chip.on .chip-tick{ background:var(--amber); border-color:var(--amber); }
+  .stage-chip.on .chip-tick::after{ content:''; position:absolute; left:3px; top:0px; width:3px; height:6px; border:solid #fff; border-width:0 1.6px 1.6px 0; transform:rotate(45deg); }
   .mic-toggle{
     display:none; align-items:center; gap:8px; margin-top:6px;
     padding:9px 16px; border-radius:999px; border:1.5px solid var(--border-strong);
@@ -1180,7 +1205,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 </style>
 </head>
 <body>
-<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.34</div>
+<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.40</div>
 <script>/* 3-5-26-1: if the build never ran on this file, the version token is still in the label -> say so in red instead of showing the raw token. (Token is split here so the build does not rewrite it.) */
 (function(){ try{ var b=document.getElementById('appVersionBadge'); if(b && b.textContent.indexOf('__APP_'+'VERSION__')>-1){ b.textContent='UNBUILT COPY - no product file'; b.style.color='#d92d20'; b.style.fontWeight='800'; b.style.textShadow='none'; } }catch(e){} })();
 </script>
@@ -1237,7 +1262,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
      stopped and staying open here serves no purpose except hogging
      resources, so the message just tells the person to close it. -->
 <div id="staleTabNotice" class="hidden" style="background:#f8d7da;color:#58151c;border-bottom:1px solid #f1aeb5;padding:10px 16px;font-size:14px;line-height:1.4;">
-  This lesson was opened in a newer tab. Audio here has been stopped — you can close this tab and continue in the newer one.
+  Another lesson was opened in a newer tab. Audio here has been stopped — close this tab, or tap the button to use this one instead.
 </div>
 
 <div class="wrap">
@@ -1348,6 +1373,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <button class="btn ghost" id="retryBtn">Retry</button>
         </div>
       </div>
+    </div>
+
+    <!-- 3-5-37: chip row just BELOW the word card (outside it, so tapping never pauses/plays). Left = Practice only (source language -> none). Next to it = Latin script (only for a target language with a Latin column). -->
+    <div class="chip-row">
+      <button class="stage-chip" id="practiceOnlyChip" type="button" title="Practice only: no source language" aria-pressed="false"><span class="chip-tick"></span><span>Practice only</span></button>
+      <button class="stage-chip hidden" id="latnAudioChip" type="button" title="Show the Latin-letter version on screen (the sound stays in the original script)" aria-pressed="false"><span class="chip-tick"></span><span>Latin script</span></button>
     </div>
 
     <div class="transport">
@@ -1472,7 +1503,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     </div>
   </footer>
 
-  <div class="student-guide-foot" style="text-align:center; padding:14px 5% 4px 5%; line-height:2;"><a href="#instructor-guide" id="instructorGuideFootLink" style="color:var(--ink-soft); text-decoration:underline; font-weight:600; font-size:13px;">A note to instructors</a><br><a href="#student-guide" id="studentGuideFootLink" style="color:var(--ink-soft); text-decoration:underline; font-weight:600; font-size:13px;">How to use this (for students)</a></div>
+  <div class="student-guide-foot" style="text-align:center; padding:14px 5% 4px 5%; line-height:2;"><a href="#instructor-guide" id="instructorGuideFootLink" style="color:var(--ink-soft); text-decoration:underline; font-weight:600; font-size:13px;">A note to instructors</a><br><a href="#student-guide" id="studentGuideFootLink" style="color:var(--ink-soft); text-decoration:underline; font-weight:600; font-size:13px;">How to use this (for students)</a><br><a href="#statistics" id="statsFootLink" style="color:var(--ink-soft); text-decoration:underline; font-weight:600; font-size:13px;">Anonymous statistics</a><br><a href="mailto:faynemilner@gmail.com" data-contact="mail" id="contactFootLink" style="color:var(--ink-soft); text-decoration:underline; font-weight:600; font-size:13px;">Contact</a></div>
 
   <div class="ad-safe-spacer"></div>
 
@@ -1603,8 +1634,8 @@ const APP_ID = 'family';
        gets superseded by a genuinely newer tab of the same page goes
        stale. */
 (function(){
-  const CHANNEL_NAME = APP_ID + '-instance-control';
-  const STORAGE_KEY = APP_ID + '-active-instance';
+  const CHANNEL_NAME = 'lang-player-instance-control';   // 3-5-38: same name for EVERY course (was APP_ID-based, so a different course never silenced this one)
+  const STORAGE_KEY = 'lang-player-active-instance';
   const instanceId = Math.random().toString(36).slice(2) + Date.now();
   let isStale = false;
 
@@ -1619,8 +1650,18 @@ const APP_ID = 'family';
     if(isStale) return; // only need to do this once
     isStale = true;
     stopAllAudio();
+    try{ if('mediaSession' in navigator){ navigator.mediaSession.playbackState = 'none'; navigator.mediaSession.metadata = null; } }catch(e){}   // 3-5-38: let go of the lock-screen / car controls
     const el = document.getElementById('staleTabNotice');
-    if(el) el.classList.remove('hidden');
+    if(el){
+      el.classList.remove('hidden');
+      if(!document.getElementById('staleTabUseHere')){   // 3-5-38: one tap to come back here (a reload makes THIS the newest tab, which silences the other)
+        const b = document.createElement('button');
+        b.id = 'staleTabUseHere'; b.type = 'button'; b.textContent = 'Use this tab instead';
+        b.style.cssText = 'display:block;margin-top:8px;padding:10px 16px;font-size:16px;';
+        b.addEventListener('click', ()=>{ try{ location.reload(); }catch(e){} });
+        el.appendChild(b);
+      }
+    }
   }
 
   function claimActive(){
@@ -1939,10 +1980,13 @@ function guessVoiceGender(voice){
 /* ============================================================
    3-5-33: CALLBACKS / RECALL BREAKS ("How do you say ...?") -- Pimsleur-style forced recall. ("Callback" and "recall break" are the same feature.)
    DEFAULT ON for every course. A course without callbacks sets BUILT_IN_COURSE.recall = {off:true}.
-   LESSON 1 (the first real lesson) ALWAYS gets "how do you say" added as its FIRST and LAST line (source + target, read by the first character's voice). No check, no symbol,
+   3-5-35 LESSON 1 OPTIONS (recall.lesson1 = 'auto' | 'frames3' | 'classic'; auto = frames3 if the course's sheets hold callback symbols, else classic): FRAMES3 = three taught frames at the top of lesson 1
+       (2 words + 1 small sentence, all from the first lines; no sheet edit) and callbacks are allowed in lesson 1. CLASSIC = the paragraph below.
+   CLASSIC: LESSON 1 (the first real lesson) gets "how do you say" added as its FIRST and LAST line (source + target, read by the first character's voice). No check, no symbol,
        no sheet edit. Lesson 1 has no callbacks. CALLBACKS START IN LESSON 2. They need a distinct source language and a HDYS entry for both languages; otherwise nothing is added.
    WHERE THEY HAPPEN: a marker row is an ordinary row whose SPEAKER cell (column A) holds a marker and whose language cells are EMPTY. The symbol is a diamond (\u25C6) or a star (\u2605):
-       \u25C6R      callback to something heard in the last minute or two (the last rWindow phrases actually heard in this pass, before the marker)
+       \u25C6R      callback to something heard just before (the last rWindow = 5 phrases actually heard in this pass, before the marker)
+       \u25C6R3     3-5-37: same, but the window is the last 3 phrases (any number: R2, R4, R5...). "How do you say" lines are never picked.
        \u25C6L      something earlier in the same lesson (older than the R window)
        \u25C6P12    one random phrase from lesson 12 (the lesson number the learner sees); a bad number falls back to plain \u25C6P
        \u25C6P      one random phrase from any earlier real lesson (the intro / Lesson 0 never counts)
@@ -1961,7 +2005,8 @@ function guessVoiceGender(voice){
        {rWindow, shortWords, longWords, thinkBaseMs, thinkPerWordMs, thinkMaxMs, recentCap, resumeMs, keepMs, off:true}.
    ONBOARDING A LANGUAGE: every time a language is added, define its HDYS ("how do you say") entry too (same codes as BASE_LANGS). build.py prints a NOTE for any code without one.
    ============================================================ */
-const RECALL_CFG = { rWindow:8, shortWords:7, longWords:12, thinkBaseMs:3000, thinkPerWordMs:500, thinkMaxMs:7000, recentCap:20, resumeMs:15000, keepMs:120000 };
+const RECALL_CFG = { rWindow:5, shortWords:7, longWords:12, thinkBaseMs:3000, thinkPerWordMs:500, thinkMaxMs:7000, recentCap:20, resumeMs:15000, keepMs:120000,
+                     l1Look:8, l1WordMax:2, l1SentMin:3, l1SentMax:6 };   // 3-5-35: lesson-1 frames (see "LESSON 1 OPTIONS")
 const RECALL_KEY = APP_ID + ':recall';
 // "How do you say" in each language, written WITHOUT closing punctuation (it is followed by the phrase). Languages marked in
 // HDYS_NEEDS_CHECK are drafts: have a native speaker confirm them before shipping. An empty string = no draft yet = recall stays off for that language.
@@ -1987,7 +2032,7 @@ function recallMarkerOf(cell){
   const m = /^\s*[\u25C6\u2605]\s*([RLPrlp])?\s*(\d+)?\s*$/.exec(String(cell==null ? '' : cell));
   if(!m) return null;
   const kind = m[1] ? m[1].toUpperCase() : 'A';
-  return {kind, num:(kind === 'P' && m[2]) ? parseInt(m[2],10) : 0};
+  return {kind, num:((kind === 'P' || kind === 'R') && m[2]) ? parseInt(m[2],10) : 0};   // 3-5-37: R may carry a window size (R3 = pick from the last 3 phrases)
 }
 function courseHasRecall(course){
   return !(course && course.recall && course.recall.off);   // 3-5-33: callbacks are the default; BUILT_IN_COURSE.recall = {off:true} makes a course without them
@@ -2008,16 +2053,35 @@ function recallBuildCtx(course, sh){
   const hT = hdysFor(S.tgtCode), hS = hdysFor(S.srcCode);
   if(!hT || !hS || !S.srcCode || S.srcCode === S.tgtCode) return null;
   const num = lessonNumberFor(c, S.sheetIdx);
-  return {num, hT, hS, needFrame: (num === 1)};   // 3-5-33: lesson 1 ALWAYS gets "how do you say" as its first and last line
+  // 3-5-35: LESSON 1 OPTIONS. 'frames3' (default whenever the course's sheets hold callback symbols) = three taught "how do you say" frames at the top of lesson 1
+  // and callbacks allowed in lesson 1. 'classic' = the 3-5-33 behaviour (plain "how do you say" as first and last line, no callbacks in lesson 1).
+  const f3 = (num === 1) && recallLesson1Mode(c) === 'frames3';
+  return {num, hT, hS, needFrame: (num === 1 && !f3), frames3: f3};
+}
+function courseHasMarkers(course){
+  if(!course) return false;
+  if(course._rcHasMk === undefined){
+    course._rcHasMk = !!(course.sheets || []).some(sh => sh && sh.mode !== 'narration' && (sh.rows || []).some(r => r && recallMarkerOf(r[0])));
+  }
+  return course._rcHasMk;
+}
+function recallLesson1Mode(course){
+  const o = course && course.recall && course.recall.lesson1;   // 'auto' (default) | 'frames3' | 'classic'
+  if(o === 'frames3' || o === 'classic') return o;
+  return courseHasMarkers(course) ? 'frames3' : 'classic';
 }
 function recallMakeMarker(mk, ri, ctx){
   if(!ctx) return null;
-  if(ctx.num === 1) return null;   // 3-5-33: lesson 1 teaches the phrase and has no callbacks; they start in lesson 2
+  if(ctx.num === 1 && !ctx.frames3) return null;   // 3-5-33: classic lesson 1 has no callbacks; 3-5-35: with the frames3 option they work in lesson 1 (the frames just taught "how do you say")
   return {recall:true, kind:mk.kind, pNum:mk.num, rid:ri, speaker:'', tone:'', source:'', target:''};
+}
+function recallIsHdys(e){   // 3-5-37: "how do you say" lines (the lesson-1 frames, hand-written or added) are never callback material
+  const c = currentCourse(), hs = [hdysFor(S.tgtCode), hdysFor(S.srcCode)].filter(Boolean).map(recallNorm);
+  return hs.some(h => h && (recallNorm(e.target).indexOf(h) === 0 || recallNorm(e.source).indexOf(h) === 0));
 }
 function recallEligible(e){
   const cfg = recallCfg();
-  return !!(e && !e.recall && !e.frame && !e.srcOnly && !e.voiceEs && !e.isVariant && e.rid !== undefined && e.source && e.target &&
+  return !!(e && !e.recall && !recallIsHdys(e) && !e.frame && !e.srcOnly && !e.voiceEs && !e.isVariant && e.rid !== undefined && e.source && e.target &&
             recallWords(e.source) <= cfg.longWords && recallWords(e.target) <= cfg.longWords);
 }
 function recallGroups(list, sheetIdx, lessonNum){
@@ -2039,6 +2103,35 @@ function recallAddFrames(list, ctx){
   if(!base) return;
   const mk = () => Object.assign({}, base, {tone:'', source:ctx.hS, sourceSpoken:ctx.hS, target:ctx.hT, targetSpoken:ctx.hT, headerLabel:'', genderLabel:'', genderForm:undefined, rid:undefined, frame:true});
   list.unshift(mk()); list.push(mk());
+}
+function recallAddFrames3(list, ctx){
+  // 3-5-35: three taught "how do you say" frames at the top of lesson 1. Frames 1 and 2 = single words (or the shortest phrases) from the next few lines; frame 3 = a small
+  // sentence from the lesson (a word if there is no sentence). Each plays like a callback (How do you say / source / think pause / target twice), so the learner meets the pattern
+  // before the dialogue and the same words come right after. Nothing in the sheet is needed.
+  // 3-5-36: the sheet may already open with its own "how do you say" rows (hand-written frames). Then the player adds none; callbacks in lesson 1 still work.
+  const first = list.find(e => !e.recall && !e.srcOnly && e.rid !== undefined);
+  if(first){
+    const hasH = (txt, h) => { const a = recallNorm(txt), b = recallNorm(h); return !!b && a.indexOf(b) === 0; };
+    if(hasH(first.targetSpoken || first.target, ctx.hT) || hasH(first.sourceSpoken || first.source, ctx.hS)) return;
+  }
+  const cfg = recallCfg(), groups = recallGroups(list, S.sheetIdx, 1);
+  if(!groups.length) return;
+  const look = groups.slice(0, cfg.l1Look), used = {};
+  const key = g => recallNorm(g.main.target);
+  const take = g => { used[key(g)] = 1; return g; };
+  const words = look.filter(g => recallWords(g.main.source) <= cfg.l1WordMax && recallWords(g.main.target) <= cfg.l1WordMax);
+  const pickWords = [];
+  words.forEach(g => { if(pickWords.length < 2 && !used[key(g)]) pickWords.push(take(g)); });
+  if(pickWords.length < 2){   // not enough one-word lines: fill with the shortest of the next few lines
+    look.slice().sort((a, b) => (recallWords(a.main.target) - recallWords(b.main.target))).forEach(g => { if(pickWords.length < 2 && !used[key(g)]) pickWords.push(take(g)); });
+  }
+  let third = groups.slice(0, cfg.l1Look * 2).find(g => !used[key(g)] &&
+      recallWords(g.main.source) >= cfg.l1SentMin && recallWords(g.main.source) <= cfg.l1SentMax &&
+      recallWords(g.main.target) >= cfg.l1SentMin && recallWords(g.main.target) <= cfg.l1SentMax);
+  if(!third) third = groups.find(g => !used[key(g)] && g.short);   // no small sentence: another word is fine
+  const picks = pickWords.concat(third ? [third] : []);
+  const frames = picks.map(g => ({recall:true, kind:'F', pNum:0, preset:g, speaker:'', tone:'', source:'', target:''}));
+  frames.slice().reverse().forEach(f => list.unshift(f));
 }
 function recallPool(course, i){
   const key = i + '|' + S.srcCode + '|' + S.tgtCode;
@@ -2093,6 +2186,7 @@ function recallChoose(groups){
   return recallRandom(oldest.slice(0, Math.min(3, oldest.length)));
 }
 function recallResolve(entry){
+  if(entry.preset) return entry.preset;   // 3-5-35: lesson-1 frame, phrase chosen when the lesson was built
   const course = currentCourse(), cfg = recallCfg();
   const pos = S.activeLines.indexOf(entry), num = lessonNumberFor(course, S.sheetIdx);
   const prefer = a => { const s = a.filter(g => g.short); return s.length ? s : a; };
@@ -2101,7 +2195,8 @@ function recallResolve(entry){
   const hr = (S.heardR && S.heardR.sheet === S.sheetIdx) ? S.heardR.set : null;
   if(hr){ const h = all.filter(g => hr[g.main.rid]); if(h.length) all = h; }
   const here = prefer(all);
-  const R = here.slice(-cfg.rWindow), L = here.slice(0, Math.max(0, here.length - cfg.rWindow));
+  const rw = (entry.kind === 'R' && entry.pNum > 0) ? entry.pNum : cfg.rWindow;   // 3-5-37: numbered R = its own window
+  const R = here.slice(-rw), L = here.slice(0, Math.max(0, here.length - cfg.rWindow));
   let pick = null;
   if(entry.kind === 'A' && num > 1) pick = recallChoose(prefer(here.concat(recallPrevGroups(course, num, 0))));   // bare symbol: anything before this point, any lesson
   if(!pick && entry.kind === 'P' && num > 1){
@@ -2123,7 +2218,7 @@ async function runRecallLine(entry, token){
   let pick = null, from = 0;
   const rp = S.recallPick;
   if(rp && rp.entry === entry && now - rp.t < cfg.keepMs){ pick = rp.pick; if(now - rp.t < cfg.resumeMs) from = rp.step || 0; }
-  else { pick = recallResolve(entry); if(pick) recallRemember(pick.id); }
+  else { pick = recallResolve(entry); if(pick && !entry.preset) recallRemember(pick.id); }
   if(!pick){ advance(); return; }
   const rec = {entry, pick, t:now, step:from}; S.recallPick = rec;
   const m = pick.main, hT = hdysFor(S.tgtCode), v = voicesForEntry(m);
@@ -2182,7 +2277,9 @@ function stripTags(raw){
 }
 // What TTS / speech recognition should use for a line: the spoken variant when the row has one,
 // otherwise the displayed text. (Shown and spoken differ with pipe syntax and with the notes column.)
-function tSay(entry){ return entry.targetSpoken || entry.target; }
+function tSayRaw(entry){ return entry.targetSpoken || entry.target; }
+function tSay(entry){ return entry.targetSpoken || entry.target; }   // audio is ALWAYS the original script (3-5-37: the Latin script chip only changes what is shown)
+function tSayRaw(entry){ return tSay(entry); }
 // 3-5-14: GENDER LABELS (course.genderPairs). A gendered line can be said in up to three forms:
 // 'm' = masculine, 'f' = feminine, 'n' = neutral. Before each form the app says its label in the SOURCE
 // language's own words (the target's when no distinct source is chosen). Not "man"/"woman": these are forms of
@@ -2361,6 +2458,45 @@ document.getElementById('drillTgtLangSelect').addEventListener('change', e=>{
   syncMainLangSelects();
   onDrillLangChange();
 });
+
+/* 3-5-37: STAGE CHIPS. Practice only = shortcut for "source language: none" (tap again to bring the previous source back).
+   Latin audio = for a target language that has a Latin column (sh.latn) in this course; plays the Latin text with an English voice. */
+function courseHasLatnFor(course, code){
+  if(!course || !code) return false;
+  return (course.sheets||[]).some(sh => sh && sh.latn && Object.keys(sh.latn).some(ri => sh.latn[ri] && sh.latn[ri][code]));
+}
+function loadLatnPref(){ try{ S.latnShow = localStorage.getItem(APP_ID + ':latnShow') === '1'; }catch(e){ S.latnShow = false; } }
+function updateStageChips(){
+  const course = currentCourse(), po = document.getElementById('practiceOnlyChip'), la = document.getElementById('latnAudioChip');
+  if(!po || !la || !course) return;
+  const showLa = !course.multiLang && courseHasLatnFor(course, S.tgtCode);
+  la.classList.toggle('hidden', !showLa);
+  la.classList.toggle('on', !!S.latnShow && showLa); la.setAttribute('aria-pressed', String(!!S.latnShow && showLa));
+  const none = !S.srcCode;
+  po.classList.toggle('hidden', !!course.multiLang);
+  po.classList.toggle('on', none); po.setAttribute('aria-pressed', String(none));
+}
+(function initStageChips(){
+  const po = document.getElementById('practiceOnlyChip'), la = document.getElementById('latnAudioChip');
+  if(!po || !la) return;
+  loadLatnPref();
+  po.addEventListener('click', e=>{
+    e.stopPropagation();
+    if(S.srcCode){ S._prevSrc = S.srcCode; S.srcCode = ''; }
+    else { S.srcCode = S._prevSrc || DEFAULT_SRC; if(S.srcCode === S.tgtCode) S.srcCode = ''; }
+    const a = document.getElementById('srcLangSelect'); if(a) a.value = S.srcCode;
+    syncDrillLangSelects(); onDrillLangChange();
+  });
+  la.addEventListener('click', e=>{
+    e.stopPropagation();
+    S.latnShow = !S.latnShow;
+    try{ localStorage.setItem(APP_ID + ':latnShow', S.latnShow ? '1' : '0'); }catch(err){}
+    (S.activeLines || []).forEach(en => { if(en && en.targetLatn) en.target = S.latnShow ? en.targetLatn : en.targetNative; });   // swap the shown text in place, playback keeps going
+    const el = document.getElementById('targetLineEl');
+    if(el){ const cur = el.textContent, hit = (S.activeLines || []).find(en => en && en.targetLatn && (en.targetNative === cur || en.targetLatn === cur)); if(hit) el.textContent = hit.target; }
+    updateStageChips();
+  });
+})();
 function onDrillLangChange(){
   speechSynthesis.cancel(); stopRecognition();
   S.token++;
@@ -2371,6 +2507,7 @@ function onDrillLangChange(){
   if(courseUsesPairs(currentCourse())){ populateSheetSelect(); updateLessonNavButtons(); }
   populateVoicesForOSHelp();
   updateListenNote();
+  updateStageChips();
   renderVoiceCoverageWarning(currentCourse());
   S.order = S.activeLines.map((_,i)=>i);
   if(S.random) shuffleOrder();
@@ -3182,6 +3319,7 @@ function resolveSlotCell(raw, code, latin){
 
 function buildActiveLines(){
   const course = currentCourse();
+  try{ updateStageChips(); }catch(e){}   // 3-5-37
   if(course.multiLang){ mlBuildLines(course); return; }
   // If the language pair just changed and the open lesson is not offered for it (a sheet with
   // `onlyPairs`, e.g. False Friends outside English->Spanish), fall back to the nearest lesson that is.
@@ -3317,7 +3455,9 @@ function buildActiveLines(){
         const ln = resolveSlotCell(sh.latn && sh.latn[ri] && sh.latn[ri][S.tgtCode], S.tgtCode, true);   // 3-5-21: latn cells may be slot cells
         const lnV = isV ? latnOf(k) : '';
         const latnText = lnV || ln;
-        if(latnText) shown = stripTags(latnText).clean;
+        // 3-5-37: the Latin text is a DISPLAY crutch only. It shows when the "Latin script" chip is on (S.latnShow); the sound is always the original script.
+        const latnTxt = latnText ? stripTags(latnText).clean : '';
+        if(S.latnShow && latnTxt) shown = latnTxt;
         const form = (k===null) ? undefined : formKeys[k];
         return {
           rid: ri,   // 3-5-31: row index, used by recall breaks
@@ -3327,6 +3467,8 @@ function buildActiveLines(){
           sourceSpoken: s.spoken,
           target: withNote(shown, S.tgtCode, row),
           targetSpoken: t.spoken,
+          targetNative: withNote(t.clean, S.tgtCode, row),
+          targetLatn: latnTxt ? withNote(latnTxt, S.tgtCode, row) : '',
           headerLabel: rowHeader(row),
           voiceEs: flag === 'voiceEs',
           genderForm: form,
@@ -3337,7 +3479,8 @@ function buildActiveLines(){
       if(hasSet){ list.push(mkEntry(0)); if(exists(1)) list.push(mkEntry(1)); if(exists(2)) list.push(mkEntry(2)); }
       else list.push(mkEntry(null));
     });
-    if(rc && rc.needFrame) recallAddFrames(list, rc);   // 3-5-33: lesson 1 always gets "how do you say" as first and last line
+    if(rc && rc.needFrame) recallAddFrames(list, rc);   // 3-5-33: classic lesson 1 gets "how do you say" as first and last line
+    if(rc && rc.frames3) recallAddFrames3(list, rc);   // 3-5-35: lesson 1 with callback symbols gets three taught frames at the top
   }
   S.activeLines = list;
   const tgtLang = langByCode(course, S.tgtCode);
@@ -4242,6 +4385,7 @@ const CODE_TO_REGION_KEY = {
   'la-CI':'la-classical', 'la-HV':'la-hisp', 'la-VA':'la-ecc', 'la':'la-ecc',
   'lo':'lo-th',
   'km':'km-th',
+  'th':'th',   // 3-5-37: Thai's own default voice path (Google Thai / th-TH), explicit instead of relying on the 2-letter prefix; Lao and Khmer already stand in with Thai
   // Yoruba, isiZulu, isiXhosa, Igbo, and Susu have NO dedicated voice in
   // Google's on-device Android TTS engine as of this check (2026-09) — so
   // unlike sw/ha/am (which got their own profiles once a real voice was
@@ -6516,6 +6660,7 @@ async function runLine(i){
     }
   }
   S.idx = i; S.attempt = 1;
+  try{ if(window.LP_STATS) LP_STATS.line(i); }catch(e){}   // 3-5-40: STATS hook
   if(i === 0) S.passStart = Date.now();
   const myToken = ++S.token;
   const entry = S.activeLines[S.order[i]];
@@ -6689,7 +6834,7 @@ async function runJudgedLine(entry, token, attempt, opts){
   document.getElementById('retryBtn').style.visibility = 'visible';
   document.getElementById('heardText').textContent = '';
   updateMicToggleUI();
-  tryStartRecognition(entry.voiceEs ? 'es-ES' : (S.targetLangGuess==='la' ? 'it-IT' : S.targetLangGuess), tSay(entry));
+  tryStartRecognition(entry.voiceEs ? 'es-ES' : (S.targetLangGuess==='la' ? 'it-IT' : S.targetLangGuess), tSayRaw(entry));
 
   // The learner's turn never times out and never auto-advances: "Retry"
   // replays the model line and comes right back here (mic re-armed, "what I
@@ -7337,6 +7482,7 @@ function syncCourseFlag(course){
 function recordPass(){
   try{
     if(!S.passStart) return;
+    try{ if(window.LP_STATS) LP_STATS.pass(); }catch(e){}   // 3-5-40: STATS hook
     const course = currentCourse(), sh = course.sheets[S.sheetIdx]; if(!sh) return;
     S.passStart = 0;                                           // 3-5-30: no time gate. Reaching the end of the lesson counts as a pass, however fast.
     loadProgress();
@@ -7792,13 +7938,44 @@ function uiRefresh(force){
         </div>
   </div>
 </div>
+<div class="sg-overlay" id="statsGuide" role="dialog" aria-modal="true" aria-label="Anonymous statistics">
+  <div class="sg-bar">
+    <button type="button" class="sg-back" id="statsGuideBack" aria-label="Back" title="Back">&#8249;</button>
+    <span class="sg-bar-title">Anonymous statistics</span>
+  </div>
+  <div class="sg-scroll">
+    <h1 class="doc-title">Anonymous statistics</h1>
+    <div class="doc-subtitle">What we count, and why</div>
+    <p>To find out whether these lessons are really helping people, this page counts how the web apps are used. The counting is done by a small, privacy-friendly service called <strong>GoatCounter</strong>. It is anonymous: it does not know your name, it does not ask for an account, and it does not use cookies.</p>
+    <h2>What is counted</h2>
+    <ul>
+      <li>That a web app was opened, and which one.</li>
+      <li>Which lesson was started, which language you hear it in, and which language you read or listen to it in.</li>
+      <li>Whether a lesson was played halfway, and whether it was played to the end.</li>
+      <li>Roughly how long the app stayed open, so we can tell a quick look from a real study session.</li>
+      <li>The kind of device and browser (for example a phone or a computer), the operating system, the screen size and the general country.</li>
+    </ul>
+    <h2>What is not counted</h2>
+    <ul>
+      <li>Your name, email address or phone number, or your IP address.</li>
+      <li>Anything you type, or anything you say.</li>
+      <li>Your other websites or apps. Nothing here follows you around.</li>
+    </ul>
+    <h2>Why</h2>
+    <p>It helps answer simple questions. Do people open a lesson and leave right away? Do they finish it? Which languages and lessons are most useful? The answers are used to fix problems and to make better lessons. The numbers are never sold and are not used for advertising.</p>
+    <h2>If you prefer not to be counted</h2>
+    <p>The lessons work exactly the same either way. A content blocker or the privacy settings of your browser will stop the counting.</p>
+    <p><a href="mailto:faynemilner@gmail.com" data-contact="mail" style="color:var(--ink-soft); text-decoration:underline; font-weight:600;">Questions? Contact</a></p>
+  </div>
+</div>
 <script>
 /* 3-5-12: guide pages (student + instructor) open/close. Self-contained; touches nothing else on the page. */
 (function(){
   var G = [
     {hash:'#student-guide',    ov:document.getElementById('studentGuide'),    back:'studentGuideBack',    links:['studentHelpBtn','studentGuideFootLink']},
     {hash:'#instructor-guide', ov:document.getElementById('instructorGuide'), back:'instructorGuideBack', links:['instructorGuideFootLink']},
-    {hash:'#sound-help',       ov:document.getElementById('soundHelp'),       back:'soundHelpBack',       links:['soundHelpLink','noSoundMoreLink']}
+    {hash:'#sound-help',       ov:document.getElementById('soundHelp'),       back:'soundHelpBack',       links:['soundHelpLink','noSoundMoreLink']},
+    {hash:'#statistics',       ov:document.getElementById('statsGuide'),       back:'statsGuideBack',       links:['statsFootLink']}
   ].filter(function(g){ return g.ov; });
   if(!G.length) return;
   /* 3-5-13: the student guide text is translated by the interface-language table (UI_TABLE, rows added in 3-5-13);
@@ -7847,6 +8024,167 @@ function uiRefresh(force){
   sync();
 })();
 </script>
+<script>
+/* 3-5-39: CONTACT (email now, text later). One place holds the address; every "Contact" link on the page reads it from here.
+   - EMAIL: opens the person's own mail app to CONTACT.email. The subject names the course + version, and the body is left EMPTY at the top for
+     what they want to say, with a short info block UNDER it (course, version, device, browser, screen). The browser cannot read an iPhone's model
+     name, so on iPhone/iPad the block ends with a line for them to type it; the screen size printed above it identifies the model.
+   - TEXT: switched OFF. To turn it on, put the number in CONTACT.sms (with country code, like '+15551234567'). A "Text me" link then appears
+     everywhere "Contact" does (top bar of the help pages, footer, "No sound?" page). Empty = nothing shows.
+   Static UI only: touches no playback code. */
+(function(){
+  var CONTACT = { email:'faynemilner@gmail.com', sms:'' };
+  window.LP_CONTACT = CONTACT;
+  function ver(){ var b = document.getElementById('appVersionBadge'); return b ? String(b.textContent||'').trim() : '?'; }
+  function appName(){ try{ return (typeof APP_ID !== 'undefined') ? String(APP_ID) : ''; }catch(e){ return ''; } }
+  function info(){
+    var ua = navigator.userAgent || '', os = '', dev = '', m, ios = false;
+    if((m = /(iPhone|iPad|iPod).*? OS (\d+)[_.](\d+)/.exec(ua))){ dev = m[1]; os = 'iOS ' + m[2] + '.' + m[3]; ios = true; }
+    else if(/Macintosh/.test(ua) && navigator.maxTouchPoints > 1){ dev = 'iPad'; os = 'iPadOS'; ios = true; }
+    else if((m = /Android (\d+(?:\.\d+)*)/.exec(ua))){ os = 'Android ' + m[1]; var mm = /;\s*([^;)]+?)\s+Build/.exec(ua) || /Android[^;]*;\s*([^;)]+)\)/.exec(ua); dev = mm ? mm[1] : 'Android device'; }
+    else if(/Windows/.test(ua)) os = 'Windows'; else if(/Mac OS X/.test(ua)) os = 'macOS'; else if(/Linux/.test(ua)) os = 'Linux';
+    var br = /CriOS/.test(ua) ? 'Chrome' : /FxiOS/.test(ua) ? 'Firefox' : /EdgiOS|Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : 'unknown';
+    var standalone = false; try{ standalone = !!(navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)); }catch(e){}
+    var scr = ''; try{ scr = screen.width + 'x' + screen.height + ' @' + (window.devicePixelRatio || 1) + 'x'; }catch(e){}
+    var L = [];
+    L.push('App: ' + appName());
+    L.push('Version: ' + ver());
+    L.push('Device: ' + (dev ? dev + ', ' : '') + (os || 'unknown'));
+    L.push('Browser: ' + br + (standalone ? ' (opened from the Home Screen icon)' : ''));
+    if(scr) L.push('Screen: ' + scr);
+    if(ios) L.push('Phone model (please type it, for example iPhone SE 2nd generation): ');
+    return L.join('\n');
+  }
+  function enc(s){ return encodeURIComponent(s).replace(/%0A/g, '%0D%0A'); }
+  function mailHref(){
+    var subj = 'Question about ' + (appName() || 'the lesson') + ' ' + ver();
+    var body = '\n\n\n----- Please leave the lines below so I can help you -----\n' + info() + '\n';
+    return 'mailto:' + CONTACT.email + '?subject=' + enc(subj) + '&body=' + enc(body);
+  }
+  function smsHref(){
+    var isIos = /iPhone|iPad|iPod/.test(navigator.userAgent || '') || (/Macintosh/.test(navigator.userAgent || '') && navigator.maxTouchPoints > 1);
+    var body = 'Question about ' + (appName() || 'the lesson') + ' ' + ver() + '\n\n\n(' + info().replace(/\n/g, '; ') + ')';
+    return 'sms:' + CONTACT.sms + (isIos ? '&' : '?') + 'body=' + encodeURIComponent(body);
+  }
+  /* one click handler for every contact link on the page (links are marked data-contact="mail" or data-contact="sms") */
+  document.addEventListener('click', function(e){
+    var t = e.target && e.target.closest ? e.target.closest('[data-contact]') : null;
+    if(!t) return;
+    var kind = t.getAttribute('data-contact');
+    if(kind === 'sms' && !CONTACT.sms) return;
+    e.preventDefault();
+    try{ location.href = (kind === 'sms') ? smsHref() : mailHref(); }catch(err){}
+  }, true);
+  /* top of every help page (student guide, instructor note, "No sound?"): a small Contact link at the right end of the colored bar */
+  function mk(kind, label){
+    var a = document.createElement('a');
+    a.href = '#'; a.setAttribute('data-contact', kind); a.textContent = label; a.className = 'sg-contact';
+    a.style.cssText = 'margin-left:auto;color:#fff;font-size:14px;font-weight:700;text-decoration:underline;white-space:nowrap;';
+    return a;
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.sg-bar'), function(bar){
+    var c = mk('mail', 'Contact'); bar.appendChild(c);
+    if(CONTACT.sms){ var t = mk('sms', 'Text'); t.style.marginLeft = '12px'; bar.appendChild(t); }
+  });
+  /* the footer link is in the page markup (id contactFootLink); the text link joins it only when a number is set */
+  if(CONTACT.sms){
+    var f = document.getElementById('contactFootLink');
+    if(f){ var s = f.cloneNode(false); s.id = 'contactSmsFootLink'; s.setAttribute('data-contact', 'sms'); s.textContent = 'Text me'; f.parentNode.insertBefore(document.createElement('br'), f.nextSibling); f.parentNode.insertBefore(s, f.nextSibling.nextSibling); }
+  }
+})();
+</script>
+<script>
+/* 3-5-40: STATS. Anonymous usage statistics through GoatCounter. Static add-on: touches no playback code.
+   SWITCH: put the GoatCounter site code in GC.code (the part before .goatcounter.com). Empty = nothing is sent, anywhere.
+   No cookies, no stored ID. Requests go straight to the GoatCounter count endpoint (an image-style GET), so no outside script is loaded.
+   NAMES (these are the paths you will see in GoatCounter; events are listed under "events" there, page views under "pages"):
+     page view   /<app>                        the app was opened
+     page view   /<app>/page/<name>            student-guide | instructor-guide | sound-help | statistics
+     event       lesson-start/<app>/L03/en-ru      lesson 3 started, source en, target ru (source "none" = practice only)
+     event       lesson-half/<app>/L03/en-ru       reached halfway of that pass
+     event       lesson-complete/<app>/L03/en-ru   the pass was played to its natural end
+     event       leave/<app>/<lesson|no-lesson>/<bucket>   tab closed; bucket = under10s, under1m, under5m, 5mplus
+   "Opened a lesson, never finished" = lesson-start minus lesson-complete for the same path.
+   Hooks (two one-liners elsewhere): LP_STATS.line(i) in runLine, LP_STATS.pass() in recordPass. */
+(function(){
+  var GC = { code:'faynemilner', allowLocal:false };
+  var api = window.LP_STATS = { config:GC, sent:[] };
+  var t0 = Date.now(), lessonsStarted = 0, cur = null, left = false;
+
+  function app(){ try{ return String(APP_ID); }catch(e){ return 'app'; } }
+  function live(){
+    if(!GC.code) return false;
+    if(!GC.allowLocal && (location.protocol === 'file:' || /^(localhost|127\.|\[::1\])/.test(location.hostname))) return false;
+    return true;
+  }
+  function send(path, title, isEvent){
+    try{
+      api.sent.push({path:path, event:!!isEvent});
+      if(!live()) return;
+      var q = 'p=' + encodeURIComponent(path) + '&t=' + encodeURIComponent(title || path) + (isEvent ? '&e=true' : '') +
+              '&s=' + encodeURIComponent((screen.width||0) + ',' + (screen.height||0) + ',' + (window.devicePixelRatio||1)) +
+              '&rnd=' + Math.random().toString(36).slice(2, 8);
+      var url = 'https://' + GC.code + '.goatcounter.com/count?' + q;
+      if(typeof fetch === 'function'){ fetch(url, {method:'GET', mode:'no-cors', keepalive:true, credentials:'omit'}).catch(function(){}); }
+      else { new Image().src = url; }
+    }catch(e){}
+  }
+  function pad(n){ n = parseInt(n,10); return (n < 10 ? '0' : '') + (isNaN(n) ? 0 : n); }
+  function lessonKey(){
+    var c = currentCourse(), n = lessonNumberFor(c, S.sheetIdx);
+    var src = S.srcCode || 'none', tgt = S.tgtCode || 'none';
+    return 'L' + pad(n) + '/' + src + '-' + tgt;
+  }
+  function path(kind){ return kind + '/' + app() + '/' + cur.key; }
+
+  /* called at the top of every line of a pass (after S.idx is set) */
+  api.line = function(i){
+    var key = lessonKey();
+    if(i === 0){
+      if(!cur || cur.key !== key || cur.done){
+        cur = { key:key, half:false, done:false };
+        lessonsStarted++;
+        send(path('lesson-start'), 'Lesson started ' + key, true);
+      }
+    } else if(cur && !cur.done && cur.key === key && !cur.half && S.order && i >= Math.floor(S.order.length / 2)){
+      cur.half = true;
+      send(path('lesson-half'), 'Lesson halfway ' + key, true);
+    }
+  };
+  /* called when a pass reaches its natural end (recordPass, once per pass) */
+  api.pass = function(){
+    var key = lessonKey();
+    if(!cur || cur.key !== key) cur = { key:key, half:true, done:false };
+    if(cur.done) return;
+    cur.done = true;                         // a replay of the same lesson starts a new start/complete pair
+    send(path('lesson-complete'), 'Lesson completed ' + key, true);
+  };
+
+  /* page views: the app itself, then the help pages when they open */
+  send('/' + app(), document.title || app(), false);
+  var lastHash = '';
+  function pageView(){
+    var h = (location.hash || '').replace('#', '');
+    if(h === lastHash) return;
+    lastHash = h;
+    if(h === 'student-guide' || h === 'instructor-guide' || h === 'sound-help' || h === 'statistics') send('/' + app() + '/page/' + h, h, false);
+  }
+  window.addEventListener('hashchange', pageView);
+  window.addEventListener('popstate', pageView);
+  /* the guide router opens pages with history.pushState, which fires no hashchange: also look after any tap/click */
+  document.addEventListener('click', function(){ setTimeout(pageView, 0); }, true);
+  pageView();
+
+  /* leaving: pagehide only (visibilitychange would fire whenever the phone locks while audio plays) */
+  window.addEventListener('pagehide', function(){
+    if(left) return; left = true;
+    var s = (Date.now() - t0) / 1000;
+    var b = s < 10 ? 'under10s' : s < 60 ? 'under1m' : s < 300 ? 'under5m' : '5mplus';
+    send('leave/' + app() + '/' + (lessonsStarted ? 'lesson' : 'no-lesson') + '/' + b, 'Left ' + b, true);
+  });
+})();
+
+</script>
 <!-- ===================== END GUIDE PAGES ===================== -->
 <script>
 /* 3-5-29: iPhone/iPad "no sound?" hint. Static UI only: it never calls speak/cancel, never touches the silent anchor track or
@@ -7863,29 +8201,29 @@ function uiRefresh(force){
   if(!isApple) return;                       // stays display:none everywhere else
   bar.style.display = ''; bar.classList.remove('hidden');
   var T = {
-    en:{hint:'No sound? Turn your ringer ON (no orange showing), turn the volume up, and check earbuds you are not wearing.', more:'More help', link:'No sound?', title:'No sound?',
+    en:{mail:'Email me about this', smsLbl:'Text me', hint:'No sound? Turn your ringer ON (no orange showing), turn the volume up, and check earbuds you are not wearing.', more:'More help', link:'No sound?', title:'No sound?',
         intro:'On iPhone, speech can be muted even when music and videos play. Check these in order:',
-        steps:['<b>Ringer switch.</b> Flip the side switch so no orange shows (or set the Action button away from Silent).','<b>Volume.</b> Press volume up on the side of the phone.','<b>Earbuds and Bluetooth.</b> If earbuds, a speaker, or a car are connected, the sound may be going there. Put them in, turn them off, or disconnect them.','<b>Pick a voice.</b> Open Advanced / voices, press &ldquo;Try&rdquo; next to each voice list. If it says &ldquo;choose a voice&rdquo; or stays silent, pick a voice.','<b>Download a better voice.</b> Settings &rarr; Accessibility &rarr; Spoken Content &rarr; Voices, download an Enhanced voice for your language, then reload this page.','<b>Try the other browser.</b> If you are in Chrome, try Safari (or the reverse).','<b>Close other audio apps</b> (calls, video, music), then reload this page.'],
+        steps:["<b>Close every lesson that is open anywhere.</b> A lesson open in another tab, another browser, or a Home Screen icon can take over the sound. Check every browser you use (Safari, Chrome, Firefox, Edge, Brave) and close all the tabs that have a lesson open. To close an app completely: swipe up from the bottom edge of the screen, pause in the middle, then flick each app up and away. Then open just one lesson.",'<b>Ringer switch.</b> Flip the side switch so no orange shows (or set the Action button away from Silent).','<b>Volume.</b> Press volume up on the side of the phone.','<b>Earbuds and Bluetooth.</b> If earbuds, a speaker, or a car are connected, the sound may be going there. Put them in, turn them off, or disconnect them.','<b>Pick a voice.</b> Open Advanced / voices, press &ldquo;Try&rdquo; next to each voice list. If it says &ldquo;choose a voice&rdquo; or stays silent, pick a voice.','<b>Download a better voice.</b> Settings &rarr; Accessibility &rarr; Spoken Content &rarr; Voices, download an Enhanced voice for your language, then reload this page.','<b>Try the other browser.</b> If you are in Chrome, try Safari (or the reverse).','<b>Close other audio apps</b> (calls, video, music), then reload this page.'],
         end:'Still nothing? Tell your instructor which phone and iOS version you have.'},
-    es:{hint:'¿No oyes nada? Activa el timbre (que no se vea naranja), sube el volumen y revisa si hay audífonos puestos o conectados que no llevas.', more:'Más ayuda', link:'¿Sin sonido?', title:'¿Sin sonido?',
+    es:{mail:'Escríbeme por correo', smsLbl:'Envíame un mensaje', hint:'¿No oyes nada? Activa el timbre (que no se vea naranja), sube el volumen y revisa si hay audífonos puestos o conectados que no llevas.', more:'Más ayuda', link:'¿Sin sonido?', title:'¿Sin sonido?',
         intro:'En iPhone, la voz puede quedar en silencio aunque la música y los videos sí suenen. Revisa en este orden:',
-        steps:['<b>Interruptor del timbre.</b> Mueve el interruptor lateral para que no se vea naranja (o cambia el botón de acción para que no esté en Silencio).','<b>Volumen.</b> Sube el volumen con el botón lateral del teléfono.','<b>Audífonos y Bluetooth.</b> Si hay audífonos, una bocina o un auto conectados, el sonido puede estar saliendo por ahí. Póntelos, apágalos o desconéctalos.','<b>Elige una voz.</b> Abre Avanzado / voces y pulsa &ldquo;Probar&rdquo; junto a cada lista de voces. Si dice &ldquo;elige una voz&rdquo; o no suena, elige una voz.','<b>Descarga una voz mejor.</b> Ajustes &rarr; Accesibilidad &rarr; Contenido leído &rarr; Voces, descarga una voz mejorada de tu idioma y vuelve a cargar esta página.','<b>Prueba el otro navegador.</b> Si usas Chrome, prueba Safari (o al revés).','<b>Cierra otras apps de audio</b> (llamadas, video, música) y vuelve a cargar esta página.'],
+        steps:["<b>Cierra todas las lecciones abiertas.</b> Una lección abierta en otra pestaña, otro navegador o un ícono de la pantalla de inicio puede quitarle el sonido a esta. Revisa todos los navegadores que uses (Safari, Chrome, Firefox, Edge, Brave) y cierra todas las pestañas que tengan una lección. Para cerrar una app por completo: desliza hacia arriba desde el borde inferior de la pantalla, haz una pausa en el centro y lanza cada app hacia arriba. Después abre una sola lección.",'<b>Interruptor del timbre.</b> Mueve el interruptor lateral para que no se vea naranja (o cambia el botón de acción para que no esté en Silencio).','<b>Volumen.</b> Sube el volumen con el botón lateral del teléfono.','<b>Audífonos y Bluetooth.</b> Si hay audífonos, una bocina o un auto conectados, el sonido puede estar saliendo por ahí. Póntelos, apágalos o desconéctalos.','<b>Elige una voz.</b> Abre Avanzado / voces y pulsa &ldquo;Probar&rdquo; junto a cada lista de voces. Si dice &ldquo;elige una voz&rdquo; o no suena, elige una voz.','<b>Descarga una voz mejor.</b> Ajustes &rarr; Accesibilidad &rarr; Contenido leído &rarr; Voces, descarga una voz mejorada de tu idioma y vuelve a cargar esta página.','<b>Prueba el otro navegador.</b> Si usas Chrome, prueba Safari (o al revés).','<b>Cierra otras apps de audio</b> (llamadas, video, música) y vuelve a cargar esta página.'],
         end:'¿Sigue sin sonar? Dile a tu instructor qué teléfono y qué versión de iOS tienes.'},
-    pt:{hint:'Sem som? Ative o toque (sem laranja aparecendo), aumente o volume e veja se há fones conectados que você não está usando.', more:'Mais ajuda', link:'Sem som?', title:'Sem som?',
+    pt:{mail:'Envie um e-mail', smsLbl:'Envie uma mensagem', hint:'Sem som? Ative o toque (sem laranja aparecendo), aumente o volume e veja se há fones conectados que você não está usando.', more:'Mais ajuda', link:'Sem som?', title:'Sem som?',
         intro:'No iPhone, a voz pode ficar muda mesmo quando música e vídeos tocam. Verifique nesta ordem:',
-        steps:['<b>Chave do toque.</b> Mova a chave lateral para que não apareça laranja (ou tire o botão de ação do modo Silencioso).','<b>Volume.</b> Aumente o volume pelo botão lateral.','<b>Fones e Bluetooth.</b> Se houver fones, caixa de som ou carro conectados, o som pode estar indo para lá. Coloque-os, desligue ou desconecte.','<b>Escolha uma voz.</b> Abra Avançado / vozes e toque em &ldquo;Testar&rdquo; ao lado de cada lista. Se disser &ldquo;escolha uma voz&rdquo; ou ficar mudo, escolha uma voz.','<b>Baixe uma voz melhor.</b> Ajustes &rarr; Acessibilidade &rarr; Conteúdo Falado &rarr; Vozes, baixe uma voz Aprimorada do seu idioma e recarregue a página.','<b>Tente o outro navegador.</b> Se estiver no Chrome, tente o Safari (ou o contrário).','<b>Feche outros apps de áudio</b> (chamadas, vídeo, música) e recarregue a página.'],
+        steps:["<b>Feche todas as lições abertas.</b> Uma lição aberta em outra aba, em outro navegador ou em um ícone da tela de início pode tirar o som desta. Verifique todos os navegadores que você usa (Safari, Chrome, Firefox, Edge, Brave) e feche todas as abas que tenham uma lição. Para fechar um app por completo: deslize para cima a partir da borda inferior da tela, pause no meio e arraste cada app para cima. Depois abra só uma lição.",'<b>Chave do toque.</b> Mova a chave lateral para que não apareça laranja (ou tire o botão de ação do modo Silencioso).','<b>Volume.</b> Aumente o volume pelo botão lateral.','<b>Fones e Bluetooth.</b> Se houver fones, caixa de som ou carro conectados, o som pode estar indo para lá. Coloque-os, desligue ou desconecte.','<b>Escolha uma voz.</b> Abra Avançado / vozes e toque em &ldquo;Testar&rdquo; ao lado de cada lista. Se disser &ldquo;escolha uma voz&rdquo; ou ficar mudo, escolha uma voz.','<b>Baixe uma voz melhor.</b> Ajustes &rarr; Acessibilidade &rarr; Conteúdo Falado &rarr; Vozes, baixe uma voz Aprimorada do seu idioma e recarregue a página.','<b>Tente o outro navegador.</b> Se estiver no Chrome, tente o Safari (ou o contrário).','<b>Feche outros apps de áudio</b> (chamadas, vídeo, música) e recarregue a página.'],
         end:'Ainda sem som? Diga ao seu instrutor qual é o celular e a versão do iOS.'},
-    fr:{hint:'Pas de son ? Activez la sonnerie (sans orange visible), montez le volume et vérifiez les écouteurs connectés que vous ne portez pas.', more:"Plus d'aide", link:'Pas de son ?', title:'Pas de son ?',
+    fr:{mail:'Envoyer un e-mail', smsLbl:'Envoyer un SMS', hint:'Pas de son ? Activez la sonnerie (sans orange visible), montez le volume et vérifiez les écouteurs connectés que vous ne portez pas.', more:"Plus d'aide", link:'Pas de son ?', title:'Pas de son ?',
         intro:"Sur iPhone, la voix peut être coupée même si la musique et les vidéos fonctionnent. Vérifiez dans cet ordre :",
-        steps:['<b>Interrupteur de sonnerie.</b> Poussez l\'interrupteur latéral pour que l\'orange ne soit plus visible (ou réglez le bouton Action hors du mode Silence).','<b>Volume.</b> Montez le volume avec le bouton latéral.','<b>Écouteurs et Bluetooth.</b> Si des écouteurs, une enceinte ou une voiture sont connectés, le son peut y aller. Mettez-les, éteignez-les ou déconnectez-les.','<b>Choisissez une voix.</b> Ouvrez Avancé / voix et appuyez sur &laquo;&nbsp;Essayer&nbsp;&raquo; à côté de chaque liste. Si c\'est écrit &laquo;&nbsp;choisis une voix&nbsp;&raquo; ou silencieux, choisissez une voix.','<b>Téléchargez une meilleure voix.</b> Réglages &rarr; Accessibilité &rarr; Contenu énoncé &rarr; Voix, téléchargez une voix améliorée puis rechargez la page.','<b>Essayez l\'autre navigateur.</b> Si vous êtes dans Chrome, essayez Safari (ou l\'inverse).','<b>Fermez les autres apps audio</b> (appels, vidéo, musique), puis rechargez la page.'],
+        steps:["<b>Fermez toutes les leçons ouvertes.</b> Une leçon ouverte dans un autre onglet, un autre navigateur ou une icône de l&rsquo;écran d&rsquo;accueil peut prendre le son. Vérifiez chaque navigateur que vous utilisez (Safari, Chrome, Firefox, Edge, Brave) et fermez tous les onglets qui contiennent une leçon. Pour fermer complètement une app : balayez vers le haut depuis le bas de l&rsquo;écran, marquez une pause au milieu, puis faites glisser chaque app vers le haut. Ouvrez ensuite une seule leçon.",'<b>Interrupteur de sonnerie.</b> Poussez l\'interrupteur latéral pour que l\'orange ne soit plus visible (ou réglez le bouton Action hors du mode Silence).','<b>Volume.</b> Montez le volume avec le bouton latéral.','<b>Écouteurs et Bluetooth.</b> Si des écouteurs, une enceinte ou une voiture sont connectés, le son peut y aller. Mettez-les, éteignez-les ou déconnectez-les.','<b>Choisissez une voix.</b> Ouvrez Avancé / voix et appuyez sur &laquo;&nbsp;Essayer&nbsp;&raquo; à côté de chaque liste. Si c\'est écrit &laquo;&nbsp;choisis une voix&nbsp;&raquo; ou silencieux, choisissez une voix.','<b>Téléchargez une meilleure voix.</b> Réglages &rarr; Accessibilité &rarr; Contenu énoncé &rarr; Voix, téléchargez une voix améliorée puis rechargez la page.','<b>Essayez l\'autre navigateur.</b> Si vous êtes dans Chrome, essayez Safari (ou l\'inverse).','<b>Fermez les autres apps audio</b> (appels, vidéo, musique), puis rechargez la page.'],
         end:'Toujours rien ? Dites à votre instructeur quel téléphone et quelle version d\'iOS vous avez.'},
-    it:{hint:'Nessun suono? Attiva la suoneria (senza arancione visibile), alza il volume e controlla eventuali auricolari collegati che non stai usando.', more:'Più aiuto', link:'Nessun suono?', title:'Nessun suono?',
+    it:{mail:'Scrivimi una e-mail', smsLbl:'Scrivimi un SMS', hint:'Nessun suono? Attiva la suoneria (senza arancione visibile), alza il volume e controlla eventuali auricolari collegati che non stai usando.', more:'Più aiuto', link:'Nessun suono?', title:'Nessun suono?',
         intro:"Su iPhone la voce può essere muta anche se musica e video si sentono. Controlla in quest'ordine:",
-        steps:['<b>Interruttore della suoneria.</b> Sposta l\'interruttore laterale in modo che non si veda l\'arancione (o imposta il tasto Azione fuori da Silenzioso).','<b>Volume.</b> Alza il volume con il tasto laterale.','<b>Auricolari e Bluetooth.</b> Se sono collegati auricolari, un altoparlante o un\'auto, il suono può andare lì. Indossali, spegnili o scollegali.','<b>Scegli una voce.</b> Apri Avanzate / voci e premi &ldquo;Prova&rdquo; accanto a ogni elenco. Se dice &ldquo;scegli una voce&rdquo; o è muto, scegli una voce.','<b>Scarica una voce migliore.</b> Impostazioni &rarr; Accessibilità &rarr; Contenuto pronunciato &rarr; Voci, scarica una voce migliorata e ricarica la pagina.','<b>Prova l\'altro browser.</b> Se usi Chrome, prova Safari (o viceversa).','<b>Chiudi altre app audio</b> (chiamate, video, musica) e ricarica la pagina.'],
+        steps:["<b>Chiudi tutte le lezioni aperte.</b> Una lezione aperta in un&rsquo;altra scheda, in un altro browser o in un&rsquo;icona della schermata Home può prendersi l&rsquo;audio. Controlla ogni browser che usi (Safari, Chrome, Firefox, Edge, Brave) e chiudi tutte le schede con una lezione. Per chiudere del tutto un&rsquo;app: scorri verso l&rsquo;alto dal bordo inferiore dello schermo, fermati a metà, poi fai scorrere ogni app verso l&rsquo;alto. Poi apri una sola lezione.",'<b>Interruttore della suoneria.</b> Sposta l\'interruttore laterale in modo che non si veda l\'arancione (o imposta il tasto Azione fuori da Silenzioso).','<b>Volume.</b> Alza il volume con il tasto laterale.','<b>Auricolari e Bluetooth.</b> Se sono collegati auricolari, un altoparlante o un\'auto, il suono può andare lì. Indossali, spegnili o scollegali.','<b>Scegli una voce.</b> Apri Avanzate / voci e premi &ldquo;Prova&rdquo; accanto a ogni elenco. Se dice &ldquo;scegli una voce&rdquo; o è muto, scegli una voce.','<b>Scarica una voce migliore.</b> Impostazioni &rarr; Accessibilità &rarr; Contenuto pronunciato &rarr; Voci, scarica una voce migliorata e ricarica la pagina.','<b>Prova l\'altro browser.</b> Se usi Chrome, prova Safari (o viceversa).','<b>Chiudi altre app audio</b> (chiamate, video, musica) e ricarica la pagina.'],
         end:'Ancora niente? Dì al tuo istruttore quale telefono e quale versione di iOS hai.'},
-    de:{hint:'Kein Ton? Klingeln einschalten (kein Orange sichtbar), Lautstärke erhöhen und angeschlossene Kopfhörer prüfen, die Sie nicht tragen.', more:'Mehr Hilfe', link:'Kein Ton?', title:'Kein Ton?',
+    de:{mail:'E-Mail schreiben', smsLbl:'SMS schreiben', hint:'Kein Ton? Klingeln einschalten (kein Orange sichtbar), Lautstärke erhöhen und angeschlossene Kopfhörer prüfen, die Sie nicht tragen.', more:'Mehr Hilfe', link:'Kein Ton?', title:'Kein Ton?',
         intro:'Auf dem iPhone kann Sprache stumm sein, obwohl Musik und Videos laufen. Prüfen Sie der Reihe nach:',
-        steps:['<b>Klingelschalter.</b> Schieben Sie den Schalter an der Seite so, dass kein Orange zu sehen ist (oder stellen Sie die Aktionstaste nicht auf Lautlos).','<b>Lautstärke.</b> Erhöhen Sie die Lautstärke mit der Taste an der Seite.','<b>Kopfhörer und Bluetooth.</b> Sind Kopfhörer, ein Lautsprecher oder ein Auto verbunden, geht der Ton eventuell dorthin. Aufsetzen, ausschalten oder trennen.','<b>Stimme wählen.</b> Öffnen Sie Erweitert / Stimmen und tippen Sie neben jeder Liste auf &bdquo;Testen&ldquo;. Steht dort &bdquo;Stimme wählen&ldquo; oder bleibt es stumm, wählen Sie eine Stimme.','<b>Bessere Stimme laden.</b> Einstellungen &rarr; Bedienungshilfen &rarr; Gesprochene Inhalte &rarr; Stimmen, eine erweiterte Stimme laden und die Seite neu laden.','<b>Anderen Browser testen.</b> In Chrome? Versuchen Sie Safari (oder umgekehrt).','<b>Andere Audio-Apps schließen</b> (Anrufe, Video, Musik) und die Seite neu laden.'],
+        steps:["<b>Schließen Sie alle geöffneten Lektionen.</b> Eine Lektion in einem anderen Tab, einem anderen Browser oder auf dem Home-Bildschirm kann den Ton blockieren. Prüfen Sie jeden Browser, den Sie nutzen (Safari, Chrome, Firefox, Edge, Brave), und schließen Sie alle Tabs, in denen eine Lektion offen ist. So beenden Sie eine App ganz: Wischen Sie vom unteren Bildschirmrand nach oben, halten Sie in der Mitte kurz an und wischen Sie jede App nach oben weg. Öffnen Sie danach nur eine Lektion.",'<b>Klingelschalter.</b> Schieben Sie den Schalter an der Seite so, dass kein Orange zu sehen ist (oder stellen Sie die Aktionstaste nicht auf Lautlos).','<b>Lautstärke.</b> Erhöhen Sie die Lautstärke mit der Taste an der Seite.','<b>Kopfhörer und Bluetooth.</b> Sind Kopfhörer, ein Lautsprecher oder ein Auto verbunden, geht der Ton eventuell dorthin. Aufsetzen, ausschalten oder trennen.','<b>Stimme wählen.</b> Öffnen Sie Erweitert / Stimmen und tippen Sie neben jeder Liste auf &bdquo;Testen&ldquo;. Steht dort &bdquo;Stimme wählen&ldquo; oder bleibt es stumm, wählen Sie eine Stimme.','<b>Bessere Stimme laden.</b> Einstellungen &rarr; Bedienungshilfen &rarr; Gesprochene Inhalte &rarr; Stimmen, eine erweiterte Stimme laden und die Seite neu laden.','<b>Anderen Browser testen.</b> In Chrome? Versuchen Sie Safari (oder umgekehrt).','<b>Andere Audio-Apps schließen</b> (Anrufe, Video, Musik) und die Seite neu laden.'],
         end:'Immer noch nichts? Sagen Sie Ihrem Kursleiter, welches Telefon und welche iOS-Version Sie haben.'}
   };
   var cur = null;
@@ -7900,6 +8238,11 @@ function uiRefresh(force){
     var h = '<p>' + x.intro + '</p><div class="sg-flow">';
     x.steps.forEach(function(s, i){ s = s.replace(/<b>/g, '<strong>').replace(/<\/b>/g, '</strong>'); h += '<div class="sg-step"><b>' + (i + 1) + '</b><span>' + s + '</span></div>'; });   /* titles use <strong>: the page style turns every <b> inside a step into an orange number circle */
     h += '</div><p style="margin-top:14px;color:var(--sg-soft);">' + x.end + '</p>';
+    /* 3-5-39: contact buttons at the end of the page (email always; text only when a number is set in CONTACT.sms) */
+    var cbs = 'display:inline-block;margin:6px 8px 0 0;padding:10px 16px;border-radius:10px;background:var(--sg-accent);color:#fff;font-weight:700;text-decoration:none;';
+    h += '<p style="margin-top:12px;"><a href="#" data-contact="mail" style="' + cbs + '">' + (x.mail || 'Email me about this') + '</a>';
+    if(window.LP_CONTACT && window.LP_CONTACT.sms) h += '<a href="#" data-contact="sms" style="' + cbs + '">' + (x.smsLbl || 'Text me') + '</a>';
+    h += '</p>';
     document.getElementById('soundHelpBody').innerHTML = h;
     var ov = document.getElementById('soundHelp'); if(ov) ov.setAttribute('dir', lg === 'ar' ? 'rtl' : 'ltr');
   }
