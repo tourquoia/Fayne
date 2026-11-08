@@ -1,5 +1,5 @@
 <!-- build:JysnMlnrMthd -->
-<!-- template_arch_3-5-48 + POC.product (0 patch(es)) -->
+<!-- template_arch_3-5-50 + POC.product (0 patch(es)) -->
 <!DOCTYPE html>
 <html lang="en" translate="no" class="notranslate">
 <head>
@@ -856,6 +856,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   .gender-options label{ display:flex; align-items:center; gap:5px; cursor:pointer; }
   .gender-options input{ accent-color:var(--amber); width:14px; height:14px; }
 
+  /* 3-5-49: intro mode + spotlight */
+  body.lp-intro #langPairCaption, body.lp-intro #langPairGrid, body.lp-intro #drillStyleRow, body.lp-intro #practiceOnlyChip, body.lp-intro details{ opacity:.4; pointer-events:none; }
+  .lp-spot{ outline:3px solid var(--amber-bright,#F05A22); outline-offset:3px; border-radius:12px; animation:lpSpot 1s ease-in-out infinite; }
+  @keyframes lpSpot{ 50%{ outline-offset:7px; outline-color:transparent; } }
+  @media (prefers-reduced-motion:reduce){ .lp-spot{ animation:none; } }
+  #lpVoiceDemo{ position:absolute; z-index:60; width:220px; max-height:114px; overflow:hidden; background:var(--surface,#fff); border:1.5px solid var(--border,#ccc); border-radius:10px; box-shadow:var(--shadow,0 4px 14px rgba(0,0,0,.2)); }
+  #lpVoiceDemo div{ padding:0 12px; font-size:14px; height:38px; line-height:38px; box-sizing:border-box; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #lpVoiceDemo div.on{ background:#FEE9DD; color:var(--amber-bright,#F05A22); font-weight:700; }
   /* ---- lesson picker pill (home screen) — now a real button that opens
      a working dropdown of lessons, using the same list/item styling as
      the player screen's lesson dropdown ---- */
@@ -1072,7 +1080,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 </style>
 </head>
 <body>
-<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.48</div>
+<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.50</div>
 <script>/* 3-5-26-1: if the build never ran on this file, the version token is still in the label -> say so in red instead of showing the raw token. (Token is split here so the build does not rewrite it.) */
 (function(){ try{ var b=document.getElementById('appVersionBadge'); if(b && b.textContent.indexOf('__APP_'+'VERSION__')>-1){ b.textContent='UNBUILT COPY - no product file'; b.style.color='#d92d20'; b.style.fontWeight='800'; b.style.textShadow='none'; } }catch(e){} })();
 </script>
@@ -3252,7 +3260,7 @@ function buildActiveLines(){
     // line to drill here, so we build off the SOURCE column instead of the
     // target column, and stash the text in `target` purely so the existing
     // display/speak plumbing (which reads entry.target) still works.
-    for(const row of sh.rows){
+    for(const [ri,row] of sh.rows.entries()){
       const rawSource = srcColIdx>=0 ? resolveSlotCell(row[srcColIdx], S.srcCode) : null;
       if(!rawSource || !String(rawSource).trim()) continue;
       const s = stripTags(rawSource);
@@ -3264,6 +3272,7 @@ function buildActiveLines(){
         target: withNote(s.clean, S.srcCode, row),
         targetSpoken: s.spoken,
         headerLabel: rowHeader(row),
+        rowIdx: ri,
       });
     }
   } else if(course.format === 'narrator'){
@@ -6570,7 +6579,47 @@ function speakerTagLabel(entry){
   return `${displayName} — ${gender} gendered speech`;
 }
 
+/* 3-5-49: intro mode + spotlight (see the 3-5-49 note at the top) */
+function lpSpotClear(){
+  document.querySelectorAll('.lp-spot').forEach(e=>e.classList.remove('lp-spot'));
+  const d=document.getElementById('lpVoiceDemo'); if(d) d.remove();
+}
+function lpSpot(entry){
+  lpSpotClear();
+  const course=currentCourse(), sh=course.sheets[S.sheetIdx];
+  document.body.classList.toggle('lp-intro', !!course.introMode);
+  if(course.introMode) S.loop=false;
+  const key = sh && sh.spotlight && entry && entry.rowIdx!==undefined ? sh.spotlight[entry.rowIdx] : '';
+  if(!key) return;
+  if(key==='voicedemo') return lpVoiceDemo(course);
+  const el = {home:'#mainPageBtn', advanced:'details summary', voice:'#allVoicesRow', keepawake:'#keepAwakeLabel'}[key];
+  const n = el && document.querySelector(el);
+  if(!n) return;
+  n.classList.add('lp-spot');
+  try{ n.scrollIntoView({block:'center', behavior:'smooth'}); }catch(e){}
+}
+function lpVoiceDemo(course){
+  const host=document.getElementById('allVoicesRow'); if(!host || host.classList.contains('hidden')) return;
+  const nm=l=>String(l.label).replace(/\s*\(.*\)/,'')+' voice';
+  const me=langByCode(course,S.srcCode); if(!me) return;
+  const others=course.langs.filter(l=>l.code!==me.code).slice(0,4).map(nm);
+  const names=others.slice(0,2).concat([nm(me)],others.slice(2));
+  host.classList.add('lp-spot');
+  host.style.scrollMarginTop='90px';
+  try{ host.scrollIntoView({block:'start', behavior:'smooth'}); }catch(e){}
+  const sel=document.getElementById('allSrcVoice'), col=sel && sel.parentElement; if(!col) return;
+  col.style.position='relative';
+  const d=document.createElement('div'); d.id='lpVoiceDemo'; d.style.cssText='left:0;width:200px;max-width:90vw;top:'+(sel.offsetHeight+4)+'px';
+  d.innerHTML=names.map(x=>'<div>'+x.replace(/</g,'&lt;')+'</div>').join('');
+  col.appendChild(d);
+  const target=Math.min(2,names.length-1), rows=d.children;
+  let k=-1; const step=()=>{ if(!d.isConnected) return; k++;
+    d.scrollTop=Math.max(0,(k-1)*38);
+    if(k<target){ setTimeout(step,550); } else { rows[target].classList.add('on'); setTimeout(()=>{ if(d.isConnected){ d.remove(); sel.classList.add('lp-spot'); } },1400); } };
+  setTimeout(step,1100);
+}
 async function runLine(i){
+  lpSpotClear();
   if(i>=S.order.length && S.playthrough && S.style==='exposure'){
     recordPass();
     // PLAYTHROUGH: lesson finished -> next lesson; after the last one, back to the first
@@ -6606,6 +6655,7 @@ async function runLine(i){
   updateMilestone();
   applyStageMode();
 
+  lpSpot(entry);
   document.getElementById('speakerTag').textContent = speakerTagLabel(entry);
   document.getElementById('toneTag').textContent = entry.genderLabel ? (entry.genderLabel + (entry.tone ? ' \u00B7 ' + entry.tone : '')) : (entry.tone || '\u00A0');
   document.getElementById('sourceLineEl').textContent = entry.source || '';

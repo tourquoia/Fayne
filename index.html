@@ -507,6 +507,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   .track-btn:not(.is-next) .track-icon svg { opacity: 0.8; }
   .track-btn.is-next .track-icon { box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.85), 0 0 14px rgba(240, 90, 34, 0.6); }
   .track-btn.is-next { border-color: var(--brand-accent); }
+  /* Start Here card (intro.html): unnumbered, always green, pulses until the intro has been finished. */
+  .track-btn.start-here { border-left-color: #1F9D55; border-color: #1F9D55; }
+  .track-btn.start-here .track-icon { background: #1F9D55; }
+  .track-btn.start-here .track-icon svg { opacity: 1; stroke-width: 1.9; }
+  .track-btn.start-here:not(.is-done) .track-icon { animation: startPulse 1.8s ease-out infinite; }
+  @keyframes startPulse { 0% { box-shadow: 0 0 0 0 rgba(31,157,85,0.65); } 70%, 100% { box-shadow: 0 0 0 16px rgba(31,157,85,0); } }
+  @media (prefers-reduced-motion: reduce) { .track-btn.start-here:not(.is-done) .track-icon { animation: none; box-shadow: 0 0 0 3px rgba(31,157,85,0.5); } }
   .track-num {
     position: absolute; top: -6px; left: -6px;
     min-width: 26px; height: 26px; padding: 0 5px; box-sizing: border-box;
@@ -560,8 +567,21 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           Do not treat the missing files as a bug and do not drop these cards unless told to.
         - Legacy courses may move to the BOTTOM of the list (near Brennan). Candidate: POC.html ("Old Course", Tanya & Al) - move it down
           if Mercado (higher value) teaches most of what it already does. Not decided yet.
-        - Mercado.html added 2026-11-07 as card 4 (before Laura), index.html and index2.html both. Keep both index files in sync.
+        - Mercado.html added 2026-11-07 as card 4 (before Laura). index2.html is an OLD version the owner is keeping for a while; it does NOT need to stay in sync.
+        - intro.html ("Start here") is the first card, deliberately UNNUMBERED (class start-here, excluded from numbering and next-up); green with a pulse until the intro is finished.
       -->
+        <a href="intro.html" class="hotspot track-btn start-here" aria-label="Empieza aquí. Começa aqui. Start here">
+          <div class="track-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><g transform="translate(1.5,3.5) scale(.85)"><path d="M22 14a8 8 0 0 1-8 8"/><path d="M18 11v-1a2 2 0 0 0-2-2a2 2 0 0 0-2 2"/><path d="M14 10V9a2 2 0 0 0-2-2a2 2 0 0 0-2 2v1"/><path d="M10 9.5V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v10"/><path d="M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></g><path d="M5.7 5a2.6 2.6 0 0 1 5.2 0"/><path d="M3.5 5a4.8 4.8 0 0 1 9.6 0"/></svg>
+          </div>
+          <div class="track-text">
+            <span class="track-title-es">EMPIEZA AQUÍ</span>
+            <span class="track-title-pt">COMECE AQUI</span>
+            <span class="track-title-en">START HERE</span>
+          </div>
+          <span class="chevron">›</span>
+        </a>
+
         <a href="1stSteps.html" class="hotspot track-btn" aria-label="Primeros Pasos">
           <div class="track-icon">
             <svg class="icon-lg" viewBox="0 0 2100 2100" style="width:48px;height:48px;fill:#ffffff;stroke:none;">
@@ -1118,7 +1138,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 <script>
 /* Course numbers + next-up highlight. Reads 'fayneCourseState:<file>' ('started' | 'done') written by each course page. Never blocks a link. */
 (function(){
-  var cards = document.querySelectorAll('.track-list .track-btn');
+  var cards = document.querySelectorAll('.track-list .track-btn:not(.start-here)');
   var CHECK = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block;margin:4px auto"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   function fileOf(a){
     var h = (a.getAttribute('href') || '').split('#')[0].split('?')[0].split('/').pop();
@@ -1127,6 +1147,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   function state(f){ try { return localStorage.getItem('fayneCourseState:' + f) || ''; } catch(e) { return ''; } }
   function render(){
     var nextFound = false;
+    var sh = document.querySelector('.track-btn.start-here');
+    if(sh){ sh.classList.toggle('is-done', state('intro.html') === 'done'); }
     Array.prototype.forEach.call(cards, function(a, i){
       var ic = a.querySelector('.track-icon'); if(!ic) return;
       var badge = a.querySelector('.track-num');

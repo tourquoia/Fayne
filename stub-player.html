@@ -19,6 +19,8 @@ template skips that, the course is then missed by every later template round, an
      (it prints RECOVERED). Handing back the product file too is optional. Never hand back a hand-edited copy of this template.
   To update an existing course: edit the data region of its product file, run step 4. Check anything at any time: build.py --check.
   A loose copy someone already made (still has the slot marker comments):  build.py --adopt <File.html>
+3-5-50: the voicedemo line now scrolls the voice row to near the top of the screen first, and the lookalike list opens right under the SOURCE voice menu; when it lands, the real source menu pulses. Search "3-5-50".
+3-5-49: INTRO MODE (optional, off by default). Course flag introMode:true (BUILT_IN_COURSE) greys out and blocks the language pair, the style pills and Advanced (class lp-intro on body; Home, voice menus and Keep screen on stay live) and turns Loop off. A narration sheet may carry spotlight:{rowIndex:key} (0-based row): while that line plays the control pulses (keys: home, advanced, voice, keepawake) or, for key voicedemo, a small lookalike voice list scrolls and lands on the learner's language (no real change). Narration entries now carry rowIdx. Search "3-5-49".
 3-5-48: RENAMES + AUTO-CONTINUE POLISH. (1) The Practice pill is now "Your turn" (reuses the existing "Your turn" UI_TABLE row, so it is already translated). (2) The "Practice only" chip now reads "<target language> only" (e.g. "Spanish only", "Solo español"), shown in the learner's source language: pattern table UI_ONLY (search "UI_ONLY") + the language name from uiLabel(); the chip text element has class chip-only-label and is in UI_SKIP so the generic translator leaves it alone. While the chip is on (source = none) the interface now stays in the last source language instead of flipping to English (UI.lastSrc). (3) New short note "Speech recognition can make mistakes. Don’t rely on it alone." (one UI_TABLE row, 32 languages): a small dismissible line in the Your-turn card (#srNote; shown until dismissed, and on every visit when the target is Latin, whose mic recognition is borrowed from Italian) and a line at the end of the student guide. (4) The optional "Auto-continue when it matches" tick (added in 3-5-47) is slightly larger with an orange tick, and tapping Retry or Got it during the 1.2 s beat cancels the pending auto-continue. Search "3-5-48".
 3-5-47: PRACTICE STOPS ON CALLBACKS TOO, AND CALLBACKS ARE REAL RECALL. (1) The three opening frames of Lesson 1 are TAUGHT lines: "how do you say", the source phrase and the target are all heard and shown, no guess pause; in Practice the mic then comes on (Retry replays the target) and only the phrase is checked. (2) Real callbacks: "how do you say" is spoken but NOT shown; the source phrase shows once spoken; the target phrase stays hidden through the long pause and appears only when its audio plays, then stays for the rest of the callback. In Practice the long pause is a mic turn (Got it / Retry = hear the source again), then the target plays once. Hands-free timing unchanged. (3) New optional tick under the mic button, Practice only, off by default and remembered per app: "Auto-continue when it matches" presses Got it about 1.2 s after a green match (UI_TABLE row added). Search "3-5-47".
 3-5-42: GENDERED SPEECH, SOURCE LINE ONCE. In a gender-variant set (genderPairs) the source-language line is now heard only once, before the speaker's own form; the other forms (feminine/masculine, or the extra German forms) play just the form label + the target line. Variants whose source text differs from the main form's still say their own source line. Search "3-5-42" (mkEntry skipSrcAudio, runExposureLine, runJudgedLine). Nothing else changed; the other files are not rebuilt yet.
@@ -146,7 +148,7 @@ RULES FOR ANYONE (OR ANY CLAUDE) EDITING OR REPLACING THIS TEMPLATE:
 =====================================================================
 -->
 <!-- build:JysnMlnrMthd -->
-<!-- template_arch_3-5-48 + stub-player.product (0 patch(es)) -->
+<!-- template_arch_3-5-50 + stub-player.product (0 patch(es)) -->
 <!DOCTYPE html>
 <html lang="en" translate="no" class="notranslate">
 <head>
@@ -1003,6 +1005,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   .gender-options label{ display:flex; align-items:center; gap:5px; cursor:pointer; }
   .gender-options input{ accent-color:var(--amber); width:14px; height:14px; }
 
+  /* 3-5-49: intro mode + spotlight */
+  body.lp-intro #langPairCaption, body.lp-intro #langPairGrid, body.lp-intro #drillStyleRow, body.lp-intro #practiceOnlyChip, body.lp-intro details{ opacity:.4; pointer-events:none; }
+  .lp-spot{ outline:3px solid var(--amber-bright,#F05A22); outline-offset:3px; border-radius:12px; animation:lpSpot 1s ease-in-out infinite; }
+  @keyframes lpSpot{ 50%{ outline-offset:7px; outline-color:transparent; } }
+  @media (prefers-reduced-motion:reduce){ .lp-spot{ animation:none; } }
+  #lpVoiceDemo{ position:absolute; z-index:60; width:220px; max-height:114px; overflow:hidden; background:var(--surface,#fff); border:1.5px solid var(--border,#ccc); border-radius:10px; box-shadow:var(--shadow,0 4px 14px rgba(0,0,0,.2)); }
+  #lpVoiceDemo div{ padding:0 12px; font-size:14px; height:38px; line-height:38px; box-sizing:border-box; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #lpVoiceDemo div.on{ background:#FEE9DD; color:var(--amber-bright,#F05A22); font-weight:700; }
   /* ---- lesson picker pill (home screen) — now a real button that opens
      a working dropdown of lessons, using the same list/item styling as
      the player screen's lesson dropdown ---- */
@@ -1265,7 +1275,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 </style>
 </head>
 <body>
-<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.48</div>
+<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.50</div>
 <script>/* 3-5-26-1: if the build never ran on this file, the version token is still in the label -> say so in red instead of showing the raw token. (Token is split here so the build does not rewrite it.) */
 (function(){ try{ var b=document.getElementById('appVersionBadge'); if(b && b.textContent.indexOf('__APP_'+'VERSION__')>-1){ b.textContent='UNBUILT COPY - no product file'; b.style.color='#d92d20'; b.style.fontWeight='800'; b.style.textShadow='none'; } }catch(e){} })();
 </script>
@@ -3457,7 +3467,7 @@ function buildActiveLines(){
     // line to drill here, so we build off the SOURCE column instead of the
     // target column, and stash the text in `target` purely so the existing
     // display/speak plumbing (which reads entry.target) still works.
-    for(const row of sh.rows){
+    for(const [ri,row] of sh.rows.entries()){
       const rawSource = srcColIdx>=0 ? resolveSlotCell(row[srcColIdx], S.srcCode) : null;
       if(!rawSource || !String(rawSource).trim()) continue;
       const s = stripTags(rawSource);
@@ -3469,6 +3479,7 @@ function buildActiveLines(){
         target: withNote(s.clean, S.srcCode, row),
         targetSpoken: s.spoken,
         headerLabel: rowHeader(row),
+        rowIdx: ri,
       });
     }
   } else if(course.format === 'narrator'){
@@ -6775,7 +6786,47 @@ function speakerTagLabel(entry){
   return `${displayName} — ${gender} gendered speech`;
 }
 
+/* 3-5-49: intro mode + spotlight (see the 3-5-49 note at the top) */
+function lpSpotClear(){
+  document.querySelectorAll('.lp-spot').forEach(e=>e.classList.remove('lp-spot'));
+  const d=document.getElementById('lpVoiceDemo'); if(d) d.remove();
+}
+function lpSpot(entry){
+  lpSpotClear();
+  const course=currentCourse(), sh=course.sheets[S.sheetIdx];
+  document.body.classList.toggle('lp-intro', !!course.introMode);
+  if(course.introMode) S.loop=false;
+  const key = sh && sh.spotlight && entry && entry.rowIdx!==undefined ? sh.spotlight[entry.rowIdx] : '';
+  if(!key) return;
+  if(key==='voicedemo') return lpVoiceDemo(course);
+  const el = {home:'#mainPageBtn', advanced:'details summary', voice:'#allVoicesRow', keepawake:'#keepAwakeLabel'}[key];
+  const n = el && document.querySelector(el);
+  if(!n) return;
+  n.classList.add('lp-spot');
+  try{ n.scrollIntoView({block:'center', behavior:'smooth'}); }catch(e){}
+}
+function lpVoiceDemo(course){
+  const host=document.getElementById('allVoicesRow'); if(!host || host.classList.contains('hidden')) return;
+  const nm=l=>String(l.label).replace(/\s*\(.*\)/,'')+' voice';
+  const me=langByCode(course,S.srcCode); if(!me) return;
+  const others=course.langs.filter(l=>l.code!==me.code).slice(0,4).map(nm);
+  const names=others.slice(0,2).concat([nm(me)],others.slice(2));
+  host.classList.add('lp-spot');
+  host.style.scrollMarginTop='90px';
+  try{ host.scrollIntoView({block:'start', behavior:'smooth'}); }catch(e){}
+  const sel=document.getElementById('allSrcVoice'), col=sel && sel.parentElement; if(!col) return;
+  col.style.position='relative';
+  const d=document.createElement('div'); d.id='lpVoiceDemo'; d.style.cssText='left:0;width:200px;max-width:90vw;top:'+(sel.offsetHeight+4)+'px';
+  d.innerHTML=names.map(x=>'<div>'+x.replace(/</g,'&lt;')+'</div>').join('');
+  col.appendChild(d);
+  const target=Math.min(2,names.length-1), rows=d.children;
+  let k=-1; const step=()=>{ if(!d.isConnected) return; k++;
+    d.scrollTop=Math.max(0,(k-1)*38);
+    if(k<target){ setTimeout(step,550); } else { rows[target].classList.add('on'); setTimeout(()=>{ if(d.isConnected){ d.remove(); sel.classList.add('lp-spot'); } },1400); } };
+  setTimeout(step,1100);
+}
 async function runLine(i){
+  lpSpotClear();
   if(i>=S.order.length && S.playthrough && S.style==='exposure'){
     recordPass();
     // PLAYTHROUGH: lesson finished -> next lesson; after the last one, back to the first
@@ -6811,6 +6862,7 @@ async function runLine(i){
   updateMilestone();
   applyStageMode();
 
+  lpSpot(entry);
   document.getElementById('speakerTag').textContent = speakerTagLabel(entry);
   document.getElementById('toneTag').textContent = entry.genderLabel ? (entry.genderLabel + (entry.tone ? ' \u00B7 ' + entry.tone : '')) : (entry.tone || '\u00A0');
   document.getElementById('sourceLineEl').textContent = entry.source || '';
