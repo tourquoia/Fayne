@@ -1427,8 +1427,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   /* one big button for this kind of phone, one small link for the other kind */
   var SUBS = '<span>Agregar al calendario</span><span>Adicionar ao calendário</span>';
   if(android){
-    bG.className = 'rem-btn'; bG.innerHTML = '📅 Google Calendar' + SUBS; bG.style.order = '0';
-    bIcs.className = 'rem-link'; bIcs.textContent = 'Other calendar (file) · Otro calendario · Outro calendário'; bIcs.style.order = '1';
+    /* two choices side by side: the file ("most calendars") first and filled, Google Calendar second and outlined */
+    var row = back.querySelector('.rem-btns'); row.style.flexDirection = 'row'; row.style.gap = '8px';
+    bIcs.className = 'rem-btn'; bIcs.innerHTML = '📅 Most calendars<span>La mayoría de calendarios</span><span>A maioria dos calendários</span>';
+    bG.className = 'rem-btn'; bG.innerHTML = '📅 Google Calendar<span>(web)</span>';
+    bG.style.background = 'transparent'; bG.style.color = 'var(--install-color)';
+    bG.querySelector('span').style.color = 'var(--install-sub-color)';
+    [bIcs, bG].forEach(function(b){ b.style.width = 'auto'; b.style.flex = '1 1 0'; });
+    bIcs.style.order = '0'; bG.style.order = '1';
   } else {
     bIcs.className = 'rem-btn'; bIcs.innerHTML = '📅 Add to calendar' + SUBS; bIcs.style.order = '0';
     bG.className = 'rem-link'; bG.textContent = 'Google Calendar'; bG.style.order = '1';
@@ -1463,9 +1469,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   back.querySelector('#remLater').addEventListener('click', closeSheet);
   pill.addEventListener('click', function(){ send('reminder/open', 'Reminder: open'); openSheet(); });
 
-  function done(){
+  function done(isFile){
     markAdded(); syncPill();
-    msg.textContent = 'Almost done: if your calendar asks, tap Add. · Casi listo: si tu calendario te lo pide, toca Agregar. · Quase pronto: se o calendário pedir, toque em Adicionar.';
+    msg.textContent = (android && isFile) ? 'Almost done: when your phone asks, open the file with Calendar, then tap Save. · Casi listo: cuando tu teléfono pregunte, abre el archivo con Calendario y toca Guardar. · Quase pronto: quando o telefone perguntar, abra o arquivo com o Calendário e toque em Salvar.' : 'Almost done: if your calendar asks, tap Add. · Casi listo: si tu calendario te lo pide, toca Agregar. · Quase pronto: se o calendário pedir, toque em Adicionar.';
   }
   bIcs.addEventListener('click', function(){
     var ics = buildIcs(chosen(), timeEl.value); if(!ics) return;
@@ -1480,7 +1486,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         setTimeout(function(){ try{ URL.revokeObjectURL(url); }catch(e){} }, 15000);
       }
     }catch(err){ location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics); }
-    done();
+    done(true);
   });
   bG.addEventListener('click', function(){
     var url = googleUrl(chosen(), timeEl.value); if(!url) return;
@@ -1489,7 +1495,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var a = document.createElement('a'); a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }catch(err){ location.href = url; }
-    done();
+    done(false);
   });
 
   syncPill();
