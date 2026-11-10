@@ -20,7 +20,7 @@ you at runtime.
 =====================================================================
 -->
 <!-- build:JysnMlnrMthd -->
-<!-- template_arch_3-5-54 + Repair.product (0 patch(es)) -->
+<!-- template_arch_3-5-56 + Repair.product (0 patch(es)) -->
 <!DOCTYPE html>
 <html lang="en" translate="no" class="notranslate">
 <head>
@@ -628,6 +628,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     cursor:pointer; white-space:nowrap;
   }
   .home-dropdown-item:hover{ background:var(--border-soft); color:var(--ink); }
+  .home-dropdown-item.hd-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; }   /* 3-5-56 */
+  .hd-pips{ flex:none; display:flex; align-items:center; gap:3px; }
   .home-dropdown-item.active{ background:#FEE9DD; color:var(--amber-bright); font-weight:700; }
   .home-dropdown-more{ text-align:center; padding:6px 0 2px; color:var(--ink-dim); font-size:12px; letter-spacing:.1em; }
   .home-dropdown-list{ max-height:280px; overflow-y:auto; }
@@ -1105,7 +1107,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 </style>
 </head>
 <body>
-<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.54</div>
+<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.56</div>
 <script>/* 3-5-26-1: if the build never ran on this file, the version token is still in the label -> say so in red instead of showing the raw token. (Token is split here so the build does not rewrite it.) */
 (function(){ try{ var b=document.getElementById('appVersionBadge'); if(b && b.textContent.indexOf('__APP_'+'VERSION__')>-1){ b.textContent='UNBUILT COPY - no product file'; b.style.color='#d92d20'; b.style.fontWeight='800'; b.style.textShadow='none'; } }catch(e){} })();
 </script>
@@ -2434,6 +2436,7 @@ function updateStageChips(){
   });
 })();
 function onDrillLangChange(){
+  pairChanged();   // 3-5-56
   speechSynthesis.cancel(); stopRecognition();
   S.token++;
   const priorRow = S.order.length ? S.order[S.idx] : 0; // absolute row this session was on
@@ -2935,8 +2938,16 @@ function renderLessonDropdownInto(listEl, onSelect){
   course.sheets.forEach((sh,i)=>{
     if(!sheetAvailable(sh)) return;
     const item = document.createElement('div');
-    item.className = 'home-dropdown-item' + (i===S.sheetIdx ? ' active' : '');
-    item.textContent = course.multiLang ? sh.name : `${lessonNumberFor(course, i)}. ${sh.name}`;
+    item.className = 'home-dropdown-item hd-row' + (i===S.sheetIdx ? ' active' : '');
+    const nm = document.createElement('span');
+    nm.textContent = course.multiLang ? sh.name : `${lessonNumberFor(course, i)}. ${sh.name}`;
+    item.appendChild(nm);
+    try{   // 3-5-56: pips for the current source>target pair (outline = still to do, green = pass finished)
+      const need = passesNeeded(course, sh), d = passesDone(course, i), pp = document.createElement('span');
+      pp.className = 'hd-pips';
+      for(let k=0;k<need;k++){ const pip = document.createElement('i'); pip.className = 'pc-pip' + (k<d ? ' on' : ''); pp.appendChild(pip); }
+      item.appendChild(pp);
+    }catch(e){}
     item.addEventListener('click', ()=>{
       listEl.classList.add('hidden');
       if(i!==S.sheetIdx) onSelect(i);
@@ -3200,6 +3211,7 @@ function toggleTargetChooser(tileBtn, srcCode, candidates){
 function chooseLanguageAndStart(srcCode, tgtCode){
   S.srcCode = srcCode;
   if(tgtCode) S.tgtCode = tgtCode;
+  S._pairLive = true;   // 3-5-56
   syncMainLangSelects();
   syncDrillLangSelects();
   onLangChange();
@@ -6556,6 +6568,7 @@ function checkAudioActuallyPlaying(){
 }
 document.getElementById('startBtn').addEventListener('click', async ()=>{
   if(S.activeLines.length===0){ alert('No lines available for that language combination.'); return; }
+  S._pairLive = true; pairChanged();   // 3-5-56: progress now follows the live source>target pair
   if(OLD_IOS){ unlockSpeechInGesture(); anchorAudioStart(); }   // 3-5-20: inside the tap, before any waiting (older iPhones only)
   await voicesReady();
   document.querySelectorAll('.setup-card').forEach(c=>c.classList.add('hidden'));
@@ -7364,22 +7377,57 @@ function initKeepAwake(){
    A pass counts when the lesson reaches its end (loop wrap, playthrough
    advance, or the end of a non-looping session). 3-5-30: no minimum time.
    Saved in this browser only: APP_ID + ':progress', keyed by lesson name. */
-const PROGRESS_KEY = APP_ID + ':progress';
+const PROGRESS_KEY = APP_ID + ':progress';              // 3-5-56: OLD single store (one set of passes for all languages). Read once for migration, then left alone as a backup.
+const PAIR_PROGRESS_PREFIX = APP_ID + ':progress:';     // 3-5-56: + 'src>tgt', e.g. 'all-languages-template:progress:es>en'
+const LASTPAIR_KEY = APP_ID + ':lastPair';
 let progressData = null, progressSaveOK = true;
+function readLastPair(){ try{ return localStorage.getItem(LASTPAIR_KEY) || ''; }catch(e){ return ''; } }
+/* 3-5-56: which source>target pair progress belongs to. Once a lesson has been started (S._pairLive) it is the live pair;
+   before that (welcome page) it is the pair played last, else the current default. Direction matters: es>en is not en>es. */
+function pairId(){
+  const live = (S.srcCode || S._prevSrc || '-') + '>' + (S.tgtCode || '-');
+  if(S._pairLive) return live;
+  return readLastPair() || live;
+}
+function pairChanged(){   // call after the language pair changes: remember it, redraw the progress card
+  try{ if(S._pairLive) localStorage.setItem(LASTPAIR_KEY, pairId()); renderProgressCard(); }catch(e){}
+}
+function migrateLegacyProgress(){
+  try{
+    if(localStorage.getItem(APP_ID + ':progressMigrated')) return;
+    const old = JSON.parse(localStorage.getItem(PROGRESS_KEY) || 'null');
+    if(old && old.passes && typeof old.passes === 'object' && Object.keys(old.passes).length){
+      const pid = pairId(), k = PAIR_PROGRESS_PREFIX + pid;
+      if(!localStorage.getItem(k)) localStorage.setItem(k, JSON.stringify({ passes: old.passes }));
+      if(!readLastPair()) localStorage.setItem(LASTPAIR_KEY, pid);
+    }
+    localStorage.setItem(APP_ID + ':progressMigrated', '1');
+  }catch(e){}
+}
 function loadProgress(){
-  if(progressData) return progressData;
+  const pid = pairId();
+  if(progressData && progressData._pid === pid) return progressData;
   let d = null;
-  try{ d = JSON.parse(localStorage.getItem(PROGRESS_KEY) || 'null'); }catch(e){}
+  try{ d = JSON.parse(localStorage.getItem(PAIR_PROGRESS_PREFIX + pid) || 'null'); }catch(e){}
   progressData = (d && typeof d==='object' && d.passes && typeof d.passes==='object') ? d : { passes:{} };
+  progressData._pid = pid;
   return progressData;
 }
 function saveProgress(){
   try{
-    const str = JSON.stringify(progressData);
-    localStorage.setItem(PROGRESS_KEY, str);
-    progressSaveOK = (localStorage.getItem(PROGRESS_KEY) === str);   // read it back: some browsers accept the write and drop it
+    const k = PAIR_PROGRESS_PREFIX + (progressData._pid || pairId());
+    const str = JSON.stringify({ passes: progressData.passes });
+    localStorage.setItem(k, str);
+    progressSaveOK = (localStorage.getItem(k) === str);   // read it back: some browsers accept the write and drop it
   }catch(e){ progressSaveOK = false; }
   return progressSaveOK;
+}
+/* 3-5-56: every saved pair's passes (for the index.html flag/ring, which is per app, not per pair) */
+function allPairPasses(){
+  const out = [];
+  try{ for(let i=0;i<localStorage.length;i++){ const k = localStorage.key(i);
+    if(k && k.indexOf(PAIR_PROGRESS_PREFIX) === 0){ let d = null; try{ d = JSON.parse(localStorage.getItem(k)); }catch(e){} if(d && d.passes) out.push(d.passes); } } }catch(e){}
+  return out;
 }
 function lessonKey(sh){ return S.courseIdx + ':' + (sh.id || sh.name); }
 function passesNeeded(course, sh){
@@ -7520,14 +7568,16 @@ function syncCourseFlag(course, touched){
   try{
     const f = decodeURIComponent(location.pathname.split('/').pop() || 'index.html'), key = 'fayneCourseState:' + f, pkey = 'fayneCourseProgress:' + f;
     const av = availableIdxs(course);
-    const any = av.some(i => passesDone(course, i) > 0);
+    const sets = allPairPasses();   // 3-5-56: progress is per language pair; the home page shows the best pair
+    const doneIn = ps => av.filter(i => (ps[lessonKey(course.sheets[i])] || 0) >= passesNeeded(course, course.sheets[i])).length;
+    const any = sets.some(ps => av.some(i => (ps[lessonKey(course.sheets[i])] || 0) > 0));
     let pr = null; try{ pr = JSON.parse(localStorage.getItem(pkey) || 'null'); }catch(e){}
     // 3-5-53: a course also counts as "started" once a line has played (touched), not only after a full lesson pass.
     if(!any && !touched && !(pr && pr.ts)){ localStorage.removeItem(key); localStorage.removeItem(pkey); return; }
-    const nd = av.filter(i => lessonDone(course, i)).length;
+    const nd = Math.max(0, ...sets.map(doneIn));
     const ts = touched ? Date.now() : ((pr && pr.ts) || 0);
     localStorage.setItem(pkey, JSON.stringify({ d: nd, t: av.length, ts: ts }));   // 3-5-53: lessons finished / total / last played, for the ring on index.html
-    localStorage.setItem(key, (av.length && nextUpIdx(course) < 0) ? 'done' : 'started');
+    localStorage.setItem(key, (av.length && nd >= av.length) ? 'done' : 'started');
   }catch(e){}
 }
 
@@ -7545,6 +7595,7 @@ function recordPass(){
     const nextWasLocked = nxt!=null && !lessonUnlocked(course, nxt);
     progressData.passes[lessonKey(sh)] = before + 1;
     saveProgress();
+    try{ localStorage.setItem(LASTPAIR_KEY, pairId()); }catch(e){}   // 3-5-56
     syncCourseFlag(course, true);
     renderProgressCard();
     const finished = before + 1 >= need;
@@ -7557,7 +7608,9 @@ function recordPass(){
 
 let _pcResize = 0;
 function initProgress(){
+  try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}   // 3-5-55: ask the browser to protect saved progress from automatic cleanup
   try{ localStorage.removeItem(APP_ID+':remember'); localStorage.removeItem(APP_ID+':position'); }catch(e){}   // old, removed feature
+  migrateLegacyProgress(); progressData = null;   // 3-5-56
   loadProgress();
   syncCourseFlag(currentCourse());   // 3-5-34: bring the home-page flag up to date with progress saved by earlier versions
   const nx = nextUpIdx(currentCourse());

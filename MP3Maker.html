@@ -29,9 +29,10 @@ audio{width:100%;margin-top:8px}h2{font-size:15px;margin:0 0 4px}
 </style></head><body><div id="mp3VersionBadge" aria-hidden="true" translate="no"></div><main>
 <h1 id="appName"></h1>
 <div class="card" id="helper" hidden><h2>Start the helper</h2>
- <p style="margin:6px 0">MP3 Maker needs its small helper program running on this computer to make the audio.</p>
- <a id="startlink" href="mp3maker://start"><button type="button">Start helper</button></a><button type="button" class="alt" id="recheck">Check again</button>
- <p style="font-size:13px;opacity:.8;margin:8px 0 0">First time, or the button does nothing? In File Explorer, double-click <b>MP3Maker.py</b> once (not in the browser). It sets this button up. The browser may ask to allow opening MP3 Maker: say yes and tick "always allow".</p></div>
+ <p style="margin:6px 0">MP3 Maker needs its small helper program running on this computer to make the audio. It is one file, <b>MP3Maker.py</b>.</p>
+ <p style="margin:6px 0"><b>First time:</b> download it, then double-click it in File Explorer (it needs <a href="https://www.python.org/downloads/" target="_blank" rel="noopener">Python</a>, with "Add Python to PATH" ticked). A black window opens and stays open while the helper runs. This page then wakes up by itself.</p>
+ <a id="dllink" href="MP3Maker.py" download="MP3Maker.py"><button type="button">Download MP3Maker.py</button></a><button type="button" class="alt" id="recheck">Check again</button>
+ <p style="font-size:13px;opacity:.8;margin:8px 0 0"><b>Next times:</b> after that first run this button works: <a id="startlink" href="mp3maker://start"><button type="button" class="alt" style="margin:0 0 0 4px;padding:4px 10px;font-size:13px">Start helper</button></a> The browser may ask to allow opening MP3 Maker: say yes and tick "always allow".</p></div>
 <div id="app">
 <div class="card">
  <label>Course file</label><select id="course"></select>
@@ -75,7 +76,7 @@ function strip(raw){if(raw==null)return '';let t=String(raw);if(/^\{\{SLOT:/.tes
  t=t.replace(/\[([^\]]+)\]/g,'').replace(/\.\.\.\s*$/,'').replace(/\s{2,}/g,' ').trim();
  if(C.pipeSyntax){const i=t.indexOf('|');if(i>-1)t=t.slice(i+1).trim()||t.slice(0,i).trim()}return t}
 /* ---- Callbacks ("how do you say") and lesson-1 frames: port of the player's recall logic (template 3-5-33 .. 3-5-47) ---- */
-const MP3_APP_VERSION='v3.5.54';   // 3-5-52: written by build.py on every build (same number as the template); never edit by hand
+const MP3_APP_VERSION='v3.5.56';   // 3-5-52: written by build.py on every build (same number as the template); never edit by hand
 const MP3_PLAYBACK_REV=1;   // 3-5-52: must equal MP3_PLAYBACK_REV in the course pages (build.py checks this)
 {const bd=document.getElementById('mp3VersionBadge');if(bd)bd.textContent=MP3_APP_VERSION}
 let HDYS={},RCFG={rWindow:5,shortWords:7,longWords:12,thinkBaseMs:3000,thinkPerWordMs:500,thinkMaxMs:7000,recentCap:20,l1Look:8,l1WordMax:2,l1SentMin:3,l1SentMax:6};
