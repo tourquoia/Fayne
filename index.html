@@ -507,13 +507,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   .track-btn:not(.is-next) .track-icon svg { opacity: 0.8; }
   .track-btn.is-next .track-icon { box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.85), 0 0 14px rgba(240, 90, 34, 0.6); }
   .track-btn.is-next { border-color: var(--brand-accent); }
-  /* Start Here card (intro.html): unnumbered, always green, pulses until the intro has been finished. */
-  .track-btn.start-here { border-left-color: #1F9D55; border-color: #1F9D55; }
-  .track-btn.start-here .track-icon { background: #1F9D55; }
-  .track-btn.start-here .track-icon svg { opacity: 1; stroke-width: 1.9; }
-  .track-btn.start-here:not(.is-done) .track-icon { animation: startPulse 1.8s ease-out infinite; }
-  @keyframes startPulse { 0% { box-shadow: 0 0 0 0 rgba(31,157,85,0.65); } 70%, 100% { box-shadow: 0 0 0 16px rgba(31,157,85,0); } }
-  @media (prefers-reduced-motion: reduce) { .track-btn.start-here:not(.is-done) .track-icon { animation: none; box-shadow: 0 0 0 3px rgba(31,157,85,0.5); } }
   .track-num {
     position: absolute; top: -6px; left: -6px;
     min-width: 26px; height: 26px; padding: 0 5px; box-sizing: border-box;
@@ -522,16 +515,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     color: #A39D96; font-size: 14px; font-weight: 800; line-height: 22px; text-align: center;
   }
   .track-btn.is-next .track-num { color: #FFFFFF; border-color: #FFFFFF; }
-  .track-btn.is-started .track-num { border-color: #2F8CFF; }
-  /* 3-5-53: in-progress ring (blue: green is for the intro + finished, orange is the brand colour). Static arc = lessons finished / total; the dot orbits only on the most recently played course. */
-  .track-btn .track-icon .track-ring { position: absolute; top: -11px; left: -11px; width: 84px; height: 84px; pointer-events: none; }
-  .track-btn .track-icon .track-ring svg { width: 84px; height: 84px; opacity: 1; fill: none; stroke: none; }
-  .track-ring .rt { fill: none; stroke: rgba(47,140,255,0.28); stroke-width: 4; }
-  .track-ring .rf { fill: none; stroke: #2F8CFF; stroke-width: 4; stroke-linecap: round; }
-  .track-btn .track-icon .track-orbit { position: absolute; top: -11px; left: -11px; width: 84px; height: 84px; border-radius: 50%; pointer-events: none; animation: ringOrbit 3.6s linear infinite; }
-  .track-orbit::before { content: ''; position: absolute; top: 0.5px; left: 50%; width: 7px; height: 7px; margin-left: -3.5px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 0 6px #2F8CFF; }
-  @keyframes ringOrbit { to { transform: rotate(360deg); } }
-  @media (prefers-reduced-motion: reduce) { .track-btn .track-icon .track-orbit { display: none; } }
+  .track-btn.is-started .track-num { border-color: var(--brand-accent); }
   .track-btn.is-done .track-num { background: #1F9D55; border-color: #FFFFFF; color: #FFFFFF; }
 </style>
 </head>
@@ -576,21 +560,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           Do not treat the missing files as a bug and do not drop these cards unless told to.
         - Legacy courses may move to the BOTTOM of the list (near Brennan). Candidate: POC.html ("Old Course", Tanya & Al) - move it down
           if Mercado (higher value) teaches most of what it already does. Not decided yet.
-        - Mercado.html added 2026-11-07 as card 4 (before Laura). index2.html is an OLD version the owner is keeping for a while; it does NOT need to stay in sync.
-        - intro.html ("Start here") is the first card, deliberately UNNUMBERED (class start-here, excluded from numbering and next-up); green with a pulse until the intro is finished.
+        - Mercado.html added 2026-11-07 as card 4 (before Laura), index.html and index2.html both. Keep both index files in sync.
       -->
-        <a href="intro.html" class="hotspot track-btn start-here" aria-label="Empieza aquí. Começa aqui. Start here">
-          <div class="track-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><g transform="translate(1.5,3.5) scale(.85)"><path d="M22 14a8 8 0 0 1-8 8"/><path d="M18 11v-1a2 2 0 0 0-2-2a2 2 0 0 0-2 2"/><path d="M14 10V9a2 2 0 0 0-2-2a2 2 0 0 0-2 2v1"/><path d="M10 9.5V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v10"/><path d="M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></g><path d="M5.7 5a2.6 2.6 0 0 1 5.2 0"/><path d="M3.5 5a4.8 4.8 0 0 1 9.6 0"/></svg>
-          </div>
-          <div class="track-text">
-            <span class="track-title-es">EMPIEZA AQUÍ</span>
-            <span class="track-title-pt">COMECE AQUI</span>
-            <span class="track-title-en">START HERE</span>
-          </div>
-          <span class="chevron">›</span>
-        </a>
-
         <a href="1stSteps.html" class="hotspot track-btn" aria-label="Primeros Pasos">
           <div class="track-icon">
             <svg class="icon-lg" viewBox="0 0 2100 2100" style="width:48px;height:48px;fill:#ffffff;stroke:none;">
@@ -1147,7 +1118,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 <script>
 /* Course numbers + next-up highlight. Reads 'fayneCourseState:<file>' ('started' | 'done') written by each course page. Never blocks a link. */
 (function(){
-  var cards = document.querySelectorAll('.track-list .track-btn:not(.start-here)');
+  var cards = document.querySelectorAll('.track-list .track-btn');
   var CHECK = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block;margin:4px auto"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   function fileOf(a){
     var h = (a.getAttribute('href') || '').split('#')[0].split('?')[0].split('/').pop();
@@ -1156,8 +1127,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   function state(f){ try { return localStorage.getItem('fayneCourseState:' + f) || ''; } catch(e) { return ''; } }
   function render(){
     var nextFound = false;
-    var sh = document.querySelector('.track-btn.start-here');
-    if(sh){ sh.classList.toggle('is-done', state('intro.html') === 'done'); }
     Array.prototype.forEach.call(cards, function(a, i){
       var ic = a.querySelector('.track-icon'); if(!ic) return;
       var badge = a.querySelector('.track-num');
@@ -1172,39 +1141,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       a.setAttribute('aria-label', a.getAttribute('data-label') + ', ' + n + (isDone ? ', completed' : (isNext ? ', next' : '')));
     });
   }
-  /* 3-5-53: in-progress ring. Players save 'fayneCourseProgress:<file>' = {d: lessons finished, t: total, ts: last played}. */
-  var RC = 238.76;
-  function prog(f){ try { var o = JSON.parse(localStorage.getItem('fayneCourseProgress:' + f) || 'null'); return (o && typeof o === 'object') ? o : null; } catch(e) { return null; } }
-  function paintRings(){
-    var latest = null, latestTs = 0;
-    Array.prototype.forEach.call(cards, function(a){
-      if(a.classList.contains('is-started') && !a.classList.contains('is-done')){
-        var q = prog(fileOf(a)), ts = (q && +q.ts) || 0;
-        if(ts > latestTs){ latestTs = ts; latest = a; }
-      }
-    });
-    Array.prototype.forEach.call(cards, function(a){
-      var ic = a.querySelector('.track-icon'); if(!ic) return;
-      var ring = ic.querySelector('.track-ring'), orb = ic.querySelector('.track-orbit');
-      var on = a.classList.contains('is-started') && !a.classList.contains('is-done');
-      if(!on){ if(ring) ring.parentNode.removeChild(ring); if(orb) orb.parentNode.removeChild(orb); return; }
-      var p = prog(fileOf(a)) || {}, frac = (p.t > 0) ? Math.min(1, (p.d || 0) / p.t) : 0;
-      frac = Math.max(0.06, frac);
-      var badge = ic.querySelector('.track-num');
-      if(!ring){
-        ring = document.createElement('span'); ring.className = 'track-ring'; ring.setAttribute('aria-hidden', 'true');
-        ring.innerHTML = '<svg viewBox="0 0 84 84" width="84" height="84"><circle class="rt" cx="42" cy="42" r="38"/><circle class="rf" cx="42" cy="42" r="38" transform="rotate(-90 42 42)"/></svg>';
-        ic.insertBefore(ring, badge);
-      }
-      ring.querySelector('.rf').setAttribute('stroke-dasharray', (frac * RC).toFixed(1) + ' ' + RC);
-      if(a === latest){
-        if(!orb){ orb = document.createElement('span'); orb.className = 'track-orbit'; orb.setAttribute('aria-hidden', 'true'); ic.insertBefore(orb, badge); }
-      } else if(orb){ orb.parentNode.removeChild(orb); }
-      a.setAttribute('aria-label', (a.getAttribute('aria-label') || '').replace(/, in progress.*$/, '') + ', in progress' + (p.t ? ', ' + (p.d || 0) + ' of ' + p.t + ' lessons finished' : ''));
-    });
-  }
-  var _render = render;
-  render = function(){ _render(); paintRings(); };
   render();
   window.addEventListener('pageshow', render);
   window.addEventListener('storage', render);
@@ -1304,268 +1240,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       if(m) send('open-app/' + m[1].toLowerCase(), 'Opened ' + m[1], true);
     }catch(err){}
   }, true);
-})();
-</script>
-
-<!-- 3-5-50: CALENDAR REMINDER for index.html. Paste just before the closing body tag (after the STATS block).
-     What people see: ONE small permanent pill ("Add to calendar") between the title bar and the first lesson (no x; it turns into "Calendar ✓" once used).
-     Tapping it opens a bottom sheet over the page: pick days + time (defaults Mon/Wed/Fri 19:00), then one big button for their phone
-     (iPhone/other: "Add to calendar" = .ics file; Android: "Google Calendar") and one small link for the other kind.
-     The event repeats weekly at that local time and links back to THIS page, so it never goes stale; the page itself already highlights the next lesson.
-     NO DUPLICATES: the .ics keeps one fixed ID per phone, so saving again replaces the earlier event in most calendar apps. The Google link cannot do that,
-     so the sheet warns when a reminder was already added from this phone.
-     Static add-on: touches no playback code, no cookies; localStorage holds two small flags.
-     SWITCHES: CFG.place = 'list' (above the first lesson), 'top' (under the save button) or 'bottom' (above the footer). CFG.days / CFG.time = defaults.
-     CFG.minutes = event length. CFG.iosMethod = 'data' (opens the Add-to-Calendar sheet directly) or 'blob' (normal download; use if 'data' misbehaves).
-     CFG.code = GoatCounter site code (same as the STATS block; empty = nothing is counted).
-     Counted events: reminder/shown, reminder/open, reminder/add-ics, reminder/add-google. -->
-<script>
-(function(){
-  var CFG = { days:['MO','WE','FR'], time:'19:00', minutes:20, iosMethod:'data', place:'list', code:'faynemilner' };
-  var KEY = 'fayneReminder', UIDKEY = 'fayneReminderUid';
-  var CODE = ['SU','MO','TU','WE','TH','FR','SA'];
-  var DAYS = [['MO','Mon','Lun','Seg'],['TU','Tue','Mar','Ter'],['WE','Wed','Mié','Qua'],['TH','Thu','Jue','Qui'],['FR','Fri','Vie','Sex'],['SA','Sat','Sáb','Sáb'],['SU','Sun','Dom','Dom']];
-  var TITLE = 'Practice · Práctica · Prática';
-
-  function pad(n){ return (n < 10 ? '0' : '') + n; }
-  function stamp(d){ return d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate()) + 'T' + pad(d.getHours()) + pad(d.getMinutes()) + '00'; }
-  function stampUtc(d){ return d.getUTCFullYear() + pad(d.getUTCMonth()+1) + pad(d.getUTCDate()) + 'T' + pad(d.getUTCHours()) + pad(d.getUTCMinutes()) + pad(d.getUTCSeconds()) + 'Z'; }
-  function esc(s){ return String(s).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n'); }
-
-  /* The page this reminder points back to: the home page itself. */
-  function pageUrl(){
-    if(location.protocol === 'file:') return location.href.split('#')[0].split('?')[0];
-    return location.origin + location.pathname.replace(/index\.html?$/i, '');
-  }
-  function details(){
-    return pageUrl() + '\n\n' +
-           'Open Fayne\u2019s Mini Language Courses and continue with your next lesson. Go from the lowest number to the highest.\n\n' +
-           'Abre Fayne\u2019s Mini Language Courses y sigue con tu siguiente lección. Ve del número más bajo al más alto.\n\n' +
-           'Abra Fayne\u2019s Mini Language Courses e continue com a sua próxima lição. Vá do número mais baixo ao mais alto.';
-  }
-  /* First future moment that falls on one of the chosen days at hh:mm, in the person's own local time. */
-  function firstStart(days, hhmm){
-    var p = String(hhmm || CFG.time).split(':'), h = +p[0] || 0, m = +p[1] || 0, now = new Date();
-    for(var i = 0; i < 8; i++){
-      var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i, h, m, 0);
-      if(days.indexOf(CODE[d.getDay()]) > -1 && d.getTime() > now.getTime()) return d;
-    }
-    return null;
-  }
-  function endOf(start){ return new Date(start.getTime() + CFG.minutes * 60000); }
-  /* RFC 5545 line folding at 75 bytes, never inside a character. */
-  function fold(line){
-    var enc = window.TextEncoder ? new TextEncoder() : null, out = [], cur = '', bytes = 0, chars = Array.from ? Array.from(line) : line.split('');
-    for(var i = 0; i < chars.length; i++){
-      var b = enc ? enc.encode(chars[i]).length : chars[i].length;
-      if(bytes + b > 75){ out.push(cur); cur = ' ' + chars[i]; bytes = 1 + b; } else { cur += chars[i]; bytes += b; }
-    }
-    out.push(cur);
-    return out.join('\r\n');
-  }
-  function buildIcs(days, hhmm){
-    var s = firstStart(days, hhmm); if(!s) return '';
-    var e = endOf(s);
-    var uid = 'fayne-mini-practice@fayne-mini';           // fixed fallback
-    try{
-      uid = localStorage.getItem(UIDKEY) || '';
-      if(!uid){ uid = 'fayne-mini-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8) + '@fayne-mini'; localStorage.setItem(UIDKEY, uid); }
-    }catch(e){ if(!uid) uid = 'fayne-mini-practice@fayne-mini'; }
-    var seq = Math.floor(Date.now() / 5000);              // always rises, so a re-save counts as an update
-    var L = [
-      'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Fayne Mini Language Courses//Practice reminder//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
-      'BEGIN:VEVENT', 'UID:' + uid, 'SEQUENCE:' + seq, 'DTSTAMP:' + stampUtc(new Date()),
-      'DTSTART:' + stamp(s), 'DTEND:' + stamp(e),
-      'RRULE:FREQ=WEEKLY;BYDAY=' + days.join(','),
-      'SUMMARY:' + esc(TITLE), 'LOCATION:' + esc(pageUrl()), 'DESCRIPTION:' + esc(details()), 'URL:' + pageUrl(),
-      'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + esc(TITLE), 'TRIGGER:PT0M', 'END:VALARM',
-      'END:VEVENT', 'END:VCALENDAR'
-    ];
-    return L.map(fold).join('\r\n') + '\r\n';
-  }
-  /* Tell Google which time zone the typed time is in (the phone's), so it does not fall back to the account's setting. */
-  function tzParam(){
-    try{ var z = Intl.DateTimeFormat().resolvedOptions().timeZone; return z ? '&ctz=' + encodeURIComponent(z) : ''; }catch(e){ return ''; }
-  }
-  function googleUrl(days, hhmm){
-    var s = firstStart(days, hhmm); if(!s) return '';
-    return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(TITLE) +
-      '&details=' + encodeURIComponent(details()) + '&location=' + encodeURIComponent(pageUrl()) + tzParam() + '&dates=' + stamp(s) + '/' + stamp(endOf(s)) +
-      '&recur=' + encodeURIComponent('RRULE:FREQ=WEEKLY;BYDAY=' + days.join(','));
-  }
-  window.LP_REMINDER = { config:CFG, buildIcs:buildIcs, googleUrl:googleUrl, firstStart:firstStart };
-
-  /* ---------- everything below needs the page ---------- */
-  var host = document.querySelector('.save-section');
-  if(!host || !host.parentNode) return;
-
-  function isIOS(){
-    var ua = navigator.userAgent || '';
-    return /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
-  }
-  var android = /Android/.test(navigator.userAgent || '');
-
-  function added(){ try{ return localStorage.getItem(KEY) === 'added'; }catch(e){ return false; } }
-  function markAdded(){ try{ localStorage.setItem(KEY, 'added'); }catch(e){} }
-
-  function send(path, title){
-    try{
-      if(!CFG.code || location.protocol === 'file:' || /^(localhost|127\.|\[::1\])/.test(location.hostname)) return;
-      var url = 'https://' + CFG.code + '.goatcounter.com/count?p=' + encodeURIComponent(path) + '&t=' + encodeURIComponent(title || path) + '&e=true' +
-        '&s=' + encodeURIComponent((screen.width||0) + ',' + (screen.height||0) + ',' + (window.devicePixelRatio||1)) + '&rnd=' + Math.random().toString(36).slice(2, 8);
-      if(typeof fetch === 'function') fetch(url, {method:'GET', mode:'no-cors', keepalive:true, credentials:'omit'}).catch(function(){});
-      else new Image().src = url;
-    }catch(e){}
-  }
-
-  var css = document.createElement('style');
-  css.textContent =
-    '.rem-pill{display:block;width:max-content;max-width:90%;margin:2px auto 12px auto;box-sizing:border-box;border:1.5px solid var(--brand-accent);border-radius:999px;background:var(--install-bg);color:var(--install-color);font:inherit;font-weight:700;font-size:clamp(12px,1.7vw,15px);line-height:1.25;padding:8px 18px;cursor:pointer;white-space:nowrap}' +
-    '.rem-back{position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center}' +
-    '.rem-back[hidden]{display:none}' +
-    '.rem-sheet{width:100%;max-width:520px;box-sizing:border-box;max-height:88vh;overflow-y:auto;background:var(--bg-page);color:var(--header-title-color);border:2px solid var(--brand-accent);border-bottom:0;border-radius:18px 18px 0 0;padding:16px 14px calc(16px + env(safe-area-inset-bottom,0px));font-family:inherit;text-align:left}' +
-    '.rem-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}' +
-    '.rem-title{font-weight:800;font-size:clamp(15px,2vw,18px);color:var(--install-color)}' +
-    '.rem-title span{display:block;font-weight:600;font-size:clamp(12px,1.6vw,15px);color:var(--install-sub-color);margin-top:2px}' +
-    '.rem-close{flex:0 0 auto;border:0;background:none;color:var(--install-sub-color);font:inherit;font-size:26px;line-height:1;cursor:pointer;padding:0 4px}' +
-    '.rem-note{margin:10px 0 0;padding:8px 10px;border:1.5px dashed var(--brand-accent);border-radius:12px;background:var(--install-bg);font-size:13px;line-height:1.45}' +
-    '.rem-note[hidden]{display:none}' +
-    '.rem-note span{display:block;margin-top:3px;color:var(--install-sub-color)}' +
-    '.rem-text{margin:10px 0 12px;font-size:clamp(13px,1.8vw,16px);line-height:1.5}' +
-    '.rem-text span{display:block;margin-top:6px;color:var(--install-sub-color)}' +
-    '.rem-days{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}' +
-    '.rem-day{flex:1 1 0;min-width:38px;border:2px solid var(--brand-accent);border-radius:12px;background:transparent;color:var(--install-color);font:inherit;font-weight:800;font-size:13px;line-height:1.2;padding:7px 2px;cursor:pointer}' +
-    '.rem-day small{display:block;font-weight:600;font-size:10.5px;opacity:.85}' +
-    '.rem-day[aria-pressed="true"]{background:var(--brand-accent);color:#fff}' +
-    '.rem-time{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-weight:700;font-size:clamp(13px,1.8vw,16px)}' +
-    '.rem-time input{font:inherit;font-size:16px;color:var(--header-title-color);background:var(--icon-btn-bg);border:1px solid var(--photo-border);border-radius:10px;padding:8px 10px}' +
-    '.rem-btns{display:flex;flex-direction:column;gap:4px}' +
-    '.rem-btn{width:100%;border:2px solid var(--brand-accent);border-radius:14px;background:var(--brand-accent);color:#fff;font:inherit;font-weight:800;font-size:clamp(14px,2vw,17px);padding:12px 10px;cursor:pointer}' +
-    '.rem-btn span{display:block;font-weight:600;font-size:12px;color:#fff;opacity:.92;margin-top:2px}' +
-    '.rem-link{align-self:center;background:none;border:0;font:inherit;font-size:13px;font-weight:600;text-decoration:underline;color:var(--install-sub-color);cursor:pointer;padding:8px;text-align:center}' +
-    '.rem-btn:disabled,.rem-link:disabled{opacity:.45;cursor:default}' +
-    '.rem-later{display:block;margin:6px auto 0;background:none;border:0;font:inherit;font-size:13px;font-weight:600;text-decoration:underline;color:var(--install-sub-color);cursor:pointer;padding:6px}' +
-    '.rem-msg{margin-top:8px;font-size:13px;line-height:1.5;color:var(--install-sub-color);text-align:center}' +
-    '.rem-msg:empty{display:none}';
-  document.head.appendChild(css);
-
-  /* the pill (permanent) */
-  var pill = document.createElement('button');
-  pill.type = 'button'; pill.className = 'rem-pill'; pill.id = 'remOpen';
-  pill.innerHTML = '📅 <span id="remPillText"></span>';
-  var footer = document.querySelector('main.screen > footer') || document.querySelector('footer');
-  var list = document.querySelector('.track-list');
-  if(CFG.place === 'list' && list && list.parentNode){ list.parentNode.insertBefore(pill, list); }
-  else if(CFG.place === 'bottom' && footer && footer.parentNode){ footer.parentNode.insertBefore(pill, footer); }
-  else { host.parentNode.insertBefore(pill, host.nextSibling); }
-  function syncPill(){ pill.querySelector('#remPillText').textContent = added() ? 'Calendar ✓' : 'Add to calendar'; }
-
-  /* the sheet (over the page; never changes the page layout) */
-  var back = document.createElement('div');
-  back.className = 'rem-back'; back.hidden = true;
-  var chips = DAYS.map(function(d){
-    return '<button type="button" class="rem-day" data-d="' + d[0] + '" aria-pressed="' + (CFG.days.indexOf(d[0]) > -1) + '">' + d[1] + '<small>' + d[2] + '</small><small>' + d[3] + '</small></button>';
-  }).join('');
-  back.innerHTML =
-    '<div class="rem-sheet" role="dialog" aria-modal="true" aria-label="Calendar / Calendario / Calendário">' +
-      '<div class="rem-head"><div class="rem-title">📅 CALENDAR<span>Calendario · Calendário</span></div><button type="button" class="rem-close" id="remClose" aria-label="Close / Cerrar / Fechar">×</button></div>' +
-      '<div class="rem-note" id="remNote" hidden>You already added a reminder. The calendar file updates it; Google Calendar makes a second one.' +
-        '<span>Ya agregaste uno. El archivo de calendario lo actualiza; Google Calendar crea otro.</span>' +
-        '<span>Você já adicionou um. O arquivo de calendário o atualiza; o Google Calendar cria outro.</span></div>' +
-      '<p class="rem-text">Get a reminder to practice. It opens this page: continue with your next lesson, from the lowest number to the highest.' +
-      '<span>Recibe un recordatorio para practicar. Abre esta página: sigue con tu siguiente lección, del número más bajo al más alto.</span>' +
-      '<span>Receba um lembrete para praticar. Abra esta página: continue com a sua próxima lição, do número mais baixo ao mais alto.</span></p>' +
-      '<div class="rem-days" role="group" aria-label="Days / Días / Dias">' + chips + '</div>' +
-      '<label class="rem-time">Time · Hora <input type="time" id="remTime" value="' + CFG.time + '"></label>' +
-      '<div class="rem-btns">' +
-        '<button type="button" id="remIcs"></button>' +
-        '<button type="button" id="remG"></button>' +
-      '</div>' +
-      '<div class="rem-msg" id="remMsg" aria-live="polite"></div>' +
-      '<button type="button" class="rem-later" id="remLater">Close · Cerrar · Fechar</button>' +
-    '</div>';
-  document.body.appendChild(back);
-
-  var bIcs = back.querySelector('#remIcs'), bG = back.querySelector('#remG'), msg = back.querySelector('#remMsg'),
-      timeEl = back.querySelector('#remTime'), note = back.querySelector('#remNote'), lastFocus = null;
-  /* one big button for this kind of phone, one small link for the other kind */
-  var SUBS = '<span>Agregar al calendario</span><span>Adicionar ao calendário</span>';
-  if(android){
-    /* two choices side by side: the file ("most calendars") first and filled, Google Calendar second and outlined */
-    var row = back.querySelector('.rem-btns'); row.style.flexDirection = 'row'; row.style.gap = '8px';
-    bIcs.className = 'rem-btn'; bIcs.innerHTML = '📅 Most calendars<span>La mayoría de calendarios</span><span>A maioria dos calendários</span>';
-    bG.className = 'rem-btn'; bG.innerHTML = '📅 Google Calendar<span>(web)</span>';
-    bG.style.background = 'transparent'; bG.style.color = 'var(--install-color)';
-    bG.querySelector('span').style.color = 'var(--install-sub-color)';
-    [bIcs, bG].forEach(function(b){ b.style.width = 'auto'; b.style.flex = '1 1 0'; });
-    bIcs.style.order = '0'; bG.style.order = '1';
-  } else {
-    bIcs.className = 'rem-btn'; bIcs.innerHTML = '📅 Add to calendar' + SUBS; bIcs.style.order = '0';
-    bG.className = 'rem-link'; bG.textContent = 'Google Calendar'; bG.style.order = '1';
-  }
-
-  function chosen(){
-    return Array.prototype.filter.call(back.querySelectorAll('.rem-day'), function(b){ return b.getAttribute('aria-pressed') === 'true'; })
-      .map(function(b){ return b.getAttribute('data-d'); });
-  }
-  function refresh(){
-    var ok = chosen().length > 0 && /^\d\d:\d\d$/.test(timeEl.value);
-    bIcs.disabled = bG.disabled = !ok;
-    if(!ok) msg.textContent = 'Pick at least one day and a time. · Elige al menos un día y una hora. · Escolha pelo menos um dia e uma hora.';
-    else if(/^Pick at least/.test(msg.textContent)) msg.textContent = '';
-  }
-  function openSheet(){
-    lastFocus = document.activeElement; msg.textContent = ''; note.hidden = !added(); refresh();
-    back.hidden = false; try{ back.querySelector('#remClose').focus(); }catch(e){}
-  }
-  function closeSheet(){ back.hidden = true; try{ if(lastFocus && lastFocus.focus) lastFocus.focus(); }catch(e){} }
-
-  back.addEventListener('click', function(e){
-    if(e.target === back){ closeSheet(); return; }
-    var b = e.target.closest ? e.target.closest('.rem-day') : null;
-    if(!b) return;
-    b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
-    refresh();
-  });
-  document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && !back.hidden) closeSheet(); });
-  timeEl.addEventListener('input', refresh);
-  back.querySelector('#remClose').addEventListener('click', closeSheet);
-  back.querySelector('#remLater').addEventListener('click', closeSheet);
-  pill.addEventListener('click', function(){ send('reminder/open', 'Reminder: open'); openSheet(); });
-
-  function done(isFile){
-    markAdded(); syncPill();
-    msg.textContent = (android && isFile) ? 'Almost done: when your phone asks, open the file with Calendar, then tap Save. · Casi listo: cuando tu teléfono pregunte, abre el archivo con Calendario y toca Guardar. · Quase pronto: quando o telefone perguntar, abra o arquivo com o Calendário e toque em Salvar.' : 'Almost done: if your calendar asks, tap Add. · Casi listo: si tu calendario te lo pide, toca Agregar. · Quase pronto: se o calendário pedir, toque em Adicionar.';
-  }
-  bIcs.addEventListener('click', function(){
-    var ics = buildIcs(chosen(), timeEl.value); if(!ics) return;
-    send('reminder/add-ics', 'Reminder: add-ics');
-    try{
-      if(isIOS() && CFG.iosMethod === 'data'){
-        location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics);
-      } else {
-        var url = URL.createObjectURL(new Blob([ics], {type:'text/calendar;charset=utf-8'}));
-        var a = document.createElement('a'); a.href = url; a.download = 'practice-reminder.ics';
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        setTimeout(function(){ try{ URL.revokeObjectURL(url); }catch(e){} }, 15000);
-      }
-    }catch(err){ location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics); }
-    done(true);
-  });
-  bG.addEventListener('click', function(){
-    var url = googleUrl(chosen(), timeEl.value); if(!url) return;
-    send('reminder/add-google', 'Reminder: add-google');
-    try{
-      var a = document.createElement('a'); a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    }catch(err){ location.href = url; }
-    done(false);
-  });
-
-  syncPill();
-  send('reminder/shown', 'Reminder: shown');
-  window.addEventListener('pageshow', syncPill);
-  window.addEventListener('storage', syncPill);
 })();
 </script>
 
