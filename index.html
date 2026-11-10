@@ -576,7 +576,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           Do not treat the missing files as a bug and do not drop these cards unless told to.
         - Legacy courses may move to the BOTTOM of the list (near Brennan). Candidate: POC.html ("Old Course", Tanya & Al) - move it down
           if Mercado (higher value) teaches most of what it already does. Not decided yet.
-        - Mercado.html added 2026-11-07 as card 4 (before Laura). index2.html is an OLD version the owner is keeping for a while; it does NOT need to stay in sync.
+        - Mercado.html added 2026-11-07 as card 4 (before Laura). index2.html is now a plain CLONE of index.html (replaced at the owner's request, 3-5-57); keep the two in sync.
         - intro.html ("Start here") is the first card, deliberately UNNUMBERED (class start-here, excluded from numbering and next-up); green with a pulse until the intro is finished.
       -->
         <a href="intro.html" class="hotspot track-btn start-here" aria-label="Empieza aquí. Começa aqui. Start here">
@@ -821,6 +821,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       <a href="#instructor-guide" id="instructorGuideFootLink" style="color:var(--footer-color); text-decoration:underline; font-weight:600;">A note to instructors</a>
       <div style="margin-top:0.6em;"><a href="#student-guide" id="studentGuideFootLink" style="color:var(--footer-color); text-decoration:underline; font-weight:600;">How to use this (for students)</a></div>
       <div style="margin-top:0.6em;"><a href="mailto:faynemilner@gmail.com" data-contact="mail" id="contactFootLink" style="color:var(--footer-color); text-decoration:underline; font-weight:600;">Contact</a></div>
+      <!-- 3-5-57: PROGRESS BACKUP. Saves/restores progress for every course linked on this page as one small file (see the script before </body>). -->
+      <div id="pbBox" style="margin-top:0.9em;">
+        <button type="button" id="pbSave" style="background:none;border:0;padding:6px 4px;font:inherit;font-weight:600;color:var(--footer-color);text-decoration:underline;cursor:pointer;">Back up my progress</button>
+        <span aria-hidden="true">&nbsp;·&nbsp;</span>
+        <button type="button" id="pbLoad" style="background:none;border:0;padding:6px 4px;font:inherit;font-weight:600;color:var(--footer-color);text-decoration:underline;cursor:pointer;">Restore progress</button>
+        <input type="file" id="pbFile" accept=".json,application/json" hidden>
+        <div id="pbMsg" role="status" aria-live="polite" style="margin-top:0.3em;min-height:1.2em;"></div>
+      </div>
       <div style="margin-top:0.8em;"><span style="display:inline-block; background:var(--ip-badge-bg); color:var(--ip-badge-color); font-size:12px; font-weight:700; line-height:1.35; padding:6px 18px; border:1px solid rgba(255,255,255,0.55); border-radius:999px; user-select:none;">Intellectual property of Fayne Milner<br>Not for public use</span></div>
     </footer>
   </main>
@@ -1587,6 +1595,85 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     d.textContent = t; document.body.appendChild(d);
   }
   show(); window.addEventListener('pageshow', show); window.addEventListener('hashchange', show);
+})();
+</script>
+<script>
+/* 3-5-57: PROGRESS BACKUP / RESTORE (home page). One small .json file holds the saved progress of EVERY course linked on this page, so a student can move it
+   to another browser or device, or keep a copy. Back up = download. Restore = pick the file; it is MERGED (the higher pass count wins for each lesson, 'done' beats
+   'started'), so restoring an old file can never take progress away. Only progress keys are read or written (never settings, themes or anything else). */
+(function(){
+  var FORMAT = 'fayne-progress-backup', VER = '3-5-57';
+  var save = document.getElementById('pbSave'), load = document.getElementById('pbLoad'), pick = document.getElementById('pbFile'), out = document.getElementById('pbMsg');
+  if(!save || !load || !pick || !out) return;
+  function say(t){ out.textContent = t; }
+  function wanted(k){ return /^fayneCourse(State|Progress):.+/.test(k) || /^[^:]+:progress:[^:]+$/.test(k) || /^[^:]+:lastPair$/.test(k); }
+  function fileOf(a){
+    var h = (a.getAttribute('href') || '').split('#')[0].split('?')[0].split('/').pop();
+    try { return decodeURIComponent(h); } catch(e) { return h; }
+  }
+  function linkedFiles(){   /* the course pages this home page links to */
+    var s = {}, a = document.querySelectorAll('a.track-btn[href]');
+    for(var i = 0; i < a.length; i++){ var f = fileOf(a[i]); if(/\.html?$/i.test(f)) s[f] = 1; }
+    return s;
+  }
+  function jparse(s){ try{ var o = JSON.parse(s); return (o && typeof o === 'object') ? o : null; }catch(e){ return null; } }
+  function count(n){ n = Math.floor(+n); return n > 0 ? Math.min(n, 99) : 0; }
+  function stamp(){ var d = new Date(), p = function(n){ return (n < 10 ? '0' : '') + n; }; return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
+
+  save.addEventListener('click', function(){
+    var items = {}, n = 0;
+    try{ for(var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if(k && wanted(k)){ items[k] = localStorage.getItem(k); n++; } } }
+    catch(e){ say('This browser is blocking saved data, so there is nothing to back up (private window?).'); return; }
+    if(!n){ say('No progress saved in this browser yet. Finish a lesson, then back up.'); return; }
+    var linked = linkedFiles(), courses = 0;
+    for(var f in linked){ if(items['fayneCourseState:' + f] != null || items['fayneCourseProgress:' + f] != null) courses++; }
+    var blob = new Blob([JSON.stringify({ app: FORMAT, format: 1, version: VER, exported: new Date().toISOString(), items: items }, null, 1)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = 'progress-backup-' + stamp() + '.json'; document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1500);
+    say('Backup saved (' + (courses ? courses + (courses === 1 ? ' course' : ' courses') : 'your progress') + '). Look for progress-backup-' + stamp() + '.json in your downloads.');
+  });
+
+  load.addEventListener('click', function(){ pick.value = ''; pick.click(); });
+
+  pick.addEventListener('change', function(){
+    var f = pick.files && pick.files[0]; if(!f) return;
+    var rd = new FileReader();
+    rd.onerror = function(){ say('Could not read that file.'); };
+    rd.onload = function(){
+      var d = jparse(String(rd.result || ''));
+      if(!d || d.app !== FORMAT || !d.items || typeof d.items !== 'object'){ say('That does not look like a progress backup from this site.'); return; }
+      var changed = 0, kept = 0, bad = 0;
+      try{
+        Object.keys(d.items).forEach(function(k){
+          if(!wanted(k) || typeof d.items[k] !== 'string'){ bad++; return; }
+          var inc = d.items[k], cur = localStorage.getItem(k), next = null;
+          if(/^fayneCourseState:/.test(k)){
+            if(inc !== 'started' && inc !== 'done'){ bad++; return; }
+            next = (cur === 'done' || inc === 'done') ? 'done' : 'started';
+          } else if(/^fayneCourseProgress:/.test(k)){
+            var a = jparse(inc), b = jparse(cur) || {}; if(!a){ bad++; return; }
+            next = JSON.stringify({ d: Math.max(count(a.d), count(b.d)), t: count(b.t) || count(a.t), ts: Math.max(+a.ts || 0, +b.ts || 0) });
+          } else if(/:lastPair$/.test(k)){
+            next = cur ? cur : inc;   /* keep this browser's own last pair if it has one */
+          } else {   /* APP:progress:src>tgt  ->  { passes: { lessonKey: passes } } */
+            var x = jparse(inc), y = jparse(cur), xp = x && x.passes, yp = (y && y.passes) || {};
+            if(!xp || typeof xp !== 'object'){ bad++; return; }
+            var m = {}, k2, up = 0;
+            for(k2 in yp) m[k2] = count(yp[k2]);
+            for(k2 in xp){ var v = count(xp[k2]); if(v > (m[k2] || 0)){ m[k2] = v; up++; } }
+            next = JSON.stringify({ passes: m }); if(up) changed += up; else kept++;
+            if(next !== cur) localStorage.setItem(k, next);
+            return;
+          }
+          if(next !== cur){ localStorage.setItem(k, next); }
+        });
+      }catch(e){ say('Could not save the restored progress in this browser (storage full or blocked).'); return; }
+      say(changed ? 'Progress restored (' + changed + (changed === 1 ? ' lesson' : ' lessons') + ' updated). Refreshing…' : 'Backup read. This browser already had all of that progress.' + (bad ? '' : ' Refreshing…'));
+      setTimeout(function(){ try{ location.reload(); }catch(e){} }, 1600);
+    };
+    rd.readAsText(f);
+  });
 })();
 </script>
 </body>

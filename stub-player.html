@@ -19,6 +19,7 @@ template skips that, the course is then missed by every later template round, an
      (it prints RECOVERED). Handing back the product file too is optional. Never hand back a hand-edited copy of this template.
   To update an existing course: edit the data region of its product file, run step 4. Check anything at any time: build.py --check.
   A loose copy someone already made (still has the slot marker comments):  build.py --adopt <File.html>
+3-5-57: PROGRESS BACKUP ON THE HOME PAGES. arch/index.html and arch/index2.html (hand-kept, not built) got 'Back up my progress' / 'Restore progress' in the footer. Back up downloads one progress-backup-DATE.json holding the saved progress of every course on the page (all APP_ID:progress:PAIR, APP_ID:lastPair, fayneCourseState:*, fayneCourseProgress:* keys; nothing else). Restore MERGES it (higher pass count wins, 'done' beats 'started', this browser's lastPair kept) so an old file can never remove progress; a file from another browser or device works the same way. arch/index2.html is now a plain clone of index.html (same footer buttons). No course player changed.
 3-5-56: PROGRESS PER LANGUAGE PAIR. Progress is now saved per app + source + target ('src>tgt'; es>en and en>es are separate) under APP_ID + ':progress:' + pair; APP_ID + ':lastPair' remembers the pair played last, and the welcome-page lesson dropdown shows that pair's green pips (rows now draw outline pips, a finished pass fills one green). First open migrates the old single store into the pair active at that time (old key kept untouched as a backup). index.html ring/flag now use the best pair. Search "3-5-56".
 3-5-55: PROTECT SAVED PROGRESS. One call to navigator.storage.persist() (in initProgress) asks the browser not to evict this site's saved data (low disk space, Safari's inactivity purge). Stores nothing new, sends nothing, no cookie, no prompt in most browsers. Does not stop a manual 'clear browsing data'. Search "3-5-55".
 3-5-54: PLAYTHROUGH PILL READABLE. At x1 the pill (lit or not) shows the word Playthrough in the learner's language; at x2 and x3 the word is hidden and a large bold \u00D72 / \u00D73 is shown instead (before, the word and a small badge were squeezed together and the number was clipped). Playback unchanged, so MP3 Maker is untouched. Also in this number: arch/index.html has a read-only #debug panel (index.html#debug) listing the saved progress flags. Search "3-5-54".
@@ -152,7 +153,7 @@ RULES FOR ANYONE (OR ANY CLAUDE) EDITING OR REPLACING THIS TEMPLATE:
 =====================================================================
 -->
 <!-- build:JysnMlnrMthd -->
-<!-- template_arch_3-5-56 + stub-player.product (0 patch(es)) -->
+<!-- template_arch_3-5-57 + stub-player.product (0 patch(es)) -->
 <!DOCTYPE html>
 <html lang="en" translate="no" class="notranslate">
 <head>
@@ -1285,7 +1286,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 </style>
 </head>
 <body>
-<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.56</div>
+<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.57</div>
 <script>/* 3-5-26-1: if the build never ran on this file, the version token is still in the label -> say so in red instead of showing the raw token. (Token is split here so the build does not rewrite it.) */
 (function(){ try{ var b=document.getElementById('appVersionBadge'); if(b && b.textContent.indexOf('__APP_'+'VERSION__')>-1){ b.textContent='UNBUILT COPY - no product file'; b.style.color='#d92d20'; b.style.fontWeight='800'; b.style.textShadow='none'; } }catch(e){} })();
 </script>
