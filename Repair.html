@@ -5066,12 +5066,23 @@ function pronFixSet(base, on){
   _pfMem[base] = !!on;
   try{ localStorage.setItem('pronFix:'+base, on ? '1' : '0'); }catch(e){}
 }
+/* 3-5-57: ALWAYS-ON SPOKEN RESPELLINGS (no tick box). Some device voices read an ordinary lowercase word as an acronym. Portuguese "usa" (he/she uses) is read
+   as the letters U-S-A. Only the text sent to the voice changes; the words on screen never do. Written "uza" is how Portuguese says it. All-caps "USA" (the country)
+   is left alone. Runs only for a Portuguese voice (or when no voice object is known), so a stand-in voice for another language is never touched.
+   TO ADD ONE: add  code: { voice: regex of the voice's lang, fn: text -> text }. Only add words a voice is actually heard to get wrong, and check the respelling
+   reads right in THAT language (e.g. Spanish/Italian "usa" is fine as written, and "uza" would be wrong there). */
+const SPOKEN_RESPELL = {
+  pt: { voice:/^pt/, fn: t => t.replace(/(?<![\p{L}\p{M}])([Uu])sa(?![\p{L}\p{M}])/gu, '$1za') }
+};
 function pronFixSpoken(text, voice, langCode){
   try{
     if(!text) return text;
-    const base = pronFixBase(langCode), fx = PRON_FIX[base];
-    if(!fx || !pronFixOn(base)) return text;
+    const base = pronFixBase(langCode);
     const vl = voice && voice.lang ? String(voice.lang).replace('_','-').toLowerCase() : '';
+    const rs = SPOKEN_RESPELL[base];
+    if(rs && (!vl || rs.voice.test(vl))) text = rs.fn(text);
+    const fx = PRON_FIX[base];
+    if(!fx || !pronFixOn(base)) return text;
     if(vl ? !fx.voice.test(vl) : !fx.native) return text;
     return fx.fn(text);
   }catch(e){ return text; }
