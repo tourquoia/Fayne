@@ -19,6 +19,7 @@ template skips that, the course is then missed by every later template round, an
      (it prints RECOVERED). Handing back the product file too is optional. Never hand back a hand-edited copy of this template.
   To update an existing course: edit the data region of its product file, run step 4. Check anything at any time: build.py --check.
   A loose copy someone already made (still has the slot marker comments):  build.py --adopt <File.html>
+3-5-54: PLAYTHROUGH PILL READABLE. At x1 the pill (lit or not) shows the word Playthrough in the learner's language; at x2 and x3 the word is hidden and a large bold \u00D72 / \u00D73 is shown instead (before, the word and a small badge were squeezed together and the number was clipped). Playback unchanged, so MP3 Maker is untouched. Search "3-5-54".
 3-5-53: PLAYTHROUGH LESSON REPEAT. Tapping the Playthrough pill while it is already on cycles x1 -> x2 -> x3 (a small badge inside the pill): each lesson plays that many times before moving to the next lesson. Turning Playthrough on always starts at x1; picking Hands-free or Your turn turns it off. Session-only, nothing is saved. Search "3-5-53". IN-PROGRESS RING: a course is now flagged started as soon as a line plays (not only after a full lesson pass), and the player also saves fayneCourseProgress:<file> = {d: lessons finished, t: lessons total, ts: last played}; index.html draws a blue progress ring on in-progress cards (and a slow orbiting dot on the most recently played one). Also fixed: the 3-5-51 comment above the data slot contained literal comment closers that cut the comment short and broke the whole script in the raw template (blank page); reworded.
 3-5-50: the voicedemo line now scrolls the voice row to near the top of the screen first, and the lookalike list opens right under the SOURCE voice menu; when it lands, the real source menu pulses. Search "3-5-50".
 3-5-49: INTRO MODE (optional, off by default). Course flag introMode:true (BUILT_IN_COURSE) greys out and blocks the language pair, the style pills and Advanced (class lp-intro on body; Home, voice menus and Keep screen on stay live) and turns Loop off. A narration sheet may carry spotlight:{rowIndex:key} (0-based row): while that line plays the control pulses (keys: home, advanced, voice, keepawake) or, for key voicedemo, a small lookalike voice list scrolls and lands on the learner's language (no real change). Narration entries now carry rowIdx. Search "3-5-49".
@@ -149,7 +150,7 @@ RULES FOR ANYONE (OR ANY CLAUDE) EDITING OR REPLACING THIS TEMPLATE:
 =====================================================================
 -->
 <!-- build:JysnMlnrMthd -->
-<!-- template_arch_3-5-53 + intro.product (0 patch(es)) -->
+<!-- template_arch_3-5-54 + intro.product (0 patch(es)) -->
 <!DOCTYPE html>
 <html lang="en" translate="no" class="notranslate">
 <head>
@@ -813,7 +814,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   .milestone .toggle-row{ gap:4px; }
   .milestone .toggle-pill{ font-size:10.5px; padding:0 3px; text-overflow:clip; }
   .milestone .toggle-pill[data-val="playthrough"]{ flex:1.5; }
-  .toggle-pill .pt-n{ font-size:.82em; margin-left:3px; white-space:nowrap; opacity:.9; }   /* 3-5-53 */
+  .toggle-pill .pt-n{ display:none; }   /* 3-5-53 */
+  /* 3-5-54: at x2 / x3 the word is replaced by a big bold count so it is readable on a narrow pill */
+  .toggle-pill.pt-num .pt-w{ display:none; }
+  .toggle-pill.pt-num .pt-n{ display:inline; font-size:1.45em; font-weight:900; letter-spacing:.02em; margin:0; opacity:1; line-height:1; }
   .milestone .cap{ font-size:9.5px; }
   .track{ position:relative; height:24px; border-radius:12px; background:var(--border-soft); overflow:hidden; }
   .fill{ position:absolute; left:0; top:0; height:100%; background:var(--amber); border-radius:12px; transition:width var(--ease); }
@@ -1231,7 +1235,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 </style>
 </head>
 <body>
-<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.53</div>
+<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.54</div>
 <script>/* 3-5-26-1: if the build never ran on this file, the version token is still in the label -> say so in red instead of showing the raw token. (Token is split here so the build does not rewrite it.) */
 (function(){ try{ var b=document.getElementById('appVersionBadge'); if(b && b.textContent.indexOf('__APP_'+'VERSION__')>-1){ b.textContent='UNBUILT COPY - no product file'; b.style.color='#d92d20'; b.style.fontWeight='800'; b.style.textShadow='none'; } }catch(e){} })();
 </script>
@@ -1353,7 +1357,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       <div class="toggle-row" id="drillStyleRow">
         <button class="toggle-pill on" data-val="exposure">Hands-free</button>
         <button class="toggle-pill" data-val="judge">Your turn</button>
-        <button class="toggle-pill" data-val="playthrough" title="Plays lesson after lesson, hands-free, and loops back to Lesson 1">Playthrough<span class="pt-n"></span></button>
+        <button class="toggle-pill" data-val="playthrough" title="Plays lesson after lesson, hands-free, and loops back to Lesson 1"><span class="pt-w">Playthrough</span><span class="pt-n"></span></button>
       </div>
       </div>
       <button class="nav-btn main-page-btn help-page-btn" id="studentHelpBtn" type="button" title="How to use this" aria-label="How to use this">?</button>
@@ -4069,7 +4073,14 @@ document.getElementById('styleRow').addEventListener('click', e=>{
 function syncStylePills(){
   document.querySelectorAll('#drillStyleRow .toggle-pill, #styleRow .toggle-pill').forEach(pl=>{
     pl.classList.toggle('on', S.playthrough ? pl.dataset.val==='playthrough' : pl.dataset.val===S.style);
-    const pn = pl.querySelector('.pt-n'); if(pn) pn.textContent = S.playthrough ? '\u00D7' + (S.ptRepeat || 1) : '';   // 3-5-53
+    // 3-5-54: x1 shows the word (lit); x2 / x3 hide the word and show a bold \u00D72 / \u00D73. Any other pill: no badge.
+    const pn = pl.querySelector('.pt-n');
+    if(pn){
+      const n = S.playthrough ? (S.ptRepeat || 1) : 1;
+      pn.textContent = (S.playthrough && n > 1) ? '\u00D7' + n : '';
+      pl.classList.toggle('pt-num', !!(S.playthrough && n > 1));
+      pl.setAttribute('aria-label', (S.playthrough && n > 1) ? 'Playthrough \u00D7' + n : 'Playthrough');
+    }
   });
 }
 document.getElementById('drillStyleRow').addEventListener('click', e=>{
@@ -8411,7 +8422,7 @@ function uiRefresh(force){
   .milestone .cap{ font-size:10px; padding:0 2px; overflow:hidden; }
   .milestone .toggle-pill[data-val="exposure"]{ flex:1.25; }
   .milestone .toggle-pill[data-val="judge"]{ flex:1; }
-  .milestone .toggle-pill[data-val="playthrough"]{ flex:1.3; }
+  .milestone .toggle-pill[data-val="playthrough"]{ flex:1.5; }
 
   /* ---- instructor guide (SOP) page; scoped so it can't touch the student page ---- */
   #instructorGuide .sg-scroll{ --ig-tint: rgba(240,90,34,.12); --ig-edge: rgba(240,90,34,.38); }
