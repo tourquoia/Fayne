@@ -522,7 +522,16 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     color: #A39D96; font-size: 14px; font-weight: 800; line-height: 22px; text-align: center;
   }
   .track-btn.is-next .track-num { color: #FFFFFF; border-color: #FFFFFF; }
-  .track-btn.is-started .track-num { border-color: var(--brand-accent); }
+  .track-btn.is-started .track-num { border-color: #2F8CFF; }
+  /* 3-5-53: in-progress ring (blue: green is for the intro + finished, orange is the brand colour). Static arc = lessons finished / total; the dot orbits only on the most recently played course. */
+  .track-btn .track-icon .track-ring { position: absolute; top: -11px; left: -11px; width: 84px; height: 84px; pointer-events: none; }
+  .track-btn .track-icon .track-ring svg { width: 84px; height: 84px; opacity: 1; fill: none; stroke: none; }
+  .track-ring .rt { fill: none; stroke: rgba(47,140,255,0.28); stroke-width: 4; }
+  .track-ring .rf { fill: none; stroke: #2F8CFF; stroke-width: 4; stroke-linecap: round; }
+  .track-btn .track-icon .track-orbit { position: absolute; top: -11px; left: -11px; width: 84px; height: 84px; border-radius: 50%; pointer-events: none; animation: ringOrbit 3.6s linear infinite; }
+  .track-orbit::before { content: ''; position: absolute; top: 0.5px; left: 50%; width: 7px; height: 7px; margin-left: -3.5px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 0 6px #2F8CFF; }
+  @keyframes ringOrbit { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .track-btn .track-icon .track-orbit { display: none; } }
   .track-btn.is-done .track-num { background: #1F9D55; border-color: #FFFFFF; color: #FFFFFF; }
 </style>
 </head>
@@ -1163,6 +1172,39 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       a.setAttribute('aria-label', a.getAttribute('data-label') + ', ' + n + (isDone ? ', completed' : (isNext ? ', next' : '')));
     });
   }
+  /* 3-5-53: in-progress ring. Players save 'fayneCourseProgress:<file>' = {d: lessons finished, t: total, ts: last played}. */
+  var RC = 238.76;
+  function prog(f){ try { var o = JSON.parse(localStorage.getItem('fayneCourseProgress:' + f) || 'null'); return (o && typeof o === 'object') ? o : null; } catch(e) { return null; } }
+  function paintRings(){
+    var latest = null, latestTs = 0;
+    Array.prototype.forEach.call(cards, function(a){
+      if(a.classList.contains('is-started') && !a.classList.contains('is-done')){
+        var q = prog(fileOf(a)), ts = (q && +q.ts) || 0;
+        if(ts > latestTs){ latestTs = ts; latest = a; }
+      }
+    });
+    Array.prototype.forEach.call(cards, function(a){
+      var ic = a.querySelector('.track-icon'); if(!ic) return;
+      var ring = ic.querySelector('.track-ring'), orb = ic.querySelector('.track-orbit');
+      var on = a.classList.contains('is-started') && !a.classList.contains('is-done');
+      if(!on){ if(ring) ring.parentNode.removeChild(ring); if(orb) orb.parentNode.removeChild(orb); return; }
+      var p = prog(fileOf(a)) || {}, frac = (p.t > 0) ? Math.min(1, (p.d || 0) / p.t) : 0;
+      frac = Math.max(0.06, frac);
+      var badge = ic.querySelector('.track-num');
+      if(!ring){
+        ring = document.createElement('span'); ring.className = 'track-ring'; ring.setAttribute('aria-hidden', 'true');
+        ring.innerHTML = '<svg viewBox="0 0 84 84" width="84" height="84"><circle class="rt" cx="42" cy="42" r="38"/><circle class="rf" cx="42" cy="42" r="38" transform="rotate(-90 42 42)"/></svg>';
+        ic.insertBefore(ring, badge);
+      }
+      ring.querySelector('.rf').setAttribute('stroke-dasharray', (frac * RC).toFixed(1) + ' ' + RC);
+      if(a === latest){
+        if(!orb){ orb = document.createElement('span'); orb.className = 'track-orbit'; orb.setAttribute('aria-hidden', 'true'); ic.insertBefore(orb, badge); }
+      } else if(orb){ orb.parentNode.removeChild(orb); }
+      a.setAttribute('aria-label', (a.getAttribute('aria-label') || '').replace(/, in progress.*$/, '') + ', in progress' + (p.t ? ', ' + (p.d || 0) + ' of ' + p.t + ' lessons finished' : ''));
+    });
+  }
+  var _render = render;
+  render = function(){ _render(); paintRings(); };
   render();
   window.addEventListener('pageshow', render);
   window.addEventListener('storage', render);

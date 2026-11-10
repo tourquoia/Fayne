@@ -60,7 +60,7 @@ list to copy entries from.
 =====================================================================
 -->
 <!-- build:JysnMlnrMthd -->
-<!-- template_arch_3-5-50 + 1stSteps.product (0 patch(es)) -->
+<!-- template_arch_3-5-53 + 1stSteps.product (0 patch(es)) -->
 <!DOCTYPE html>
 <html lang="en" translate="no" class="notranslate">
 <head>
@@ -724,6 +724,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   .milestone .toggle-row{ gap:4px; }
   .milestone .toggle-pill{ font-size:10.5px; padding:0 3px; text-overflow:clip; }
   .milestone .toggle-pill[data-val="playthrough"]{ flex:1.5; }
+  .toggle-pill .pt-n{ font-size:.82em; margin-left:3px; white-space:nowrap; opacity:.9; }   /* 3-5-53 */
   .milestone .cap{ font-size:9.5px; }
   .track{ position:relative; height:24px; border-radius:12px; background:var(--border-soft); overflow:hidden; }
   .fill{ position:absolute; left:0; top:0; height:100%; background:var(--amber); border-radius:12px; transition:width var(--ease); }
@@ -1141,7 +1142,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 </style>
 </head>
 <body>
-<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.50</div>
+<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.53</div>
 <script>/* 3-5-26-1: if the build never ran on this file, the version token is still in the label -> say so in red instead of showing the raw token. (Token is split here so the build does not rewrite it.) */
 (function(){ try{ var b=document.getElementById('appVersionBadge'); if(b && b.textContent.indexOf('__APP_'+'VERSION__')>-1){ b.textContent='UNBUILT COPY - no product file'; b.style.color='#d92d20'; b.style.fontWeight='800'; b.style.textShadow='none'; } }catch(e){} })();
 </script>
@@ -1261,7 +1262,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       <div class="toggle-row" id="drillStyleRow">
         <button class="toggle-pill on" data-val="exposure">Hands-free</button>
         <button class="toggle-pill" data-val="judge">Your turn</button>
-        <button class="toggle-pill" data-val="playthrough" title="Plays lesson after lesson, hands-free, and loops back to Lesson 1">Playthrough</button>
+        <button class="toggle-pill" data-val="playthrough" title="Plays lesson after lesson, hands-free, and loops back to Lesson 1">Playthrough<span class="pt-n"></span></button>
       </div>
       </div>
       <button class="nav-btn main-page-btn help-page-btn" id="studentHelpBtn" type="button" title="How to use this" aria-label="How to use this">?</button>
@@ -1674,6 +1675,8 @@ const APP_ID = '1ststeps';
    loading the page. It intentionally does NOT list problems for
    languages nobody has selected yet.
    ============================================================ */
+/* 3-5-51: MP3 Maker (MP3Maker/MP3Maker.html + MP3Maker.py) reads the course from the two slot marker comment lines named data-start and data-end (at-sign pair, written without the comment closers so this comment is not cut short) and from the HDYS / RECALL_CFG tables. The build keeps these two lines in every course and fails if the tables move. Read README rule 8 before changing how a lesson is played. */
+/*@@data-start*/
 /* ============================================================
    ALL-LANGUAGES TEMPLATE — this build is NOT a real product. It is a
    from-scratch base for future course files, kept as small as possible
@@ -2331,6 +2334,7 @@ const BUILT_IN_COURSE = {
 const COURSES = [BUILT_IN_COURSE];
 const DEFAULT_SRC = 'es';
 const DEFAULT_TGT = 'en';
+/*@@data-end*/
 COURSES.forEach(c=>{ if(c.multiLang) mlNormalize(c); });   // multi-language courses: fill langs/sheets/characters from c.multiLang before anything reads them
 
 const S = {
@@ -2446,6 +2450,9 @@ function guessVoiceGender(voice){
        {rWindow, shortWords, longWords, thinkBaseMs, thinkPerWordMs, thinkMaxMs, recentCap, resumeMs, keepMs, off:true}.
    ONBOARDING A LANGUAGE: every time a language is added, define its HDYS ("how do you say") entry too (same codes as BASE_LANGS). build.py prints a NOTE for any code without one.
    ============================================================ */
+// 3-5-52: MP3 PLAYBACK REVISION. Add 1 here AND in MP3Maker/MP3Maker.html (const MP3_PLAYBACK_REV) whenever playback changes (what is spoken, pauses, repeats, think time, recall breaks, voices).
+// build.py refuses to build if the two numbers differ.
+const MP3_PLAYBACK_REV = 1;
 const RECALL_CFG = { rWindow:5, shortWords:7, longWords:12, thinkBaseMs:3000, thinkPerWordMs:500, thinkMaxMs:7000, recentCap:20, resumeMs:15000, keepMs:120000,
                      l1Look:8, l1WordMax:2, l1SentMin:3, l1SentMax:6 };   // 3-5-35: lesson-1 frames (see "LESSON 1 OPTIONS")
 const RECALL_KEY = APP_ID + ':recall';
@@ -3132,6 +3139,7 @@ function updateLessonNavButtons(){
 // narration lesson, so the learner lands on the same line number in the
 // first real dialogue lesson instead of back at the top.
 function goToLesson(newIdx, startIdx){
+  S.ptDone = 0;   // 3-5-53
   const course = currentCourse();
   if(newIdx<0 || newIdx>=course.sheets.length || !sheetAvailable(course.sheets[newIdx])) return;
   speechSynthesis.cancel(); stopRecognition();
@@ -4043,6 +4051,7 @@ document.getElementById('styleRow').addEventListener('click', e=>{
 function syncStylePills(){
   document.querySelectorAll('#drillStyleRow .toggle-pill, #styleRow .toggle-pill').forEach(pl=>{
     pl.classList.toggle('on', S.playthrough ? pl.dataset.val==='playthrough' : pl.dataset.val===S.style);
+    const pn = pl.querySelector('.pt-n'); if(pn) pn.textContent = S.playthrough ? '\u00D7' + (S.ptRepeat || 1) : '';   // 3-5-53
   });
 }
 document.getElementById('drillStyleRow').addEventListener('click', e=>{
@@ -4052,6 +4061,9 @@ document.getElementById('drillStyleRow').addEventListener('click', e=>{
   // to the first lesson after the last. Picking Hands-free or Practice turns it off.
   const wantPT = (p.dataset.val === 'playthrough');
   const newStyle = wantPT ? 'exposure' : p.dataset.val;
+  // 3-5-53: tapping Playthrough while it is already on cycles the lesson repeat x1 -> x2 -> x3 -> x1.
+  if(wantPT && S.playthrough){ S.ptRepeat = (S.ptRepeat || 1) % 3 + 1; S.ptDone = 0; syncStylePills(); return; }
+  if(wantPT){ S.ptRepeat = 1; S.ptDone = 0; }   // switching it on always starts at x1
   if(newStyle === S.style && wantPT === !!S.playthrough) return;
   const styleChanged = (newStyle !== S.style);
   S.playthrough = wantPT;
@@ -7250,6 +7262,10 @@ async function runLine(i){
   lpSpotClear();
   if(i>=S.order.length && S.playthrough && S.style==='exposure'){
     recordPass();
+    S.ptDone = (S.ptDone || 0) + 1;   // 3-5-53: play this lesson ptRepeat times before moving on
+    if(S.ptDone < (S.ptRepeat || 1)){ if(S.random) shuffleOrder(); i = 0; }
+    else {
+    S.ptDone = 0;
     // PLAYTHROUGH: lesson finished -> next lesson; after the last one, back to the first
     // (the first real lesson: a narration intro is skipped on the wrap, to match "loops back to Lesson 1").
     const course = currentCourse();
@@ -7259,6 +7275,7 @@ async function runLine(i){
       if(nxt >= course.sheets.length){ nxt = 0; while(nxt < course.sheets.length && !sheetAvailable(course.sheets[nxt])) nxt++; }
     }
     if(nxt < course.sheets.length){ goToLesson(nxt); return; }
+    }
   }
   if(i<0 || i>=S.order.length){
     if(S.loop){
@@ -7273,6 +7290,7 @@ async function runLine(i){
   }
   S.idx = i; S.attempt = 1;
   try{ if(window.LP_STATS) LP_STATS.line(i); }catch(e){}   // 3-5-40: STATS hook
+  if(i === 0 || !S._flagTouched){ S._flagTouched = 1; syncCourseFlag(currentCourse(), true); }   // 3-5-53: playing a line marks the course in progress (index.html ring)
   if(i === 0) S.passStart = Date.now();
   const myToken = ++S.token;
   const entry = S.activeLines[S.order[i]];
@@ -8091,13 +8109,18 @@ function fireworks(bursts){
 /* 3-5-34: home-page flag. index.html reads 'fayneCourseState:<this file's name>' ('started' | 'done') to number/check its course cards.
    Written from the saved progress, so it is also right for people who finished lessons before this version (called on page open and after each pass).
    No passes saved = flag removed. Same browser + same site only. */
-function syncCourseFlag(course){
+function syncCourseFlag(course, touched){
   try{
-    const f = decodeURIComponent(location.pathname.split('/').pop() || 'index.html'), key = 'fayneCourseState:' + f;
+    const f = decodeURIComponent(location.pathname.split('/').pop() || 'index.html'), key = 'fayneCourseState:' + f, pkey = 'fayneCourseProgress:' + f;
     const av = availableIdxs(course);
     const any = av.some(i => passesDone(course, i) > 0);
-    if(!any){ localStorage.removeItem(key); return; }
-    localStorage.setItem(key, nextUpIdx(course) < 0 ? 'done' : 'started');
+    let pr = null; try{ pr = JSON.parse(localStorage.getItem(pkey) || 'null'); }catch(e){}
+    // 3-5-53: a course also counts as "started" once a line has played (touched), not only after a full lesson pass.
+    if(!any && !touched && !(pr && pr.ts)){ localStorage.removeItem(key); localStorage.removeItem(pkey); return; }
+    const nd = av.filter(i => lessonDone(course, i)).length;
+    const ts = touched ? Date.now() : ((pr && pr.ts) || 0);
+    localStorage.setItem(pkey, JSON.stringify({ d: nd, t: av.length, ts: ts }));   // 3-5-53: lessons finished / total / last played, for the ring on index.html
+    localStorage.setItem(key, (av.length && nextUpIdx(course) < 0) ? 'done' : 'started');
   }catch(e){}
 }
 
@@ -8115,7 +8138,7 @@ function recordPass(){
     const nextWasLocked = nxt!=null && !lessonUnlocked(course, nxt);
     progressData.passes[lessonKey(sh)] = before + 1;
     saveProgress();
-    syncCourseFlag(course);
+    syncCourseFlag(course, true);
     renderProgressCard();
     const finished = before + 1 >= need;
     showPassBanner(course.multiLang ? sh.name + ' finished' : 'Lesson ' + lessonNumberFor(course, S.sheetIdx) + ' finished',

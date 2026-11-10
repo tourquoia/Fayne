@@ -1,0 +1,235 @@
+<!doctype html>
+<!--
+MP3 Maker page. Synced with player template 3-5-50.
+It reads each course's data block and its "how do you say" table / recall settings straight from the course file, so rebuilt courses and new languages need no change here.
+Ported from the player: callback markers (diamond/star R, R<n>, L, P, P<n>, bare), lesson-1 opening frames (frames3 / classic), fallback source language for "target only".
+NOT ported yet: gender variants (genderPairs, variants, mainForm, genderTargetOnly), {{SLOT}} cells, rowFlags srcOnly/voiceEs playback.
+To update after a player change: give Claude this file, MP3Maker.py and the new template; compare the player's playback code (search "recall", "runLine", "genderPairs") with the buildBase / timeline functions here.
+-->
+<html lang="en"><head><meta charset="utf-8"><title>MP3 Maker</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{color-scheme:light dark;--bg:#f6f5f1;--fg:#1d1d1b;--card:#fff;--line:#d9d6cc;--acc:#1f6f5c}
+@media(prefers-color-scheme:dark){:root{--bg:#171a19;--fg:#ecebe6;--card:#222625;--line:#3a3f3d;--acc:#4fbf9f}}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 system-ui,sans-serif}
+main{max-width:680px;margin:0 auto;padding:20px}
+h1{font-size:22px;margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
+label{display:block;font-size:13px;opacity:.8;margin:8px 0 3px}
+select,input[type=text]{width:100%;padding:8px;font-size:15px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg);box-sizing:border-box}
+.row{display:flex;gap:10px}.row>*{flex:1}
+input[type=range]{width:100%}
+button{padding:10px 14px;font-size:15px;border-radius:8px;border:1px solid var(--acc);background:var(--acc);color:#fff;cursor:pointer;margin:4px 6px 4px 0}
+button.alt{background:transparent;color:var(--acc)}button:disabled{opacity:.5;cursor:wait}
+#status{min-height:1.4em;font-size:14px}.err{color:#c0392b}
+audio{width:100%;margin-top:8px}h2{font-size:15px;margin:0 0 4px}
+#mp3VersionBadge{position:fixed;right:calc(6px + env(safe-area-inset-right,0px));bottom:calc(4px + env(safe-area-inset-bottom,0px));z-index:40;font:700 14px/1 'Source Code Pro',ui-monospace,Menlo,monospace;color:#000;text-shadow:0 0 3px var(--bg,#fff);pointer-events:none;user-select:none;-webkit-user-select:none}
+@media(prefers-color-scheme:dark){#mp3VersionBadge{color:#F2EDE8;text-shadow:0 0 3px #000}}
+#mp3VersionBadge.bad{color:#d92d20}
+</style></head><body><div id="mp3VersionBadge" aria-hidden="true" translate="no"></div><main>
+<h1 id="appName"></h1>
+<div class="card" id="helper" hidden><h2>Start the helper</h2>
+ <p style="margin:6px 0">MP3 Maker needs its small helper program running on this computer to make the audio.</p>
+ <a id="startlink" href="mp3maker://start"><button type="button">Start helper</button></a><button type="button" class="alt" id="recheck">Check again</button>
+ <p style="font-size:13px;opacity:.8;margin:8px 0 0">First time, or the button does nothing? In File Explorer, double-click <b>MP3Maker.py</b> once (not in the browser). It sets this button up. The browser may ask to allow opening MP3 Maker: say yes and tick "always allow".</p></div>
+<div id="app">
+<div class="card">
+ <label>Course file</label><select id="course"></select>
+ <button id="openf" class="alt" style="margin-top:6px">Open a file from this computer…</button><input type="file" id="filein" accept=".html,.htm" hidden>
+ <div class="row"><div><label>Source (I speak)</label><select id="src"></select></div>
+ <div><label>Target (I'm learning)</label><select id="tgt"></select></div></div>
+ <label>Lesson</label><select id="lesson"></select>
+</div>
+<div class="card"><h2>Settings</h2>
+ <div class="row"><div><label>Target speed <b id="trv"></b></label><input type="range" id="trate" min="0.6" max="1.3" step="0.02" value="0.92"></div>
+ <div><label>Source speed <b id="srv"></b></label><input type="range" id="srate" min="0.6" max="1.3" step="0.02" value="1"></div></div>
+ <div class="row"><div><label>Pause length <b id="pmv"></b></label><input type="range" id="pm" min="0.5" max="2.5" step="0.1" value="1"></div>
+ <div><label>Target plays <b id="rpv"></b> times</label><input type="range" id="reps" min="1" max="4" step="1" value="2"></div></div>
+ <div id="voices"></div>
+</div>
+<div class="card"><h2>Save</h2>
+ <div class="row"><div><label>Format</label><select id="fmt"><option value="mp3">MP3 (plays on every MP3 player)</option><option value="ogg">OGG</option></select></div>
+ <div><label>File name</label><input type="text" id="fname"></div></div>
+ <button id="prev" class="alt">Preview first 3 lines</button>
+ <button id="save">Save this lesson</button>
+ <button id="all" class="alt">Save all lessons to a folder</button>
+ <audio id="aud" controls hidden></audio><p id="status"></p>
+</div></div></main>
+<script>
+// the helper (MP3Maker.py) runs on this computer. When this page is opened from GitHub Pages or from a file, it talks to it at 127.0.0.1:8765.
+const B=location.hostname==='127.0.0.1'?'':'http://127.0.0.1:8765';
+// opened from GitHub Pages: the course players are read from the same repo (no copies, no settings)
+const REPO=(()=>{const h=location.hostname;if(!/\.github\.io$/i.test(h))return '';const o=h.split('.')[0],seg=location.pathname.split('/')[1]||'';return o+'/'+((seg&&!/\.html?$/i.test(seg))?seg:h)})();
+const RQ=REPO?'?repo='+encodeURIComponent(REPO):'';
+const APP_NAME='MP3 Maker';
+const stem=()=>($('course').value||'course').replace(/\.html?$/i,'');
+const $=id=>document.getElementById(id);
+let C=null,DEF={},VOICES=[];
+const st={get(k,d){try{const v=localStorage.getItem('la:'+k);return v===null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('la:'+k,JSON.stringify(v))}catch(e){}}};
+const say=(m,bad)=>{$('status').textContent=m;$('status').className=bad?'err':''};
+const fill=(sel,pairs,val)=>{sel.innerHTML='';pairs.forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;sel.appendChild(o)});if(val!==undefined&&pairs.some(p=>p[0]===val))sel.value=val};
+const pad=n=>String(n).padStart(2,'0');
+const lessonNum=i=>(C.sheets[0]&&C.sheets[0].mode==='narration')?i:i+1;
+const est=(t,r)=>{const w=(t||'').trim().split(/\s+/).filter(Boolean).length||1;return Math.max(500,Math.min(4200,w/(2.3*r)*1000))};
+function strip(raw){if(raw==null)return '';let t=String(raw);if(/^\{\{SLOT:/.test(t))return '';
+ t=t.replace(/\[([^\]]+)\]/g,'').replace(/\.\.\.\s*$/,'').replace(/\s{2,}/g,' ').trim();
+ if(C.pipeSyntax){const i=t.indexOf('|');if(i>-1)t=t.slice(i+1).trim()||t.slice(0,i).trim()}return t}
+/* ---- Callbacks ("how do you say") and lesson-1 frames: port of the player's recall logic (template 3-5-33 .. 3-5-47) ---- */
+const MP3_APP_VERSION='v3.5.53';   // 3-5-52: written by build.py on every build (same number as the template); never edit by hand
+const MP3_PLAYBACK_REV=1;   // 3-5-52: must equal MP3_PLAYBACK_REV in the course pages (build.py checks this)
+{const bd=document.getElementById('mp3VersionBadge');if(bd)bd.textContent=MP3_APP_VERSION}
+let HDYS={},RCFG={rWindow:5,shortWords:7,longWords:12,thinkBaseMs:3000,thinkPerWordMs:500,thinkMaxMs:7000,recentCap:20,l1Look:8,l1WordMax:2,l1SentMin:3,l1SentMax:6};
+let rcPool={},rcRecent=[],rng=Math.random,NOTE='';
+function loadRecallTables(txt){HDYS={};
+ try{const a=txt.indexOf('const HDYS = {'),b=txt.indexOf('const HDYS_MISSING_WHY');if(a>-1&&b>a)HDYS=new Function(txt.slice(a,b)+'\n;return HDYS;')()}catch(e){}
+ try{const a=txt.indexOf('const RECALL_CFG ='),b=txt.indexOf('const RECALL_KEY');if(a>-1&&b>a)Object.assign(RCFG,new Function(txt.slice(a,b)+'\n;return RECALL_CFG;')())}catch(e){}
+ Object.assign(RCFG,(C&&C.recall)||{})}
+const rcNorm=s=>String(s==null?'':s).normalize('NFD').replace(/\p{M}/gu,'').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
+const rcWords=t=>{t=String(t||'').trim();if(!t)return 0;let w=t.split(/\s+/).filter(Boolean).length;if(/[\u3040-\u30FF\u3400-\u9FFF\u0E00-\u0EFF\u0E80-\u0EFF\u1780-\u17FF]/.test(t)&&w<=3)w=Math.ceil(t.replace(/\s/g,'').length/2.5);return w};
+function rcMarker(cell){const m=/^\s*[\u25C6\u2605]\s*([RLPrlp])?\s*(\d+)?\s*$/.exec(String(cell==null?'':cell));if(!m)return null;const k=m[1]?m[1].toUpperCase():'A';return{kind:k,num:((k==='P'||k==='R')&&m[2])?parseInt(m[2],10):0}}
+function mkRng(seed){let a=seed>>>0;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function hash(s){let h=2166136261;for(const ch of s){h^=ch.codePointAt(0);h=Math.imul(h,16777619)}return h>>>0}
+// source language used for callbacks: the chosen one, else the last one used, else the course default, else any language that has a "how do you say"
+function rcSrc(){const t=$('tgt').value,s=$('src').value;if(s)return s;
+ const ok=c=>c&&c!==t&&C.langs.some(l=>l.code===c);
+ const last=st.get('srcLast','');if(ok(last))return last;if(ok(DEF.DEFAULT_SRC))return DEF.DEFAULT_SRC;
+ const any=C.langs.find(l=>l.code!==t&&HDYS[l.code]);return any?any.code:''}
+function rcCtx(i){if(!C||(C.recall&&C.recall.off)||C.multiLang||C.format==='narrator'||C.sheets[i].mode==='narration')return null;
+ const tc=$('tgt').value,rc=rcSrc(),hT=HDYS[tc]||'',hS=HDYS[rc]||'';if(!hT||!hS||!rc||rc===tc)return null;
+ const num=lessonNum(i),classic=(C.recall&&C.recall.lesson1)==='classic';
+ return{num,hT,hS,tc,rc,frames3:num===1&&!classic,classic:num===1&&classic}}
+function buildBase(i){const sh=C.sheets[i],tc=$('tgt').value,sc=$('src').value,rc=rcSrc();
+ const ti=C.langs.findIndex(l=>l.code===tc)+1,si=sc?C.langs.findIndex(l=>l.code===sc)+1:0,ri=rc?C.langs.findIndex(l=>l.code===rc)+1:0,narr=sh.mode==='narration',out=[],fl=sh.rowFlags||{};
+ sh.rows.forEach((row,rid)=>{
+  if(narr){const x=strip(row[si||ti]);if(x)out.push({sp:row[0]||'',tgt:x,narr:true,rid});return}
+  const mk=rcMarker(row[0]);if(mk){out.push({mk,rid});return}
+  const t=strip(row[ti]);if(!t)return;
+  out.push({sp:row[0]||'',src:(si&&si!==ti)?strip(row[si]):'',tgt:t,rid,rsrc:(ri&&ri!==ti)?strip(row[ri]):'',flag:fl[rid]||''})});
+ return out}
+const rcIsH=(e,c)=>[c.hT,c.hS].map(rcNorm).some(h=>h&&(rcNorm(e.tgt).indexOf(h)===0||rcNorm(e.rsrc).indexOf(h)===0));
+const rcElig=(e,c)=>!!(e&&!e.mk&&!e.narr&&!e.flag&&e.rid!==undefined&&e.rsrc&&e.tgt&&!rcIsH(e,c)&&rcWords(e.rsrc)<=RCFG.longWords&&rcWords(e.tgt)<=RCFG.longWords);
+const rcGroups=(list,i,num,c)=>list.filter(e=>rcElig(e,c)).map(e=>({main:e,id:i+':'+e.rid,sheetIdx:i,lesson:num,short:rcWords(e.rsrc)<=RCFG.shortWords&&rcWords(e.tgt)<=RCFG.shortWords}));
+function rcPrev(c,cur,only){let out=[];C.sheets.forEach((sh,j)=>{if(sh.mode==='narration')return;const ln=lessonNum(j);if(ln>=cur||ln<1||(only&&ln!==only))return;
+ const key=j+'|'+c.tc+'|'+$('src').value+'|'+c.rc;if(!rcPool[key])rcPool[key]=rcGroups(buildBase(j),j,ln,c);out=out.concat(rcPool[key])});return out}
+const rcRand=a=>a[Math.floor(rng()*a.length)];
+function rcChoose(gs){if(!gs||!gs.length)return null;const per={};rcRecent.forEach(id=>{const l=String(id).split(':')[0];per[l]=(per[l]||0)+1});
+ const fresh=gs.filter(g=>rcRecent.indexOf(g.id)<0);
+ if(fresh.length){const min=Math.min(...fresh.map(g=>per[g.sheetIdx]||0));return rcRand(fresh.filter(g=>(per[g.sheetIdx]||0)===min))}
+ const old=gs.slice().sort((a,b)=>rcRecent.indexOf(a.id)-rcRecent.indexOf(b.id));return rcRand(old.slice(0,Math.min(3,old.length)))}
+function rcRemember(id){rcRecent=rcRecent.filter(x=>x!==id);rcRecent.push(id);while(rcRecent.length>RCFG.recentCap)rcRecent.shift()}
+function rcResolve(mk,before,i,c){const prefer=a=>{const s=a.filter(g=>g.short);return s.length?s:a};
+ const here=prefer(rcGroups(before,i,c.num,c)),rw=(mk.kind==='R'&&mk.num>0)?mk.num:RCFG.rWindow;
+ const R=here.slice(-rw),L=here.slice(0,Math.max(0,here.length-RCFG.rWindow));let pick=null;
+ if(mk.kind==='A'&&c.num>1)pick=rcChoose(prefer(here.concat(rcPrev(c,c.num,0))));
+ if(!pick&&mk.kind==='P'&&c.num>1){pick=rcChoose(prefer(rcPrev(c,c.num,mk.num)));if(!pick&&mk.num)pick=rcChoose(prefer(rcPrev(c,c.num,0)))}
+ if(!pick&&(mk.kind==='L'||mk.kind==='P'||mk.kind==='A'))pick=rcChoose(L.length?L:R);
+ if(!pick)pick=rcChoose(R);return pick}
+// lesson 1: three taught "how do you say" frames (2 words + 1 small sentence from the first lines), unless the sheet already opens with them
+function rcFrames3(base,i,c){const hasH=(t,h)=>{const a=rcNorm(t),b=rcNorm(h);return !!b&&a.indexOf(b)===0};
+ let lead=0;for(const e of base){if(e.mk||e.narr)continue;if(hasH(e.tgt,c.hT)||hasH(e.rsrc,c.hS))lead++;else break}
+ if(lead>=3)return[];const groups=rcGroups(base,i,1,c);if(!groups.length)return[];
+ const look=groups.slice(0,RCFG.l1Look),used={},key=g=>rcNorm(g.main.tgt),take=g=>{used[key(g)]=1;return g};
+ const pw=[];look.filter(g=>rcWords(g.main.rsrc)<=RCFG.l1WordMax&&rcWords(g.main.tgt)<=RCFG.l1WordMax).forEach(g=>{if(pw.length<2&&!used[key(g)])pw.push(take(g))});
+ if(pw.length<2)look.slice().sort((a,b)=>rcWords(a.main.tgt)-rcWords(b.main.tgt)).forEach(g=>{if(pw.length<2&&!used[key(g)])pw.push(take(g))});
+ let third=groups.slice(0,RCFG.l1Look*2).find(g=>!used[key(g)]&&rcWords(g.main.rsrc)>=RCFG.l1SentMin&&rcWords(g.main.rsrc)<=RCFG.l1SentMax&&rcWords(g.main.tgt)>=RCFG.l1SentMin&&rcWords(g.main.tgt)<=RCFG.l1SentMax);
+ if(!third)third=groups.find(g=>!used[key(g)]&&g.short);
+ return pw.concat(third?[third]:[]).slice(0,3-lead).map(g=>({frame:true,pick:g}))}
+function buildLines(i){const base=buildBase(i),c=rcCtx(i),nm=base.filter(e=>e.mk).length;NOTE='';
+ if(!c){if(nm)NOTE=` (${nm} callback marker(s) skipped: no "how do you say" for this language pair)`;return base.filter(e=>!e.mk)}
+ rng=mkRng(hash([C.id||'',c.tc,c.rc,i].join('|')));const out=[];
+ if(c.frames3)rcFrames3(base,i,c).forEach(f=>out.push(f));
+ const first=base.find(e=>!e.mk&&!e.narr),hd=first?{hd:true,sp:first.sp,hT:c.hT,hS:c.hS}:null;
+ if(c.classic&&hd)out.push(hd);
+ base.forEach((e,pos)=>{if(!e.mk){out.push(e);return}
+  if(c.num===1&&!c.frames3)return;
+  const pick=rcResolve(e.mk,base.slice(0,pos),i,c);if(!pick)return;rcRemember(pick.id);out.push({cb:true,pick})});
+ if(c.classic&&hd)out.push(hd);return out}
+function cands(code){const L=C.langs.find(x=>x.code===code);if(!L)return[];let vl=L.voiceLang||'';
+ if(/^la(-|$)/i.test(code)||/^la(-|$)/i.test(vl))vl='it-IT';else if(vl==='nah')vl='es-MX';
+ const pref=vl==='es-419'?['es-CO','es-MX','es-AR','es-US','es-ES']:[vl];let o=[];
+ pref.forEach(p=>o=o.concat(VOICES.filter(v=>v.l===p)));
+ if(!o.length)o=VOICES.filter(v=>v.l.split('-')[0]===vl.split('-')[0]);return o}
+function renderVoices(){const box=$('voices');box.innerHTML='';
+ [['src','Source'],['tgt','Target']].forEach(([side,title])=>{const code=$(side).value;if(!code)return;
+  const c=cands(code),L=C.langs.find(x=>x.code===code);
+  const wrap=document.createElement('div');wrap.innerHTML=`<label><b>${title} voices — ${L.label}</b>${/^la/i.test(code)?' (no Latin voice exists: using Italian, church-style pronunciation)':''}</label>`;
+  if(!c.length){wrap.innerHTML+=`<div class="err">No free voice exists for ${L.label}.</div>`;box.appendChild(wrap);return}
+  const row=document.createElement('div');row.className='row';
+  ['Female','Male'].forEach(g=>{const s=document.createElement('select');s.id=`v-${side}-${g[0]}`;
+   const list=c.filter(v=>v.g===g),use=list.length?list:c;
+   fill(s,use.map(v=>[v.n,v.n.replace('Neural','')+(list.length?'':' ('+g+' n/a)')]),st.get(`v:${code}:${g}`));
+   s.onchange=()=>st.set(`v:${code}:${g}`,s.value);row.appendChild(s)});
+  wrap.appendChild(row);box.appendChild(wrap)})}
+function gender(sp){const ch=(C.characters||[]).find(c=>c.code===sp);return ch&&/^f/i.test(ch.gender||'')?'F':'M'}
+const pct=r=>{const p=Math.round((r-1)*100);return(p>=0?'+':'')+p+'%'};
+function voiceFor(code,g){const full=g==='F'?'Female':'Male';
+ for(const side of ['tgt','src']){if($(side).value===code){const el=$(`v-${side}-${g}`);if(el)return el.value}}
+ const s=st.get(`v:${code}:${full}`);if(s)return s;
+ const c=cands(code),l=c.filter(v=>v.g===full),u=l.length?l:c;if(!u.length)throw new Error('No voice available for '+code);return u[0].n}
+function timeline(lines){const pm=+$('pm').value,reps=+$('reps').value,tr=+$('trate').value,sr=+$('srate').value,it=[],tc=$('tgt').value,sc=$('src').value;
+ const S=(text,code,g,r)=>({t:'s',text,voice:voiceFor(code,g),rate:pct(r)});
+ const P=ms=>({t:'p',ms:Math.round(ms)});
+ for(const l of lines){const g=gender((l.pick?l.pick.main:l).sp);
+  if(l.hd){if(sc)it.push(S(l.hS,sc,g,sr));it.push(S(l.hT,tc,g,tr),P(400*pm));continue}
+  if(l.cb||l.frame){const m=l.pick.main,rc=rcSrc();
+   // callback = "how do you say" (target language) / the phrase in the source language / think pause / target phrase, same as the player
+   it.push(S(HDYS[tc],tc,g,tr),P(350),S(m.rsrc,rc,g,sr));
+   it.push(P(l.frame?350:Math.min(RCFG.thinkMaxMs,RCFG.thinkBaseMs+RCFG.thinkPerWordMs*Math.max(1,rcWords(m.rsrc)))*pm));
+   for(let r=0;r<reps;r++)it.push(S(m.tgt,tc,g,tr),P(est(m.tgt,tr)*1.2*pm));
+   it.push(P(400*pm));continue}
+  if(l.narr){it.push(S(l.tgt,sc||tc,g,sr),P(est(l.tgt,sr)*.6*pm));continue}
+  if(l.src){it.push(S(l.src,sc,g,sr),P(Math.min(est(l.tgt,tr),2000)*pm))}
+  for(let r=0;r<reps;r++)it.push(S(l.tgt,tc,g,tr),P(est(l.tgt,tr)*1.2*pm));
+  it.push(P(400*pm))}
+ return it}
+async function renderBlob(lines){const r=await fetch(B+'/api/render',{method:'POST',body:JSON.stringify({items:timeline(lines),format:$('fmt').value})});
+ if(!r.ok)throw new Error(await r.text());return r.blob()}
+const ext=()=>$('fmt').value,mime=()=>ext()==='ogg'?'audio/ogg':'audio/mpeg';
+const defName=()=>`${stem()}_L${pad(lessonNum(+$('lesson').value))}`;
+function busy(b){['prev','save','all'].forEach(i=>$(i).disabled=b)}
+async function run(fn){busy(true);rcRecent=[];try{await fn()}catch(e){if(e.name!=='AbortError')say(String(e.message||e),true);else say('')}busy(false)}
+$('prev').onclick=()=>run(async()=>{const ln=buildLines(+$('lesson').value).slice(0,3);if(!ln.length)return say('That lesson has no lines for this language pair.',true);
+ say('Making preview…');const b=await renderBlob(ln);const a=$('aud');a.hidden=false;a.src=URL.createObjectURL(b);a.play();say('Preview ready. Happy with it? Save the lesson.')});
+$('save').onclick=()=>run(async()=>{const ln=buildLines(+$('lesson').value);if(!ln.length)return say('That lesson has no lines for this language pair.',true);
+ let name=$('fname').value.trim()||defName();if(!name.toLowerCase().endsWith('.'+ext()))name+='.'+ext();
+ let h=null;if(window.showSaveFilePicker)h=await showSaveFilePicker({suggestedName:name,types:[{description:'Audio',accept:{[mime()]:['.'+ext()]}}]});
+ say('Making the audio… (a lesson takes a minute or two)');const b=await renderBlob(ln);
+ if(h){const w=await h.createWritable();await w.write(b);await w.close()}else{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click()}
+ say('Saved '+name+NOTE)});
+$('all').onclick=()=>run(async()=>{if(!window.showDirectoryPicker)return say('Saving to a folder needs Chrome or Edge.',true);
+ const dir=await showDirectoryPicker({mode:'readwrite'});let n=0;
+ for(let i=0;i<C.sheets.length;i++){const ln=buildLines(i);if(!ln.length)continue;
+  say(`Making lesson ${lessonNum(i)}… (${++n} done so far)`);const b=await renderBlob(ln);
+  const f=await dir.getFileHandle(`${stem()}_L${pad(lessonNum(i))}.${ext()}`,{create:true});const w=await f.createWritable();await w.write(b);await w.close()}
+ say(`Done: ${n} files saved.`)});
+const LOCALF={};
+async function loadCourse(){const nm=$('course').value;const txt=(nm in LOCALF)?LOCALF[nm]:await(await fetch(B+'/courses/'+encodeURIComponent(nm)+RQ)).text();
+ const a=txt.indexOf('/*@@data-start*/'),b=txt.indexOf('/*@@data-end*/');
+ if(a<0||b<0)return say('That file has no course data block (/*@@data-start*/ … /*@@data-end*/).',true);
+ const d=new Function(txt.slice(a,b)+'\n;return {COURSES,DEFAULT_SRC,DEFAULT_TGT};')();C=d.COURSES[0];DEF=d;
+ if(C.multiLang)return say('Multi-language courses are not supported yet.',true);
+ loadRecallTables(txt);rcPool={};{const m=/const MP3_PLAYBACK_REV\s*=\s*(\d+)/.exec(txt),bd=document.getElementById('mp3VersionBadge'),bad=!m||+m[1]!==MP3_PLAYBACK_REV;if(bd){bd.classList.toggle('bad',bad);bd.textContent=MP3_APP_VERSION+(bad?' - OUT OF DATE':'')}if(bad)say('Warning: this course page plays audio by playback revision '+(m?m[1]:'(none)')+' but this MP3 Maker copies revision '+MP3_PLAYBACK_REV+'. The MP3s may not match the player; upload the newest MP3Maker.html.',true)}
+ const L=C.langs.map(l=>[l.code,l.label]);
+ fill($('src'),[['','(none: target only)']].concat(L),st.get('src',d.DEFAULT_SRC));fill($('tgt'),L,st.get('tgt',d.DEFAULT_TGT));
+ fill($('lesson'),C.sheets.map((s,i)=>[i,'Lesson '+lessonNum(i)+(s.mode==='narration'?' (intro)':'')]),st.get('lesson'));
+ renderVoices();upd();say('')}
+function upd(){$('trv').textContent=(+$('trate').value).toFixed(2)+'×';$('srv').textContent=(+$('srate').value).toFixed(2)+'×';
+ $('pmv').textContent=(+$('pm').value).toFixed(1)+'×';$('rpv').textContent=$('reps').value;$('fname').value=C?defName():''}
+['trate','srate','pm','reps'].forEach(id=>{$(id).value=st.get(id,$(id).value);$(id).oninput=()=>{st.set(id,$(id).value);upd()}});
+['src','tgt'].forEach(id=>$(id).onchange=()=>{st.set(id,$(id).value);if(id==='src'&&$('src').value)st.set('srcLast',$('src').value);rcPool={};renderVoices()});
+$('openf').onclick=()=>$('filein').click();
+$('filein').onchange=()=>run(async()=>{const f=$('filein').files[0];if(!f)return;const txt=await f.text();$('filein').value='';
+ LOCALF[f.name]=txt;const sel=$('course');let o=[...sel.options].find(x=>x.value===f.name);
+ if(!o){o=document.createElement('option');o.value=f.name;sel.appendChild(o)}o.textContent=f.name+' (from this computer)';sel.value=f.name;await loadCourse()});
+$('lesson').onchange=()=>{st.set('lesson',$('lesson').value);upd()};$('fmt').onchange=upd;$('course').onchange=loadCourse;
+let started=false;
+async function ping(){try{const r=await fetch(B+'/api/ping');return r.ok}catch(e){return false}}
+async function boot(){if(started)return;
+ if(!await ping()){$('helper').hidden=false;$('app').style.display='none';setTimeout(boot,1500);return}
+ started=true;$('helper').hidden=true;$('app').style.display='';
+ try{VOICES=await(await fetch(B+'/api/voices')).json()}catch(e){started=false;return say('Could not load voices. Are you online?',true)}
+ let f=[];try{f=await(await fetch(B+'/api/courses'+RQ)).json();if(!Array.isArray(f))f=[]}catch(e){f=[]}fill($('course'),f.map(x=>[x,x]));
+ if(!f.length)return say('No course players found. Use "Open a file from this computer", or check the settings at the top of MP3Maker.py.',true);
+ await loadCourse()}
+$('appName').textContent=APP_NAME;$('recheck').onclick=()=>{started=false;boot()};boot();
+</script></body></html>
