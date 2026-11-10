@@ -1569,5 +1569,25 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 })();
 </script>
 
+<script>
+/* 3-5-54: DIAGNOSTIC. Open the home page with #debug on the end of the address (index.html#debug) to see, on screen, the address this page runs at and every
+   saved progress flag it can read. Nothing shows without #debug. Read-only; changes nothing. */
+(function(){
+  function show(){
+    var old = document.getElementById('dbgBox'); if(old) old.remove();
+    if(location.hash !== '#debug') return;
+    var t = 'ADDRESS: ' + location.href + '\n';
+    try{
+      var n = 0;
+      for(var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if(k.indexOf('fayneCourse') === 0){ n++; t += k + ' = ' + localStorage.getItem(k) + '\n'; } }
+      if(!n) t += '(no fayneCourse keys saved in this browser at this address)\n';
+    }catch(e){ t += 'STORAGE ERROR: ' + e.message + '\n'; }
+    var d = document.createElement('pre'); d.id = 'dbgBox';
+    d.style.cssText = 'margin:16px;padding:12px;background:#000;color:#0f0;font:12px/1.4 monospace;white-space:pre-wrap;word-break:break-all;border-radius:8px;position:relative;z-index:50';
+    d.textContent = t; document.body.appendChild(d);
+  }
+  show(); window.addEventListener('pageshow', show); window.addEventListener('hashchange', show);
+})();
+</script>
 </body>
 </html>
