@@ -60,7 +60,7 @@ list to copy entries from.
 =====================================================================
 -->
 <!-- build:JysnMlnrMthd -->
-<!-- template_arch_3-5-57 + Essentials.product (0 patch(es)) -->
+<!-- template_arch_3-5-59 + Essentials.product (0 patch(es)) -->
 <!DOCTYPE html>
 <html lang="en" translate="no" class="notranslate">
 <head>
@@ -1147,7 +1147,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 </style>
 </head>
 <body>
-<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.57</div>
+<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.59</div>
 <script>/* 3-5-26-1: if the build never ran on this file, the version token is still in the label -> say so in red instead of showing the raw token. (Token is split here so the build does not rewrite it.) */
 (function(){ try{ var b=document.getElementById('appVersionBadge'); if(b && b.textContent.indexOf('__APP_'+'VERSION__')>-1){ b.textContent='UNBUILT COPY - no product file'; b.style.color='#d92d20'; b.style.fontWeight='800'; b.style.textShadow='none'; } }catch(e){} })();
 </script>
@@ -2081,7 +2081,7 @@ function recallIsHdys(e){   // 3-5-37: "how do you say" lines (the lesson-1 fram
 }
 function recallEligible(e){
   const cfg = recallCfg();
-  return !!(e && !e.recall && !recallIsHdys(e) && !e.frame && !e.srcOnly && !e.voiceEs && !e.isVariant && e.rid !== undefined && e.source && e.target &&
+  return !!(e && !e.recall && !recallIsHdys(e) && !e.frame && !e.srcOnly && !e.voiceEs && !e.isVariant && !e.isCasual && e.rid !== undefined && e.source && e.target &&
             recallWords(e.source) <= cfg.longWords && recallWords(e.target) <= cfg.longWords);
 }
 function recallGroups(list, sheetIdx, lessonNum){
@@ -2089,6 +2089,7 @@ function recallGroups(list, sheetIdx, lessonNum){
   for(const e0 of list){
     const e = rcView(e0);   // 3-5-43
     if(e.isVariant){ if(cur) cur.forms.push(e); continue; }
+    if(e.isCasual){ if(cur && recallWords(e.target) <= cfg.longWords) cur.forms.push(e); continue; }   // 3-5-58: a callback plays the regular form, then the casual form
     cur = null;
     if(!recallEligible(e)) continue;
     cur = {main:e, forms:[e], id:sheetIdx + ':' + e.rid, sheetIdx, lesson:lessonNum,
@@ -2100,9 +2101,9 @@ function recallGroups(list, sheetIdx, lessonNum){
 function recallAddFrames(list, ctx){
   // 3-5-33: lesson 1 ALWAYS gets it (no check for it being present already). Old note: lesson 1 never teaches "how do you say" -> add it as the FIRST and LAST line of the lesson (source + target), read by the first
   // character's voice (whatever voice is available). No symbol and no sheet edit needed.
-  const base = list.find(e => !e.recall && !e.srcOnly && !e.isVariant && e.speaker !== undefined && e.rid !== undefined);
+  const base = list.find(e => !e.recall && !e.srcOnly && !e.isVariant && !e.isCasual && e.speaker !== undefined && e.rid !== undefined);
   if(!base) return;
-  const mk = () => Object.assign({}, base, {tone:'', source:S.srcCode ? ctx.hS : '', sourceSpoken:S.srcCode ? ctx.hS : '', target:ctx.hT, targetSpoken:ctx.hT, headerLabel:'', genderLabel:'', genderForm:undefined, rid:undefined, frame:true});
+  const mk = () => Object.assign({}, base, {tone:'', source:S.srcCode ? ctx.hS : '', sourceSpoken:S.srcCode ? ctx.hS : '', target:ctx.hT, targetSpoken:ctx.hT, headerLabel:'', genderLabel:'', genderForm:undefined, isCasual:false, casualLabel:'', rid:undefined, frame:true});
   list.unshift(mk()); list.push(mk());
 }
 function recallAddFrames3(list, ctx){
@@ -2115,7 +2116,7 @@ function recallAddFrames3(list, ctx){
   let lead = 0;
   for(const e of list){
     if(e.recall || e.srcOnly) continue;
-    if(e.isVariant) continue;
+    if(e.isVariant || e.isCasual) continue;
     if(e.rid === undefined) continue;
     if(hasH(e.targetSpoken || e.target, ctx.hT) || hasH(e.sourceSpoken || e.source, ctx.hS)) lead++; else break;
   }
@@ -2276,6 +2277,7 @@ async function runRecallLine(entry, token){
     const fv = voicesForEntry(f);
     sEl.textContent = f.source || '';
     if(pick.forms.length > 1 && f.genderLabel){ await speakGenderLabel(f, sG, token, fv.srcURI, fv.srcPitch); if(!live()) return; }
+    if(f.isCasual && f.casualLabel){ await speakCasualLabel(f, tG, token, fv.tgtURI, fv.tgtPitch); if(!live()) return; }   // 3-5-58: 'casual' said in the TARGET language
     setPhase('Listen'); tEl.textContent = f.target;
     await speak(tSay(f), tG, token, fv.tgtURI, fv.tgtPitch); if(!live()) return;
     if(isFrame && prac){ await recallPracticeTurn(m, pick, token, sG, v, {frame:true, tG, f}); return; }   // 3-5-47: taught frame in Practice = hear it, then say it
@@ -2359,6 +2361,22 @@ function genderLabelFor(form){
 async function speakGenderLabel(entry, lang, token, uri, pitch){
   if(!entry.genderLabel || !entry.source || !lang) return;
   await speak(entry.genderLabel, lang, token, uri, pitch, 0, S.srcRate);
+  if(token!==S.token) return;
+  await sleep(450, token);
+}
+// 3-5-58: CASUAL LABEL (course.casualPairs). The word said before a casual form, in the TARGET language (not the source: decided in the course plan).
+// Only decided words are listed. Everything else falls back to the English word 'Casual' until the owner decides the word for that language
+// (Master Course Template, Language Catalog column K). A course can add or override with  casualLabels:{ code:'word' }.
+const CASUAL_LABEL_DEFAULTS = { en:'Casual' };
+function casualLabelFor(tgtCode){
+  const cl = currentCourse().casualLabels || {};
+  const base = String(tgtCode||'').split('-')[0];
+  return cl[tgtCode] || cl[base] || CASUAL_LABEL_DEFAULTS[tgtCode] || CASUAL_LABEL_DEFAULTS[base] || CASUAL_LABEL_DEFAULTS.en;
+}
+// Says the casual label in the target voice, then a 450 ms gap. Only for an entry that has a casualLabel.
+async function speakCasualLabel(entry, lang, token, uri, pitch){
+  if(!entry.casualLabel || !lang) return;
+  await speak(entry.casualLabel, lang, token, uri, pitch);
   if(token!==S.token) return;
   await sleep(450, token);
 }
@@ -3515,6 +3533,33 @@ function buildActiveLines(){
         if(!trimmed(v) && k===1 && mainForm==='m' && sh.latnFem && sh.latnFem[ri]) v = sh.latnFem[ri][S.tgtCode];
         return trimmed(v);
       };
+      // 3-5-58: CASUAL ALTERNATE (course flag casualPairs). sh.casual[ri][lang] = one string; sh.latnCasual[ri][lang] = its Latin display text. Target language only.
+      // A row with a gender set plays the gender set only (one alternate type per row); the casual cell is ignored.
+      const cp = !!course.casualPairs;
+      const casualRaw = (cp && sh.casual && sh.casual[ri]) ? trimmed(sh.casual[ri][S.tgtCode]) : '';
+      if(casualRaw && hasSet && typeof console!=='undefined') console.warn('Casual cell ignored: row '+ri+' also has a gender variant (one alternate type per row).');
+      const hasCasual = !!(casualRaw && !hasSet && casualRaw !== trimmed(rawTarget));
+      const mkCasual = ()=>{
+        const c = stripTags(casualRaw);
+        let shownC = c.clean;
+        const lcRaw = (sh.latnCasual && sh.latnCasual[ri]) ? sh.latnCasual[ri][S.tgtCode] : '';
+        const lcTxt = lcRaw ? stripTags(lcRaw).clean : '';
+        if(S.latnShow && lcTxt) shownC = lcTxt;
+        const base = mkEntry(null);
+        return Object.assign({}, base, {
+          tone: c.tags[0] || base.tone,
+          target: withNote(shownC, S.tgtCode, row),
+          targetSpoken: c.spoken,
+          targetNative: withNote(c.clean, S.tgtCode, row),
+          targetLatn: lcTxt ? withNote(lcTxt, S.tgtCode, row) : '',
+          genderForm: undefined, genderLabel: undefined,
+          isVariant: false,
+          isCasual: true,
+          casualLabel: casualLabelFor(S.tgtCode),
+          skipSrcAudio: true,   // the source line was already heard before the normal form
+          rcSource: base.rcSource, rcSourceSpoken: base.rcSourceSpoken,
+        });
+      };
       const mkEntry = (k)=>{            // k: 0 = main form, 1 = variant 1, 2 = variant 2, null = not a set
         const isV = k>0;
         const t = stripTags((isV && vT[k]) ? vT[k] : rawTarget);
@@ -3551,7 +3596,7 @@ function buildActiveLines(){
         };
       };
       if(hasSet){ list.push(mkEntry(0)); if(exists(1)) list.push(mkEntry(1)); if(exists(2)) list.push(mkEntry(2)); }
-      else list.push(mkEntry(null));
+      else { list.push(mkEntry(null)); if(hasCasual) list.push(mkCasual()); }
     });
     if(rc && rc.needFrame) recallAddFrames(list, rc);   // 3-5-33: classic lesson 1 gets "how do you say" as first and last line
     if(rc && rc.frames3) recallAddFrames3(list, rc);   // 3-5-35: lesson 1 with callback symbols gets three taught frames at the top
@@ -5189,7 +5234,7 @@ function pronFixSet(base, on){
    TO ADD ONE: add  code: { voice: regex of the voice's lang, fn: text -> text }. Only add words a voice is actually heard to get wrong, and check the respelling
    reads right in THAT language (e.g. Spanish/Italian "usa" is fine as written, and "uza" would be wrong there). */
 const SPOKEN_RESPELL = {
-  pt: { voice:/^pt/, fn: t => t.replace(/(?<![\p{L}\p{M}])([Uu])sa(?![\p{L}\p{M}])/gu, '$1za') }
+  pt: { voice:/^pt/, fn: t => t.replace(/(^|[^\p{L}\p{M}])([Uu])sa(?![\p{L}\p{M}])/gu, '$1$2za') }
 };
 function pronFixSpoken(text, voice, langCode){
   try{
@@ -6851,7 +6896,7 @@ async function runLine(i){
 
   lpSpot(entry);
   document.getElementById('speakerTag').textContent = speakerTagLabel(entry);
-  document.getElementById('toneTag').textContent = entry.genderLabel ? (entry.genderLabel + (entry.tone ? ' \u00B7 ' + entry.tone : '')) : (entry.tone || '\u00A0');
+  document.getElementById('toneTag').textContent = (entry.genderLabel || entry.casualLabel) ? ((entry.genderLabel || entry.casualLabel) + (entry.tone ? ' \u00B7 ' + entry.tone : '')) : (entry.tone || '\u00A0');
   document.getElementById('sourceLineEl').textContent = entry.source || '';
   document.getElementById('targetLineEl').textContent = '';
   document.getElementById('yourTurn').classList.remove('show');
@@ -6966,6 +7011,11 @@ async function runExposureLine(entry, token){
     }
   }
   document.getElementById('targetLineEl').textContent = entry.target;
+  if(entry.casualLabel){   // 3-5-58: the word 'casual', said in the TARGET language, before the casual line
+    await speakCasualLabel(entry, tgtLangG, token, tgtURI, tgtPitch);
+    if(token!==S.token) return;
+    if(switched()) return runJudgedLine(entry, token, 1, {skipSource:true});
+  }
   await speak(tSay(entry), tgtLangG, token, tgtURI, tgtPitch);
   if(token!==S.token) return;
   if(switched()) return runJudgedLine(entry, token, 1, {skipSource:true, skipTarget:true});
@@ -7008,6 +7058,7 @@ async function runJudgedLine(entry, token, attempt, opts){
   }
   document.getElementById('targetLineEl').textContent = entry.target;
   if(!skipTarget){
+    if(attempt===1 && entry.casualLabel){ await speakCasualLabel(entry, tgtLangG, token, tgtURI, tgtPitch); if(token!==S.token) return; }   // 3-5-58
     await speak(tSay(entry), tgtLangG, token, tgtURI, tgtPitch);
     if(token!==S.token) return;
   }
@@ -7228,6 +7279,8 @@ document.addEventListener('keydown', e=>{
                             with no slotData behaves exactly as before. (resolveSlotCell)
      (3-5-15) ALL VOICES row in the language card + a "Variant" voice card in Advanced (genderPairs courses). See "3-5-15: ALL VOICES".
      genderTargetOnly: true (3-5-44) with genderPairs: variants are used only when their language is the TARGET (never on the source side). For courses where only one language is gendered. Never patch the template for this.
+     casualPairs: true      (3-5-58) casual alternate. Per sheet: casual {rowIdx:{lang:text}}, optional latnCasual. Plays the normal line, then says 'casual' in the TARGET language, then the casual line.
+                            Callbacks play both. One alternate type per row (a gender set wins). Labels: CASUAL_LABEL_DEFAULTS / course.casualLabels. The spreadsheet loader fills these from "<Language> Casual" (and "<Latin> Casual").
      genderPairs: true      (3-5-14) gender variants. Per sheet: mainForm {rowIdx:'m'|'f'}, variants {rowIdx:{lang:[v1,v2]}},
                             optional latnVar. The normal column is the line as the speaker says it; variants are the other
                             forms (v1 = other binary form, v2 = neutral). Plays main form, then each variant, saying
