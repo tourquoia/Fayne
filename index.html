@@ -548,7 +548,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   .track-orbit::before { content: ''; position: absolute; top: 0.5px; left: 50%; width: 7px; height: 7px; margin-left: -3.5px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 0 6px #2F8CFF; }
   @keyframes ringOrbit { to { transform: rotate(360deg); } }
   @media (prefers-reduced-motion: reduce) { .track-btn .track-icon .track-orbit { display: none; } }
-  .track-btn.is-done .track-num { background: #1F9D55; border-color: #FFFFFF; color: #FFFFFF; }
+  /* Finished course: the number badge stays a plain number; a large bold green check sits over the course icon (SVG stays underneath). White outline keeps it visible on the orange icon. */
+  .track-btn .track-icon .track-check { position: absolute; top: 50%; left: 50%; width: 70px; height: 70px; margin: -35px 0 0 -35px; pointer-events: none; z-index: 3; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.45)); }
+  .track-btn .track-icon .track-check svg { width: 70px; height: 70px; opacity: 1; fill: none; display: block; }
 </style>
 </head>
 <body translate="no" class="notranslate">
@@ -1171,7 +1173,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 /* Course numbers + next-up highlight. Reads 'fayneCourseState:<file>' ('started' | 'done') written by each course page. Never blocks a link. */
 (function(){
   var cards = document.querySelectorAll('.track-list .track-btn:not(.start-here)');
-  var CHECK = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block;margin:4px auto"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  var CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5L20 6.5" stroke="#fff" stroke-width="6.4"/><path d="M4.5 12.5l5 5L20 6.5" stroke="#16A34A" stroke-width="4"/></svg>';
   function fileOf(a){
     var h = (a.getAttribute('href') || '').split('#')[0].split('?')[0].split('/').pop();
     try { return decodeURIComponent(h); } catch(e) { return h; }
@@ -1197,7 +1199,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       a.classList.toggle('is-done', isDone);
       a.classList.toggle('is-next', isNext);
       a.classList.toggle('is-started', !isDone && st === 'started');
-      badge.innerHTML = isDone ? CHECK : String(n);
+      badge.textContent = String(n);
+      var ck = ic.querySelector('.track-check');
+      if(isDone && !ck){ ck = document.createElement('span'); ck.className = 'track-check'; ck.setAttribute('aria-hidden', 'true'); ck.innerHTML = CHECK; ic.appendChild(ck); }
+      else if(!isDone && ck){ ck.parentNode.removeChild(ck); }
       a.setAttribute('aria-label', a.getAttribute('data-label') + ', ' + n + (isDone ? ', completed' : (isNext ? ', next' : '')));
     });
   }
