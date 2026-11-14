@@ -19,6 +19,7 @@ template skips that, the course is then missed by every later template round, an
      (it prints RECOVERED). Handing back the product file too is optional. Never hand back a hand-edited copy of this template.
   To update an existing course: edit the data region of its product file, run step 4. Check anything at any time: build.py --check.
   A loose copy someone already made (still has the slot marker comments):  build.py --adopt <File.html>
+3-5-60 (this is 3-5-59 RC4, approved and renamed; no code changes from RC4): CONTROLS REGROUPED. Drill screen is now three boxes: LESSON (home, progress, style pills, help; lesson picker with prev/next arrows built into it; reset; theme), PLAYBACK (under the text), SENTENCE OPTIONS (Target-only / Latin-script chips and a read-only speeds line). Speed sliders moved into Advanced, side by side (source left, target right), labelled with the language names, and remembered per language on the device as speed_<code> (shared by every app on the site). Defaults: 1.15 source (was 1.05), 0.92 target. RC3: top of the drill screen is ONE card with TWO lines (small progress + the three mode pills / home with back arrow, reset, lesson picker, dark mode, help); the language pair, speeds and a boxed ALL VOICES picker are all inside Advanced (voice notes stay visible outside it).
 3-5-59: OLD-iPHONE FIX (iPhone SE 1st gen / iOS 15 and older Safari). The 3-5-57 Portuguese "usa" respelling used a regex lookbehind, which Safari before 16.4 cannot parse; that one SyntaxError stopped the whole main script, so the page never finished opening (blank language picker). Rewritten without lookbehind (capture the character before, put it back); same results on every other device. Nothing else changed.
 3-5-58: CASUAL ALTERNATE (course flag casualPairs, default off). A row may carry ONE casual form (a very casual line nearly everyone says, e.g. pt-BR 'beleza') beside the normal target line, in the same way a gender variant sits beside it. Sheet data: casual {rowIdx:{lang:text}} and latnCasual {rowIdx:{lang:text}} (one string each, no second form). Playback: source line, then the normal target line twice as always, then the word 'casual' said in the TARGET language (CASUAL_LABEL_DEFAULTS / course.casualLabels; the gender label is said in the source language, this one is not), then the casual line, played twice like any target line. The casual line never repeats the source audio. CALLBACKS: a callback to a row with a casual form plays the regular form and then the casual form (label + line), the same way it plays every gendered form. ONE ALTERNATE TYPE PER ROW: a row with a gender variant AND a casual cell plays the gender set only, the casual cell is ignored and a console warning is printed (the spreadsheet build must stop and flag such rows). Casual rows are never callback material when they are slot or frame rows. Not built: a separate Casual voice card (casual lines use the speaker's own voice), and MP3 Maker support (it does not do variants either). Practice (Your turn) treats the casual line like a gender variant: hear it, then say it. Search "3-5-58".
 3-5-57: PROGRESS BACKUP ON THE HOME PAGES. arch/index.html and arch/index2.html (hand-kept, not built) got 'Back up my progress' / 'Restore progress' in the footer. Back up downloads one progress-backup-DATE.json holding the saved progress of every course on the page (all APP_ID:progress:PAIR, APP_ID:lastPair, fayneCourseState:*, fayneCourseProgress:* keys; nothing else). Restore MERGES it (higher pass count wins, 'done' beats 'started', this browser's lastPair kept) so an old file can never remove progress; a file from another browser or device works the same way. arch/index2.html is now a plain clone of index.html (same footer buttons). Basics.html removed (it duplicated Foundation); both home pages show a 'pick a starting point' pair (1stSteps left, Foundation right) after Start Here, counted as one step. Home-page course order is now: pair, Repair, Essentials, Mercado, Errores, Laura, Charla, Bridges, Natural, then POC and Brennan (legacy). Also: always-on SPOKEN_RESPELL (see pronFixSpoken): Portuguese 'usa' is sent to the voice as 'uza' because device voices read it as the letters U-S-A; screen text unchanged.
@@ -155,7 +156,7 @@ RULES FOR ANYONE (OR ANY CLAUDE) EDITING OR REPLACING THIS TEMPLATE:
 =====================================================================
 -->
 <!-- build:JysnMlnrMthd -->
-<!-- template_arch_3-5-59 + intro.product (0 patch(es)) -->
+<!-- template_arch_3-5-60 + intro.product (0 patch(es)) -->
 <!DOCTYPE html>
 <html lang="en" translate="no" class="notranslate">
 <head>
@@ -1019,7 +1020,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   .gender-options input{ accent-color:var(--amber); width:14px; height:14px; }
 
   /* 3-5-49: intro mode + spotlight */
-  body.lp-intro #langPairCaption, body.lp-intro #langPairGrid, body.lp-intro #drillStyleRow, body.lp-intro #practiceOnlyChip, body.lp-intro details{ opacity:.4; pointer-events:none; }
+  body.lp-intro #langPairCaption, body.lp-intro #langPairGrid, body.lp-intro #drillStyleRow, body.lp-intro #practiceOnlyChip, body.lp-intro details:not([open]){ opacity:.4; }
+  body.lp-intro details{ pointer-events:none; }   /* 3-5-60: Advanced holds the voice picker the intro points at, so it is only dimmed while closed */
   .lp-spot{ outline:3px solid var(--amber-bright,#F05A22); outline-offset:3px; border-radius:12px; animation:lpSpot 1s ease-in-out infinite; }
   @keyframes lpSpot{ 50%{ outline-offset:7px; outline-color:transparent; } }
   @media (prefers-reduced-motion:reduce){ .lp-spot{ animation:none; } }
@@ -1242,7 +1244,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 </style>
 </head>
 <body>
-<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.59</div>
+<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.60</div>
 <script>/* 3-5-26-1: if the build never ran on this file, the version token is still in the label -> say so in red instead of showing the raw token. (Token is split here so the build does not rewrite it.) */
 (function(){ try{ var b=document.getElementById('appVersionBadge'); if(b && b.textContent.indexOf('__APP_'+'VERSION__')>-1){ b.textContent='UNBUILT COPY - no product file'; b.style.color='#d92d20'; b.style.fontWeight='800'; b.style.textShadow='none'; } }catch(e){} })();
 </script>
@@ -1347,15 +1349,39 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
          previously sat below Advanced, out of the way; now it's one of
          the first things visible, with its "Line X of Y" label sitting
          inside the taller bar itself instead of on its own row below it. -->
+    <!-- 3-5-59 RC3: ONE card, TWO lines. Line 1: Home (house + back arrow), reset, lesson picker with its arrows, dark mode, help. Line 2 (RC4: rows swapped): small progress + the three play-mode pills. -->
+    <div class="ctl-group top-group">
+    <div class="top-rowB">
+      <button class="nav-btn main-page-btn home-back-btn" id="mainPageBtn" type="button" title="Home" aria-label="Home"><svg viewBox="0 0 44 24" width="42" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 12H3"></path><path d="M8 7l-5 5 5 5"></path><g transform="translate(18 0)"><path d="M3 11.5 12 4l9 7.5"></path><path d="M5.5 10v9.5a1 1 0 0 0 1 1H10v-6h4v6h3.5a1 1 0 0 0 1-1V10"></path></g></svg></button>
+      <button class="nav-btn nav-home nav-reset" id="resetBtn" type="button" title="Reset (back to language picker)" aria-label="Reset">
+        <span class="home-icon"><svg viewBox="0 0 40 40" width="34" height="34" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M33.5 17A14 14 0 0 0 9.2 11.6"></path><polyline points="8.5 4.5 8.8 11.8 16 11.2"></polyline><path d="M6.5 23A14 14 0 0 0 30.8 28.4"></path><polyline points="31.5 35.5 31.2 28.2 24 28.8"></polyline><text x="20" y="22.6" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="7" font-weight="700" letter-spacing=".2" fill="currentColor" stroke="none">RESET</text></svg></span>
+      </button>
+      <div class="lesson-seg">
+      <button class="icon-btn" id="prevLessonBtn" title="Previous lesson"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+      <div class="home-pill-wrap">
+        <button class="nav-btn nav-home-pill" id="lessonDropdownBtn" title="Choose lesson">
+          <span id="playerHomeLabel">Lesson 0 of 20</span>
+          <span class="chev"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span>
+        </button>
+        <div class="home-dropdown-list hidden" id="homeDropdownList"><!-- populated by renderLessonDropdownInto() --></div>
+      </div>
+      <button class="icon-btn" id="nextLessonBtn" title="Next lesson"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+      </div>
+      <button class="nav-btn nav-home" id="themeToggleBtn" title="Toggle dark mode">
+        <span class="home-icon theme-icon-moon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></span>
+        <span class="home-icon theme-icon-sun"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><line x1="12" y1="2" x2="12" y2="4.5"></line><line x1="12" y1="19.5" x2="12" y2="22"></line><line x1="4.5" y1="12" x2="2" y2="12"></line><line x1="22" y1="12" x2="19.5" y2="12"></line><line x1="18.36" y1="5.64" x2="16.6" y2="7.4"></line><line x1="7.4" y1="16.6" x2="5.64" y2="18.36"></line><line x1="18.36" y1="18.36" x2="16.6" y2="16.6"></line><line x1="7.4" y1="7.4" x2="5.64" y2="5.64"></line></svg></span>
+      </button>
+      <button class="nav-btn main-page-btn help-page-btn" id="studentHelpBtn" type="button" title="How to use this" aria-label="How to use this">?</button>
+    </div>
+    <div class="top-rowA">
     <div class="milestone">
-      <!-- 3-5-9-3: HOME (house icon) button, left of the progress bar. Goes to index.html in the same folder. -->
-      <button class="nav-btn main-page-btn" id="mainPageBtn" type="button" title="Home" aria-label="Home"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"></path><path d="M5.5 10v9.5a1 1 0 0 0 1 1H10v-6h4v6h3.5a1 1 0 0 0 1-1V10"></path></svg></button>
       <div class="road">
         <div class="track">
           <div class="fill" id="roadFill" style="width:0%"></div>
           <div class="cap"><span id="capLeft">1/1</span><span id="capRight"></span></div>
         </div>
       </div>
+    </div>
       <!-- Session style pills, moved out of Advanced (2026-09) so switching
            between Hands-free and Practice is always one tap away. -->
       <!-- drillStyleWrap: hidden by course flags (format:'narrator' or hideStyleToggle). Kept in the
@@ -1367,26 +1393,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <button class="toggle-pill" data-val="playthrough" title="Plays lesson after lesson, hands-free, and loops back to Lesson 1"><span class="pt-w">Playthrough</span><span class="pt-n"></span></button>
       </div>
       </div>
-      <button class="nav-btn main-page-btn help-page-btn" id="studentHelpBtn" type="button" title="How to use this" aria-label="How to use this">?</button>
     </div>
-    <div class="player-nav">
-      <button class="icon-btn" id="prevLessonBtn" title="Previous lesson"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
-      <button class="nav-btn nav-home nav-reset" id="resetBtn" type="button" title="Reset (back to language picker)" aria-label="Reset">
-        <span class="home-icon"><svg viewBox="0 0 40 40" width="34" height="34" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M33.5 17A14 14 0 0 0 9.2 11.6"></path><polyline points="8.5 4.5 8.8 11.8 16 11.2"></polyline><path d="M6.5 23A14 14 0 0 0 30.8 28.4"></path><polyline points="31.5 35.5 31.2 28.2 24 28.8"></polyline><text x="20" y="22.6" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="7" font-weight="700" letter-spacing=".2" fill="currentColor" stroke="none">RESET</text></svg></span>
-      </button>
-      <div class="home-pill-wrap">
-        <button class="nav-btn nav-home-pill" id="lessonDropdownBtn" title="Choose lesson">
-          <span id="playerHomeLabel">Lesson 0 of 20</span>
-          <span class="chev"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span>
-        </button>
-        <div class="home-dropdown-list hidden" id="homeDropdownList"><!-- populated by renderLessonDropdownInto() --></div>
-      </div>
-      <button class="nav-btn nav-home" id="themeToggleBtn" title="Toggle dark mode">
-        <span class="home-icon theme-icon-moon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></span>
-        <span class="home-icon theme-icon-sun"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><line x1="12" y1="2" x2="12" y2="4.5"></line><line x1="12" y1="19.5" x2="12" y2="22"></line><line x1="4.5" y1="12" x2="2" y2="12"></line><line x1="22" y1="12" x2="19.5" y2="12"></line><line x1="18.36" y1="5.64" x2="16.6" y2="7.4"></line><line x1="7.4" y1="16.6" x2="5.64" y2="18.36"></line><line x1="18.36" y1="18.36" x2="16.6" y2="16.6"></line><line x1="7.4" y1="7.4" x2="5.64" y2="5.64"></line></svg></span>
-      </button>
-      <button class="icon-btn" id="nextLessonBtn" title="Next lesson"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
-    </div>
+    </div>  <!-- /top-group -->
     <div class="stage">
       <div class="speaker-tag" id="speakerTag">&nbsp;</div>
       <div class="tone-tag" id="toneTag">&nbsp;</div>
@@ -1415,11 +1423,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     </div>
 
     <!-- 3-5-37: chip row just BELOW the word card (outside it, so tapping never pauses/plays). Left = Practice only (source language -> none). Next to it = Latin script (only for a target language with a Latin column). -->
-    <div class="chip-row">
-      <button class="stage-chip" id="practiceOnlyChip" type="button" aria-pressed="false"><span class="chip-tick"></span><span class="chip-only-label" id="practiceOnlyLabel">Target only</span></button>
-      <button class="stage-chip hidden" id="latnAudioChip" type="button" title="Show the Latin-letter version on screen (the sound stays in the original script)" aria-pressed="false"><span class="chip-tick"></span><span>Latin script</span></button>
-    </div>
 
+    <!-- 3-5-59 RC1: PLAYBACK group (just under the text): previous / play / next line, repeat, loop, shuffle, stop -->
+    <div class="ctl-group playback-group">
     <div class="transport">
       <div class="transport-main">
         <button class="icon-btn" id="prevBtn" title="Previous line"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></svg></button>
@@ -1433,6 +1439,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <button class="icon-btn small" id="stopBtn" title="End session"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"></rect></svg></button>
       </div>
     </div>
+    </div>  <!-- /playback-group -->
 
     <!-- hidden — kept so existing JS bindings (id references) still resolve; -->
     <!-- this simple duo is now mirrored from the language-pair card below   -->
@@ -1441,18 +1448,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       <select id="drillTgtLangSelect"></select>
     </div>
 
-    <div class="rate-card" id="settingsPanel">
-      <div class="rate-caption">Speed</div>
-      <div class="rate-row">
-        <span class="rate-row-label">Source language</span>
-        <input type="range" id="drillSrcRateSlider" min="0.6" max="1.4" step="0.05" value="1.05">
-        <span id="drillSrcRateVal">1.05×</span>
+    <!-- 3-5-59 RC1: SENTENCE OPTIONS group: Target-only / Latin-script chips and a read-only line showing the current speeds (the sliders live in Advanced). -->
+    <div class="ctl-group options-group" id="sentenceOptions">
+      <div class="chip-row">
+        <button class="stage-chip" id="practiceOnlyChip" type="button" aria-pressed="false"><span class="chip-tick"></span><span class="chip-only-label" id="practiceOnlyLabel">Target only</span></button>
+        <button class="stage-chip hidden" id="latnAudioChip" type="button" title="Show the Latin-letter version on screen (the sound stays in the original script)" aria-pressed="false"><span class="chip-tick"></span><span>Latin script</span></button>
       </div>
-      <div class="rate-row">
-        <span class="rate-row-label">Target language</span>
-        <input type="range" id="drillRateSlider" min="0.6" max="1.4" step="0.05" value="0.92">
-        <span id="drillRateVal">0.92×</span>
-      </div>
+      <button type="button" class="speeds-summary" id="speedsSummary" title="Change speeds"></button>
     </div>
 
     <!-- Language pair — surfaced out of Advanced (2026-09): switching
@@ -1465,7 +1467,19 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     <!-- langPairCard / langPairCaption / langPairGrid: the caption and selects are hidden by the course
          flag hideLangControls (they stay in the DOM -- JS binds to them). The card itself is then shown
          only while one of the voice/gender warning notes below is visible. -->
-    <div class="card" id="langPairCard" style="margin-top:10px;">
+    <div class="card" id="langPairCard" style="margin-top:10px;"><!-- 3-5-59 RC3: now holds only the voice / pronunciation notes; shown only while one of them is visible -->
+      <div class="note warn hidden" id="osVoiceHelp"></div>
+      <div class="note pron-fix hidden" id="pronFixRow"></div>
+      <div class="note warn hidden" id="voiceCoverageWarning"></div>
+      <div class="note warn hidden" id="genderCoverageWarning"></div>
+    </div>
+
+    <div class="card" style="margin-top:10px;">
+      <details id="advancedDetails">
+        <summary class="section-title">Advanced<span class="chev">▾</span></summary>
+        <div class="details-body">
+
+          <!-- 3-5-59 RC3: Advanced now opens with the language pair, then speeds, then the ALL-VOICES picker, then the per-character voices. -->
       <div class="lang-pair-caption" id="langPairCaption"><span class="src">Source language</span><span>→</span><span class="tgt">Target language</span></div>
       <div class="lang-grid" id="langPairGrid" style="margin-top:0; padding-top:0; border-top:none;">
         <div class="lang-col src">
@@ -1476,6 +1490,22 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <select id="tgtLangSelect"></select>
         </div>
       </div>
+
+          <!-- 3-5-59 RC1: speed sliders moved here; source language on the left, target on the right (same sides as the language pair). Each is remembered per language (localStorage speed_<code>). -->
+          <div class="subgroup-label" id="speedSliders">Speed</div>
+          <div class="speed-grid" id="speedGrid">
+            <div class="speed-col src" id="speedColSrc">
+              <div class="speed-name speed-lang-name" id="speedNameSrc"></div>
+              <input type="range" id="drillSrcRateSlider" min="0.6" max="1.4" step="0.05" value="1.15">
+              <span class="speed-val" id="drillSrcRateVal">1.15×</span>
+            </div>
+            <div class="speed-col tgt" id="speedColTgt">
+              <div class="speed-name speed-lang-name" id="speedNameTgt"></div>
+              <input type="range" id="drillRateSlider" min="0.6" max="1.4" step="0.05" value="0.92">
+              <span class="speed-val" id="drillRateVal">0.92×</span>
+            </div>
+          </div>
+
       <!-- 3-5-15: ALL VOICES -- picks one voice per language for every character at once (and the Variant voice).
            It overrides whatever was picked in Advanced; Advanced can then still be changed one character at a time. -->
       <div class="all-voices hidden" id="allVoicesRow">
@@ -1492,17 +1522,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           </div>
         </div>
       </div>
-      <div class="note warn hidden" id="osVoiceHelp"></div>
-      <div class="note pron-fix hidden" id="pronFixRow"></div>
-      <div class="note warn hidden" id="voiceCoverageWarning"></div>
-      <div class="note warn hidden" id="genderCoverageWarning"></div>
-    </div>
-
-    <div class="card" style="margin-top:10px;">
-      <details>
-        <summary class="section-title">Advanced<span class="chev">▾</span></summary>
-        <div class="details-body">
-
           <div class="subgroup-label">Characters &amp; voices</div>
           <div id="charactersList"></div>
 
@@ -2018,144 +2037,144 @@ const ROWS_0 = [
  ],
  [
   "Narrator",
-  "Escucharás tu idioma, una pausa, luego el idioma nuevo, una pausa, luego el idioma nuevo otra vez, y otra pausa.",
-  "Você ouvirá seu idioma, uma pausa, depois o idioma novo, uma pausa, depois o idioma novo de novo, e outra pausa.",
-  "የራስዎን ቋንቋ ይሰማሉ፣ ከዚያ ቆም ማለት፣ ከዚያ አዲሱን ቋንቋ፣ ቆም ማለት፣ ከዚያ አዲሱን ቋንቋ እንደገና፣ እና ሌላ ቆም ማለት ይከተላል።",
-  "ستسمع لغتك، ثم وقفة، ثم لغتك الجديدة، ثم وقفة، ثم لغتك الجديدة مرة أخرى، ثم وقفة أخرى.",
-  "Uslyšíte svůj jazyk, pauzu, pak nový jazyk, pauzu, pak nový jazyk ještě jednou a další pauzu.",
-  "Ghadi tsmaa loghtek, men baad waqfa, men baad l-logha jdida, waqfa, men baad l-logha jdida mra khra, w waqfa khra.",
-  "Vous entendrez votre langue, une pause, puis la nouvelle langue, une pause, puis la nouvelle langue encore une fois, et une autre pause.",
-  "Vous entendrez votre langue, une pause, puis la nouvelle langue, une pause, puis la nouvelle langue encore une fois, et une autre pause.",
-  "Du hörst deine Sprache, eine Pause, dann deine neue Sprache, eine Pause, dann deine neue Sprache noch einmal und wieder eine Pause.",
-  "Za ku ji harshenku, sai ɗan hutu, sannan sabon harshen, sai ɗan hutu, sannan sabon harshen sau ɗaya kuma, da wani ɗan hutu.",
-  "E lohe ana ʻoe i kāu ʻōlelo, he hoʻomaha, a laila i ka ʻōlelo hou, he hoʻomaha, a laila i ka ʻōlelo hou hou, a he hoʻomaha hou aku.",
-  "You'll hear your language, a pause, then your new language, a pause, then your new language again, and another pause.",
-  "Ị ga-anụ asụsụ gị, nkwụsị, mgbe ahụ asụsụ ọhụrụ gị, nkwụsị, mgbe ahụ asụsụ ọhụrụ gị ọzọ, na nkwụsị ọzọ.",
-  "Sentirai la tua lingua, una pausa, poi la nuova lingua, una pausa, poi ancora la nuova lingua e un'altra pausa.",
-  "あなたの言語、間、新しい言語、間、もう一度新しい言語、そしてまた間、という順に聞こえます。",
-  "自分の言語、間、新しい言語、間、もう一度新しい言語、そしてまた間、の順に聞こえるよ。",
-  "អ្នកនឹងឮភាសារបស់អ្នក បន្ទាប់មកផ្អាក បន្ទាប់មកភាសាថ្មី ផ្អាក បន្ទាប់មកភាសាថ្មីម្តងទៀត ហើយផ្អាកម្តងទៀត។",
-  "ເຈົ້າຈະໄດ້ຍິນພາສາຂອງເຈົ້າ, ຢຸດຊົ່ວຄາວ, ແລ້ວພາສາໃໝ່, ຢຸດຊົ່ວຄາວ, ແລ້ວພາສາໃໝ່ອີກຄັ້ງ, ແລະຢຸດຊົ່ວຄາວອີກຄັ້ງ.",
-  "Linguam tuam audies, deinde intermissionem, deinde linguam novam, intermissionem, deinde iterum linguam novam, et rursus intermissionem.",
-  "Audietis linguam vestram, pausam, postea linguam novam, pausam, postea iterum linguam novam, et alia pausa.",
-  "Linguam vestram audietis, deinde pausam, deinde linguam novam, pausam, deinde iterum linguam novam, et aliam pausam.",
-  "Okoyoka monoko na yo, kopema moke, na sima monoko ya sika, kopema moke, na sima monoko ya sika lisusu, mpe kopema moke lisusu.",
-  "Ka rongo koe i tō reo, he okiokinga, ka whai ko te reo hou, he okiokinga, ka whai ko te reo hou anō, me tētahi atu okiokinga.",
-  "You'll hear your language, a pause, then your new language, a pause, then your new language again, and another pause.",
-  "Usłyszysz swój język, pauzę, potem nowy język, pauzę, potem jeszcze raz nowy język i kolejną pauzę.",
-  "Vai ouvir o seu idioma, uma pausa, depois o idioma novo, uma pausa, depois o idioma novo outra vez, e mais uma pausa.",
-  "Vai ouvir o seu idioma, uma pausa, depois o idioma novo, uma pausa, depois o idioma novo outra vez, e mais uma pausa.",
-  "Vei auzi limba ta, o pauză, apoi limba nouă, o pauză, apoi din nou limba nouă și încă o pauză.",
-  "Вы услышите свой язык, паузу, затем новый язык, паузу, затем новый язык ещё раз и ещё одну паузу.",
-  "E te faalogo i lau gagana, o se malōlō, ona sosoo ai lea ma le gagana fou, o se malōlō, ona sosoo ai lea ma le gagana fou toe, ma se isi malōlō.",
-  "Budete počuť svoj jazyk, pauzu, potom nový jazyk, pauzu, potom nový jazyk ešte raz a ďalšiu pauzu.",
-  "Simiykita uyarinki, samay, chaymanta musuq simita, samay, chaymanta musuq simita kutimpi, hinaspa huk samay.",
-  "Escucharás tu idioma, una pausa, luego el idioma nuevo, una pausa, luego el idioma nuevo otra vez, y otra pausa.",
-  "Escucharás tu idioma, una pausa, luego el idioma nuevo, una pausa, luego el idioma nuevo otra vez, y otra pausa.",
-  "You'll hear your language, a pause, then your new language, a pause, then your new language again, and another pause.",
-  "Utasikia lugha yako, kisha kusimama kidogo, kisha lugha yako mpya, kusimama kidogo, kisha lugha yako mpya tena, na kusimama kidogo tena.",
-  "คุณจะได้ยินภาษาของคุณ แล้วเว้นช่วง จากนั้นภาษาใหม่ แล้วเว้นช่วง จากนั้นภาษาใหม่อีกครั้ง และเว้นช่วงอีกครั้งค่ะ",
-  "ʻE ke ongoʻi ho lea, ko e mālōlō, pea hoko ai ʻa e lea foʻou, ko e mālōlō, pea toe hoko ʻa e lea foʻou, mo ha toe mālōlō.",
-  "Ви почуєте свою мову, паузу, потім нову мову, паузу, потім нову мову ще раз і ще одну паузу.",
-  "Bạn sẽ nghe ngôn ngữ của mình, một khoảng dừng, rồi ngôn ngữ mới, một khoảng dừng, rồi ngôn ngữ mới lần nữa, và thêm một khoảng dừng.",
-  "Ẹ ó gbọ́ èdè yín, ìdúró kúkúrú, lẹ́yìn náà èdè tuntun, ìdúró kúkúrú, lẹ́yìn náà èdè tuntun lẹ́ẹ̀kan sí i, àti ìdúró kúkúrú mìíràn.",
-  "Uya kuva ulwimi lwakho, ukumisa okuncinci, emva koko ulwimi olutsha, ukumisa, emva koko ulwimi olutsha kwakhona, kunye nokunye ukumisa.",
-  "Uzozwa ulimi lwakho, ukuma kancane, bese kuba ulimi olusha, ukuma kancane, bese kuba ulimi olusha futhi, nokunye ukuma kancane.",
-  "You'll hear your language, a pause, then your new language, a pause, then your new language again, and another pause."
+  "Escucharás una frase en tu idioma y una pausa. Luego el idioma que estás aprendiendo, dos veces, con una pausa después de cada una.",
+  "Você ouvirá uma frase no seu idioma e uma pausa. Depois, o idioma que está aprendendo, duas vezes, com uma pausa após cada uma.",
+  "በራስዎ ቋንቋ አንድ ሐረግ ይሰማሉ፣ ከዚያ ቆም ማለት ይከተላል። ከዚያ የሚማሩትን ቋንቋ ሁለት ጊዜ፣ ከእያንዳንዱ በኋላ ቆም ማለት ይሰማሉ።",
+  "ستسمع جملة بلغتك ثم وقفة. بعدها اللغة التي تتعلمها، مرتين، مع وقفة بعد كل مرة.",
+  "Uslyšíte větu ve svém jazyce a pauzu. Pak jazyk, který se učíte, dvakrát, vždy s pauzou po něm.",
+  "Ghadi tsmaa jomla b loghtek, men baad waqfa. Men baad l-logha lli kat-t3elem, mrratayn, w waqfa men baad kol mra.",
+  "Vous entendrez une phrase dans votre langue, puis une pause. Ensuite, la langue que vous apprenez, deux fois, avec une pause après chacune.",
+  "Vous entendrez une phrase dans votre langue, puis une pause. Ensuite, la langue que vous apprenez, deux fois, avec une pause après chacune.",
+  "Du hörst einen Satz in deiner Sprache und eine Pause. Danach die Sprache, die du lernst, zweimal, jeweils mit einer Pause danach.",
+  "Za ku ji jimla a harshenku, sai ɗan hutu. Sannan harshen da kuke koyo, sau biyu, da ɗan hutu bayan kowanne.",
+  "E lohe ana ʻoe i kekahi huaʻōlelo ma kāu ʻōlelo, a laila he hoʻomaha. A laila ka ʻōlelo āu e aʻo nei, ʻelua manawa, me ka hoʻomaha ma hope o kēlā me kēia.",
+  "You'll hear a phrase in your language, then a pause. Then the language you're learning, twice, with a pause after each.",
+  "Ị ga-anụ nkebi ahịrịokwu n'asụsụ gị, wee nwee nkwụsị. Mgbe ahụ asụsụ ị na-amụ, ugboro abụọ, na nkwụsị mgbe nke ọ bụla gasịrị.",
+  "Sentirai una frase nella tua lingua e una pausa. Poi la lingua che stai imparando, due volte, con una pausa dopo ciascuna.",
+  "ご自分の言語でフレーズが流れ、そのあと間があります。次に、学習中の言語が2回流れ、それぞれの後に間があります。",
+  "自分の言語でフレーズが流れて、そのあと間があるよ。次に、勉強中の言語が2回流れて、それぞれのあとに間があるよ。",
+  "អ្នកនឹងឮឃ្លាមួយជាភាសារបស់អ្នក បន្ទាប់មកផ្អាក។ បន្ទាប់មកភាសាដែលអ្នកកំពុងរៀន ពីរដង ហើយផ្អាកក្រោយម្តងៗ។",
+  "ເຈົ້າຈະໄດ້ຍິນປະໂຫຍກໜຶ່ງເປັນພາສາຂອງເຈົ້າ, ແລ້ວຢຸດຊົ່ວຄາວ. ຈາກນັ້ນເປັນພາສາທີ່ເຈົ້າກຳລັງຮຽນ, ສອງເທື່ອ, ແລະຢຸດຊົ່ວຄາວຫຼັງແຕ່ລະເທື່ອ.",
+  "Locutionem in lingua tua audies, deinde intermissionem. Deinde linguam quam discis, bis, cum intermissione post utramque.",
+  "Audietis locutionem in lingua vestra, et pausam. Postea linguam quam discitis, bis, cum pausa post utramque.",
+  "Audietis locutionem in lingua vestra, deinde pausam. Deinde linguam quam discitis, bis, cum pausa post utramque.",
+  "Okoyoka efandi moko na monoko na yo, na sima kopema moke. Na sima monoko oyo ozali koyekola, mbala mibale, na kopema moke nsima ya mbala nyonso.",
+  "Ka rongo koe i tētahi rerenga kōrero i tō reo, ā, he okiokinga. Ka whai ko te reo e ako ana koe, e rua ngā wā, me te okiokinga i muri i ia wā.",
+  "You'll hear a phrase in your language, then a pause. Then the language you're learning, twice, with a pause after each.",
+  "Usłyszysz zdanie w swoim języku i pauzę. Potem język, którego się uczysz, dwa razy, z pauzą po każdym.",
+  "Vai ouvir uma frase no seu idioma e uma pausa. Depois, o idioma que está a aprender, duas vezes, com uma pausa após cada uma.",
+  "Vai ouvir uma frase no seu idioma e uma pausa. Depois, o idioma que está a aprender, duas vezes, com uma pausa após cada uma.",
+  "Vei auzi o frază în limba ta și o pauză. Apoi limba pe care o înveți, de două ori, cu o pauză după fiecare.",
+  "Вы услышите фразу на своём языке и паузу. Затем язык, который вы изучаете, дважды, с паузой после каждого раза.",
+  "E te faalogo i se fuaitau i lau gagana, ona malōlō lea. Ona sosoo ai lea ma le gagana o loo e aʻoaʻoina, faalua, ma se malōlō ina ua uma ni mea taʻitasi.",
+  "Budete počuť vetu vo svojom jazyku a pauzu. Potom jazyk, ktorý sa učíte, dvakrát, vždy s pauzou po ňom.",
+  "Simiykipi huk rimayta uyarinki, hinaspa samay. Chaymanta yachasqayki simita, iskay kutita, sapa kutipa qhepanpi samaywan.",
+  "Escucharás una frase en tu idioma y una pausa. Luego el idioma que estás aprendiendo, dos veces, con una pausa después de cada una.",
+  "Escucharás una frase en tu idioma y una pausa. Luego el idioma que estás aprendiendo, dos veces, con una pausa después de cada una.",
+  "You'll hear a phrase in your language, then a pause. Then the language you're learning, twice, with a pause after each.",
+  "Utasikia sentensi katika lugha yako, kisha kusimama kidogo. Kisha lugha unayojifunza, mara mbili, na kusimama kidogo baada ya kila mara.",
+  "คุณจะได้ยินวลีหนึ่งในภาษาของคุณ แล้วเว้นช่วง จากนั้นเป็นภาษาที่คุณกำลังเรียน สองครั้ง โดยเว้นช่วงหลังแต่ละครั้งค่ะ",
+  "ʻE ke ongoʻi ha lea ʻi ho lea, pea mālōlō. Pea toki hoko ʻa e lea ʻokú ke ako, tuʻo ua, mo ha mālōlō hili ʻa e tuʻo taki taha.",
+  "Ви почуєте фразу вашою мовою і паузу. Потім мову, яку ви вивчаєте, двічі, з паузою після кожного разу.",
+  "Bạn sẽ nghe một cụm từ bằng ngôn ngữ của mình, rồi một khoảng dừng. Sau đó là ngôn ngữ bạn đang học, hai lần, mỗi lần đều có một khoảng dừng sau đó.",
+  "Ẹ ó gbọ́ gbólóhùn kan ní èdè yín, lẹ́yìn náà ìdúró kúkúrú. Lẹ́yìn náà èdè tí ẹ ń kọ́, lẹ́ẹ̀mejì, pẹ̀lú ìdúró kúkúrú lẹ́yìn ọ̀kọ̀ọ̀kan.",
+  "Uya kuva umyalezo kulwimi lwakho, emva koko ukumisa okuncinci. Emva koko ulwimi ofunda lona, kabini, kunye nokumisa okuncinci emva kwexesha ngalinye.",
+  "Uzozwa umusho ngolimi lwakho, bese kuba nokuma kancane. Bese kuba ulimi ofunda lona, kabili, nokuma kancane ngemuva kwesikhathi ngasinye.",
+  "You'll hear a phrase in your language, then a pause. Then the language you're learning, twice, with a pause after each."
  ],
  [
   "Narrator",
-  "En la segunda y la tercera pausa, repite lo que acabas de oír.",
-  "Na segunda e na terceira pausa, repita o que acabou de ouvir.",
-  "በሁለተኛውና በሦስተኛው ቆም ማለት ጊዜ የሰሙትን ይድገሙ።",
-  "في الوقفتين الثانية والثالثة، كرّر ما سمعته للتو.",
-  "Ve druhé a třetí pauze zopakujte to, co jste právě slyšeli.",
-  "F l-waqfa t-tanya w t-talta, aawed lli ghir smaati.",
-  "Pendant la deuxième et la troisième pause, répétez ce que vous venez d'entendre.",
-  "Pendant la deuxième et la troisième pause, répétez ce que vous venez d'entendre.",
-  "Wiederhole in der zweiten und dritten Pause, was du gerade gehört hast.",
-  "A hutu na biyu da na uku, ku maimaita abin da kuka ji yanzu.",
-  "I ka hoʻomaha ʻelua a me ke kolu, e ʻōlelo hou i kāu mea i lohe ai.",
-  "In the second and third pauses, repeat what you just heard.",
-  "N'ime nkwụsị nke abụọ na nke atọ, kwughachi ihe i nuru ugbu a.",
-  "Nella seconda e nella terza pausa, ripeti quello che hai appena sentito.",
-  "2回目と3回目の間では、今聞いたことを繰り返してください。",
-  "2回目と3回目の間では、今聞いたことをくり返してね。",
-  "ក្នុងការផ្អាកលើកទីពីរ និងទីបី សូមនិយាយឡើងវិញនូវអ្វីដែលអ្នកទើបតែបានឮ។",
-  "ໃນການຢຸດຄັ້ງທີສອງແລະທີສາມ, ໃຫ້ເວົ້າຕາມສິ່ງທີ່ເຈົ້າເພີ່ງໄດ້ຍິນ.",
-  "In secunda tertiaque intermissione, repete quod modo audivisti.",
-  "In secunda et tertia pausa, repetite quod modo audistis.",
-  "In secunda et tertia pausa, repetite quod modo audivistis.",
-  "Na kopema ya mibale mpe ya misato, subá oyo oyokaki sikoyo.",
-  "I te okiokinga tuarua me te tuatoru, tuaruatia ngā mea i rongo koe inaianei.",
-  "In the second and third pauses, repeat what you just heard.",
-  "W drugiej i trzeciej pauzie powtórz to, co właśnie zostało powiedziane.",
-  "Na segunda e na terceira pausa, repita o que acabou de ouvir.",
-  "Na segunda e na terceira pausa, repita o que acabou de ouvir.",
-  "La a doua și a treia pauză, repetă ce tocmai ai auzit.",
-  "Во вторую и третью паузы повторяйте то, что вы только что услышали.",
-  "I le malōlō lona lua ma le tolu, toe fai mai mea na e faalogo i ai.",
-  "Počas druhej a tretej pauzy zopakujte to, čo ste práve počuli.",
-  "Iskay kaq chaymanta kimsa kaq samaypi, kunan uyarisqaykita yapamanta niy.",
-  "En la segunda y la tercera pausa, repite lo que acabas de oír.",
-  "En la segunda y la tercera pausa, repite lo que acabas de oír.",
-  "In the second and third pauses, repeat what you just heard.",
-  "Katika kusimama kwa pili na kwa tatu, rudia ulichosikia sasa hivi.",
-  "ในช่วงเว้นครั้งที่สองและสาม ให้พูดตามสิ่งที่เพิ่งได้ยินค่ะ",
-  "ʻI he mālōlō hono ua mo hono tolu, toe lea ʻaki ʻa e meʻa kuó ke ongoʻi.",
-  "Під час другої та третьої пауз повторюйте те, що ви щойно почули.",
-  "Trong khoảng dừng thứ hai và thứ ba, hãy lặp lại những gì bạn vừa nghe.",
-  "Ní ìdúró kejì àti ìkẹta, ẹ tún ohun tí ẹ ṣẹ̀ṣẹ̀ gbọ́ sọ.",
-  "Kukumisa kwesibini nesesithathu, phinda into oyive ngoku nje.",
-  "Ekumeni kwesibili nokwesithathu, phinda lokho okuzwe manje.",
-  "In the second and third pauses, repeat what you just heard."
+  "La primera pausa es para adivinar, antes de oír la respuesta. Ayuda más la segunda o tercera vez que escuchas una lección.",
+  "A primeira pausa é para tentar adivinhar, antes de ouvir a resposta. Isso ajuda mais na segunda ou terceira vez que você ouve uma lição.",
+  "የመጀመሪያው ቆም ማለት መልሱን ከመስማትዎ በፊት ለመገመት ነው። ይህ ትምህርቱን ለሁለተኛ ወይም ለሦስተኛ ጊዜ ሲያዳምጡ የበለጠ ይጠቅማል።",
+  "الوقفة الأولى للتخمين، قبل أن تسمع الإجابة. وهذا يفيد أكثر في المرة الثانية أو الثالثة التي تستمع فيها إلى الدرس.",
+  "První pauza slouží k hádání, než uslyšíte odpověď. Nejvíc pomáhá podruhé nebo potřetí, když lekci posloucháte.",
+  "L-waqfa l-oula hiya bach tkhemmen, qbel ma tsmaa l-jawab. Hadchi kaynfaa aktar f l-mra t-tanya wla t-talta fach katsmaa dars.",
+  "La première pause sert à deviner, avant d'entendre la réponse. C'est surtout utile la deuxième ou la troisième fois que vous écoutez une leçon.",
+  "La première pause sert à deviner, avant d'entendre la réponse. C'est surtout utile la deuxième ou la troisième fois que vous écoutez une leçon.",
+  "Die erste Pause ist zum Raten, bevor du die Antwort gehört hast. Das hilft am meisten beim zweiten oder dritten Hören einer Lektion.",
+  "Hutu na farko na hasashe ne, kafin ku ji amsar. Wannan ya fi amfani a karo na biyu ko na uku da kuke sauraron darasi.",
+  "ʻO ka hoʻomaha mua, no ka wānana ʻana ma mua o ka lohe ʻana i ka pane. Ua ʻoi aku ka pono i ka lua a i ke kolu o ka manawa āu e hoʻolohe ai i kekahi haʻawina.",
+  "The first pause is for guessing, before you've heard the answer. That helps most the second or third time you play a lesson.",
+  "Nkwụsị mbụ bụ maka ịtụ anya, tupu ị nụ azịza. Nke a na-aba uru karịa na nke abụọ ma ọ bụ nke atọ i na-ege ihe ọmụmụ.",
+  "La prima pausa serve a indovinare, prima di sentire la risposta. Aiuta di più la seconda o la terza volta che ascolti una lezione.",
+  "最初の間は、答えを聞く前に予想するためのものです。レッスンを2回目、3回目に聞くときに、より役立ちます。",
+  "最初の間は、答えを聞く前に予想するための間だよ。レッスンを2回目、3回目に聞くときに、もっと役に立つよ。",
+  "ការផ្អាកដំបូងគឺសម្រាប់ទាយ មុនពេលឮចម្លើយ។ វាមានប្រយោជន៍ជាងនៅពេលអ្នកស្តាប់មេរៀនលើកទីពីរ ឬទីបី។",
+  "ການຢຸດຄັ້ງທຳອິດແມ່ນເພື່ອເດົາ, ກ່ອນທີ່ຈະໄດ້ຍິນຄຳຕອບ. ມັນມີປະໂຫຍດຫຼາຍທີ່ສຸດເວລາຟັງບົດຮຽນເທື່ອທີສອງ ຫຼື ທີສາມ.",
+  "Prima intermissio est ad coniciendum, antequam responsum audias. Hoc maxime iuvat secundo vel tertio, cum lectionem audis.",
+  "Prima pausa est pro divinare, antequam responsum auditis. Hoc plus iuvat secunda vel tertia vice, cum lectionem auditis.",
+  "Prima pausa est ad coniciendum, antequam responsum audiatis. Hoc maxime prodest secundo vel tertio, cum lectionem auditis.",
+  "Kopema ya liboso ezali mpo na kokanisa, naino oyoki eyano te. Yango esalisaka mingi na mbala ya mibale to ya misato ntango ozali koyoka mateya.",
+  "Ko te okiokinga tuatahi hei whakapae, i mua i tō rongo i te whakautu. He nui ake te whai hua i te wā tuarua, tuatoru rānei e whakarongo ana koe ki tētahi akoranga.",
+  "The first pause is for guessing, before you've heard the answer. That helps most the second or third time you play a lesson.",
+  "Pierwsza pauza służy do zgadywania, zanim usłyszysz odpowiedź. Najbardziej pomaga przy drugim lub trzecim odsłuchaniu lekcji.",
+  "A primeira pausa serve para tentar adivinhar, antes de ouvir a resposta. Isto ajuda mais à segunda ou terceira vez que ouve uma lição.",
+  "A primeira pausa serve para tentar adivinhar, antes de ouvir a resposta. Isto ajuda mais à segunda ou terceira vez que ouve uma lição.",
+  "Prima pauză este pentru a ghici, înainte să auzi răspunsul. Ajută cel mai mult a doua sau a treia oară când asculți o lecție.",
+  "Первая пауза нужна, чтобы угадать, ещё не услышав ответ. Это полезнее всего во второй или третий раз, когда вы слушаете урок.",
+  "O le malōlō muamua e mo le taumate, aʻo lei faalogo i le tali. E sili ona aoga pe a e faalogo i se lesona i le taimi lona lua po o le tolu.",
+  "Prvá pauza slúži na hádanie, kým ste nepočuli odpoveď. Najviac pomáha pri druhom alebo treťom počúvaní lekcie.",
+  "Ñawpaq kaq samayqa yuyaykunapaqmi, ñawpaqta kutichiyta mana uyarispa. Iskay kaq utaq kimsa kaq kuti yachaykuta uyarispaqa aswan yanapan.",
+  "La primera pausa es para adivinar, antes de oír la respuesta. Ayuda más la segunda o tercera vez que escuchas una lección.",
+  "La primera pausa es para adivinar, antes de oír la respuesta. Ayuda más la segunda o tercera vez que escuchas una lección.",
+  "The first pause is for guessing, before you've heard the answer. That helps most the second or third time you play a lesson.",
+  "Kusimama kwa kwanza ni kwa ajili ya kukisia, kabla ya kusikia jibu. Hii husaidia zaidi mara ya pili au ya tatu unaposikiliza somo.",
+  "ช่วงเว้นแรกไว้ใช้เดา ก่อนที่จะได้ยินคำตอบ ซึ่งจะมีประโยชน์มากที่สุดเมื่อฟังบทเรียนครั้งที่สองหรือสามค่ะ",
+  "Ko e mālōlō ʻuluaki ko e fakakaukauʻi, ʻi he teʻeki ke ke ongoʻi ʻa e tali. ʻOku ʻaonga lahi ange ia ʻi he tuʻo ua pe tuʻo tolu ʻoku ke fanongo ai ki ha lēsoni.",
+  "Перша пауза потрібна, щоб вгадати, ще не почувши відповідь. Найбільше це допомагає вдруге або втретє, коли ви слухаєте урок.",
+  "Khoảng dừng đầu tiên là để đoán, trước khi nghe đáp án. Điều này hữu ích nhất ở lần nghe bài học thứ hai hoặc thứ ba.",
+  "Ìdúró àkọ́kọ́ wà fún ìgbìyànjú láti ṣe àfojúsọ́nà, kí ẹ tó gbọ́ ìdáhùn. Èyí wúlò jù nígbà kejì tàbí ìkẹta tí ẹ bá ń gbọ́ ẹ̀kọ́ kan.",
+  "Ukumisa kokuqala kukuqikelela, ngaphambi kokuva impendulo. Oku kunceda kakhulu ngexesha lesibini okanye lesithathu uphulaphula isifundo.",
+  "Ukuma kokuqala kungokuthi ucabange, ngaphambi kokuzwa impendulo. Lokhu kusiza kakhulu ngesikhathi sesibili noma sesithathu uthi lalela isifundo.",
+  "The first pause is for guessing, before you've heard the answer. That helps most the second or third time you play a lesson."
  ],
  [
   "Narrator",
-  "La primera pausa es para adivinar lo que viene.",
-  "A primeira pausa é para tentar adivinhar o que vem.",
-  "የመጀመሪያው ቆም ማለት የሚመጣውን ለመገመት ነው።",
-  "الوقفة الأولى مخصّصة لتخمين ما سيأتي.",
-  "První pauza slouží k tomu, abyste hádali, co přijde.",
-  "L-waqfa l-oula hiya bach tkhemmen ach ghadi iji.",
-  "La première pause sert à deviner ce qui va suivre.",
-  "La première pause sert à deviner ce qui va suivre.",
-  "Die erste Pause ist zum Raten, was als Nächstes kommt.",
-  "Hutu na farko na yin hasashen abin da zai zo ne.",
-  "ʻO ka hoʻomaha mua, no ka wānana ʻana i ka mea e hiki mai ana.",
-  "The first pause is for making a guess at what's coming.",
-  "Nkwụsị mbụ bụ maka ịtụ anya ihe ga-abịa.",
-  "La prima pausa serve a indovinare cosa sta per arrivare.",
-  "最初の間は、次に何が来るかを予想するためのものです。",
-  "最初の間は、次に何が来るか予想するためのものだよ。",
-  "ការផ្អាកដំបូងគឺសម្រាប់ទាយថាអ្វីនឹងមកបន្ទាប់។",
-  "ການຢຸດຄັ້ງທຳອິດແມ່ນເພື່ອເດົາວ່າຈະມາຫຍັງຕໍ່ໄປ.",
-  "Prima intermissio est ut coniectes quid venturum sit.",
-  "Prima pausa est pro divinare quid venit.",
-  "Prima pausa est ad coniciendum quid sequatur.",
-  "Kopema ya liboso ezali mpo na kokanisa nini ekoya.",
-  "Ko te okiokinga tuatahi hei whakapae i ngā mea e haere mai ana.",
-  "The first pause is for making a guess at what's coming.",
-  "Pierwsza pauza służy do zgadywania, co będzie dalej.",
-  "A primeira pausa serve para adivinhar o que vem a seguir.",
-  "A primeira pausa serve para adivinhar o que vem a seguir.",
-  "Prima pauză este pentru a ghici ce urmează.",
-  "Первая пауза нужна, чтобы угадать, что будет дальше.",
-  "O le malōlō muamua e mo le taumate i mea o le a sau.",
-  "Prvá pauza slúži na to, aby ste hádali, čo príde.",
-  "Ñawpaq kaq samayqa ima hamunanta yuyaykunapaqmi.",
-  "La primera pausa es para adivinar lo que viene.",
-  "La primera pausa es para adivinar lo que viene.",
-  "The first pause is for making a guess at what's coming.",
-  "Kusimama kwa kwanza ni kwa ajili ya kukisia kinachokuja.",
-  "ช่วงเว้นแรกไว้ใช้เดาว่าจะมีอะไรตามมาค่ะ",
-  "Ko e mālōlō ʻuluaki ko e fakakaukauʻi ia ʻa e meʻa ʻe hoko mai.",
-  "Перша пауза потрібна, щоб вгадати, що буде далі.",
-  "Khoảng dừng đầu tiên là để đoán xem điều gì sắp đến.",
-  "Ìdúró àkọ́kọ́ wà fún ìgbìyànjú láti ṣe àfojúsọ́nà ohun tó ń bọ̀.",
-  "Ukumisa kokuqala kukuqikelela ukuba kuza ntoni.",
-  "Ukuma kokuqala kungokuthi ucabange ukuthi kuzokwenzekani.",
-  "The first pause is for making a guess at what's coming."
+  "Las otras pausas son para repetir.",
+  "As outras pausas são para repetir.",
+  "ሌሎቹ ቆም ማለቶች ለመድገም ናቸው።",
+  "أما الوقفات الأخرى فهي للتكرار.",
+  "Ostatní pauzy slouží k opakování.",
+  "L-waqfat l-okhra hiya bach taawed.",
+  "Les autres pauses servent à répéter.",
+  "Les autres pauses servent à répéter.",
+  "Die anderen Pausen sind zum Wiederholen.",
+  "Sauran hutun na maimaitawa ne.",
+  "ʻO nā hoʻomaha ʻē aʻe, no ka ʻōlelo hou ʻana.",
+  "The other pauses are for repeating.",
+  "Nkwụsị ndị ọzọ bụ maka ikwughachi.",
+  "Le altre pause servono a ripetere.",
+  "ほかの間は、繰り返すためのものです。",
+  "ほかの間は、くり返すための間だよ。",
+  "ការផ្អាកផ្សេងទៀតគឺសម្រាប់និយាយឡើងវិញ។",
+  "ການຢຸດຄັ້ງອື່ນໆແມ່ນເພື່ອເວົ້າຕາມ.",
+  "Reliquae intermissiones sunt ad repetendum.",
+  "Aliae pausae sunt pro repetere.",
+  "Ceterae pausae sunt ad repetendum.",
+  "Kopema mosusu ezali mpo na kosuba.",
+  "Ko ētahi atu okiokinga hei tuaruatanga.",
+  "The other pauses are for repeating.",
+  "Pozostałe pauzy służą do powtarzania.",
+  "As outras pausas servem para repetir.",
+  "As outras pausas servem para repetir.",
+  "Celelalte pauze sunt pentru repetare.",
+  "Остальные паузы нужны для повторения.",
+  "O isi malōlō e mo le toe fai mai.",
+  "Ostatné pauzy slúžia na opakovanie.",
+  "Wakin samaykunaqa yapamanta niypaqmi.",
+  "Las otras pausas son para repetir.",
+  "Las otras pausas son para repetir.",
+  "The other pauses are for repeating.",
+  "Kusimama kwingine ni kwa ajili ya kurudia.",
+  "ช่วงเว้นที่เหลือไว้พูดตามค่ะ",
+  "Ko e ngaahi mālōlō kehe ko e toe lea.",
+  "Інші паузи потрібні для повторення.",
+  "Các khoảng dừng còn lại là để lặp lại.",
+  "Àwọn ìdúró yòókù wà fún àtúnsọ.",
+  "Ezinye iindawo zokumisa zezokuphinda.",
+  "Okunye ukuma kungokuphinda.",
+  "The other pauses are for repeating."
  ],
  [
   "Narrator",
@@ -2206,50 +2225,50 @@ const ROWS_0 = [
  ],
  [
   "Narrator",
-  "Ya hay una voz elegida para ti. Si quieres probar otra, algunos dispositivos tienen más opciones en el menú.",
-  "Já há uma voz escolhida para você. Se quiser experimentar outra, alguns dispositivos têm outras opções no menu.",
-  "ድምፅ አስቀድሞ ተመርጦልዎታል። ሌላ ለመሞከር ከፈለጉ፣ አንዳንድ መሣሪያዎች በምናሌው ውስጥ ሌሎች ሊኖሯቸው ይችላሉ።",
-  "تم اختيار صوت لك بالفعل. إذا أردت تجربة صوت آخر، فقد تتوفر أصوات أخرى في القائمة على بعض الأجهزة.",
-  "Hlas už je pro vás vybrán. Pokud chcete vyzkoušet jiný, některá zařízení mají v nabídce další.",
-  "Chi sout deja ikhtar lik. Ila bghiti tjerreb wahed akhor, chi ajhiza ymken ykoun fihom khyarat okhra f l-menu.",
-  "Une voix est déjà choisie pour vous. Si vous voulez en essayer une autre, certains appareils en proposent d'autres dans le menu.",
-  "Une voix est déjà choisie pour vous. Si vous voulez en essayer une autre, certains appareils en proposent d'autres dans le menu.",
-  "Eine Stimme ist bereits für dich ausgewählt. Wenn du eine andere ausprobieren möchtest, haben manche Geräte weitere im Menü.",
-  "An riga an zaɓa muku murya. Idan kuna son gwada wata, wasu na'urori na iya samun wasu a cikin menu.",
-  "Ua koho ʻia kekahi leo nou. Inā makemake ʻoe e hoʻāʻo i kekahi ʻē aʻe, aia paha kekahi mau mea ʻē aʻe ma ka papa kuhikuhi ma kekahi mau mea hana.",
-  "A voice is already picked for you. If you'd like to try a different one, some devices may have others in the menu.",
-  "E jikọtala olu maka gị. Ọ bụrụ na ịchọrọ ịnwale nke ọzọ, ụfọdụ ngwaọrụ nwere ike inwe ndị ọzọ n'ime menu.",
-  "Una voce è già stata scelta per te. Se vuoi provarne un'altra, alcuni dispositivi ne offrono altre nel menu.",
-  "音声はすでに選ばれています。別の音声を試したい場合は、端末によってはメニューに他の音声があります。",
-  "音声はもう選んであるよ。別のを試したいときは、端末によってはメニューに他の音声があるかも。",
-  "សំឡេងមួយត្រូវបានជ្រើសរើសជូនអ្នករួចហើយ។ ប្រសិនបើអ្នកចង់សាកល្បងសំឡេងផ្សេង ឧបករណ៍មួយចំនួនអាចមានសំឡេងផ្សេងទៀតក្នុងម៉ឺនុយ។",
-  "ມີສຽງຖືກເລືອກໃຫ້ເຈົ້າແລ້ວ. ຖ້າຢາກລອງສຽງອື່ນ, ບາງອຸປະກອນອາດມີສຽງອື່ນໃນເມນູ.",
-  "Vox iam tibi electa est. Si aliam temptare vis, quaedam instrumenta in indice alias habent.",
-  "Una vox iam electa est pro vobis. Si aliam temptare vultis, aliqua instrumenta habent alias in lista.",
-  "Vox iam pro vobis electa est. Si aliam experiri vultis, quaedam instrumenta alias in indice habent.",
-  "Mongongo moko eponami mpo na yo. Soki olingi komeka mosusu, bisaleli mosusu ekoki kozala na mingi na menu.",
-  "Kua kōwhiria kē he reo mōu. Mēnā e hiahia ana koe ki te whakamātau i tētahi atu, tērā pea he atu anō kei te tahua i ētahi pūrere.",
-  "A voice is already picked for you. If you'd like to try a different one, some devices may have others in the menu.",
-  "Głos został już dla ciebie wybrany. Jeśli chcesz wypróbować inny, niektóre urządzenia mają w menu kolejne.",
-  "Já está escolhida uma voz para si. Se quiser experimentar outra, alguns dispositivos têm outras no menu.",
-  "Já está escolhida uma voz para si. Se quiser experimentar outra, alguns dispositivos têm outras no menu.",
-  "O voce este deja aleasă pentru tine. Dacă vrei să încerci alta, unele dispozitive au și altele în meniu.",
-  "Голос уже выбран для вас. Если хотите попробовать другой, на некоторых устройствах в меню есть и другие.",
-  "Ua filifilia mo oe se leo. Afai e te manaʻo e faataitai se isi, atonu e i ai isi i le lisi i nisi o masini.",
-  "Hlas je už pre vás vybraný. Ak chcete vyskúšať iný, niektoré zariadenia ponúkajú v ponuke ďalšie.",
-  "Huk kunka ñam akllasqa kachkan qanpaq. Huk kaqta pruebayta munaspaqa, wakin makinakunapi menupi huk kaqkunapas kanman.",
-  "Ya hay una voz elegida para ti. Si quieres probar otra, algunos dispositivos tienen más opciones en el menú.",
-  "Ya hay una voz elegida para ti. Si quieres probar otra, algunos dispositivos tienen más opciones en el menú.",
-  "A voice is already picked for you. If you'd like to try a different one, some devices may have others in the menu.",
-  "Sauti tayari imechaguliwa kwa ajili yako. Ukipenda kujaribu nyingine, vifaa vingine vinaweza kuwa na sauti nyingine kwenye menyu.",
-  "เลือกเสียงให้คุณแล้วค่ะ ถ้าอยากลองเสียงอื่น บางอุปกรณ์อาจมีเสียงอื่นให้เลือกในเมนูค่ะ",
-  "Kuo fili ʻa e leʻo maʻau. Kapau te ke fie ʻahiʻahi ha taha kehe, ʻe ʻi ai ha ngaahi leʻo kehe ʻi he menu ʻi he ngaahi meʻangāue ʻe niʻihi.",
-  "Голос уже вибрано для вас. Якщо хочете спробувати інший, на деяких пристроях у меню є й інші.",
-  "Đã có sẵn một giọng được chọn cho bạn. Nếu bạn muốn thử giọng khác, một số thiết bị có thể có thêm giọng khác trong menu.",
-  "A ti yan ohùn kan fún yín. Tí ẹ bá fẹ́ gbìyànjú òmíràn, àwọn ẹ̀rọ kan lè ní àwọn mìíràn nínú àtòjọ.",
-  "Ilizwi sele likhethiwe kuwe. Ukuba ungathanda ukuzama elinye, ezinye izixhobo zinokuba nezinye kwimenyu.",
-  "Izwi selikhethiwe kuwe. Uma ufuna ukuzama elinye, amanye amadivayisi angaba namanye kumenyu.",
-  "A voice is already picked for you. If you'd like to try a different one, some devices may have others in the menu."
+  "Ya hay elegida una voz adecuada para tu idioma. Si hace falta, aquí hay otras voces. Elige una que se ajuste a tu idioma y región.",
+  "Já há uma voz adequada ao seu idioma escolhida. Se precisar, há outras vozes aqui. Escolha uma que combine com seu idioma e sua região.",
+  "ለቋንቋዎ የሚስማማ ድምፅ አስቀድሞ ተመርጧል። ካስፈለገ ሌሎች ድምፆች እዚህ አሉ። ለቋንቋዎና ለአካባቢዎ የሚስማማውን ይምረጡ።",
+  "تم بالفعل اختيار صوت مناسب للغتك. عند الحاجة، توجد أصوات أخرى هنا. اختر صوتًا يناسب لغتك ومنطقتك.",
+  "Hlas vhodný pro váš jazyk je už vybrán. Pokud je potřeba, jsou tu další hlasy. Vyberte takový, který odpovídá vašemu jazyku a regionu.",
+  "Chi sout mnassib l-loghtek deja ikhtar lik. Ila knti m7taj, kayn souat okhra hna. Khtar wahed li kaynasseb m3a loghtek w mantiqtek.",
+  "Une voix adaptée à votre langue est déjà choisie. Si besoin, d'autres voix sont ici. Choisissez-en une qui convient à votre langue et à votre région.",
+  "Une voix adaptée à votre langue est déjà choisie. Si besoin, d'autres voix sont ici. Choisissez-en une qui convient à votre langue et à votre région.",
+  "Eine passende Stimme für deine Sprache ist schon ausgewählt. Bei Bedarf gibt es hier weitere Stimmen. Wähle eine, die zu deiner Sprache und Region passt.",
+  "An riga an zaɓi murya da ta dace da harshenku. Idan ya cancanta, akwai wasu muryoyi a nan. Ku zaɓi wadda ta dace da harshenku da yankinku.",
+  "Ua koho ʻia kekahi leo kūpono i kāu ʻōlelo. Inā pono, aia nā leo ʻē aʻe maanei. E koho i ka mea kūpono i kāu ʻōlelo a me kou ʻāina.",
+  "A voice that fits your language is already picked. If needed, other voices are here. Choose one that suits your language and region.",
+  "E jikọtala olu kwesịrị asụsụ gị. Ọ bụrụ na ọ dị mkpa, e nwere olu ndị ọzọ ebe a. Họrọ nke kwesịrị asụsụ gị na mpaghara gị.",
+  "Una voce adatta alla tua lingua è già scelta. Se serve, qui ci sono altre voci. Scegline una adatta alla tua lingua e alla tua zona.",
+  "ご自分の言語に合った音声がすでに選ばれています。必要なら、ここに他の音声もあります。言語と地域に合ったものを選んでください。",
+  "自分の言語に合った音声がもう選んであるよ。必要なら、ここに他の音声もあるよ。言語と地域に合ったものを選んでね。",
+  "សំឡេងដែលស័ក្តិសមនឹងភាសារបស់អ្នកត្រូវបានជ្រើសរើសរួចហើយ។ បើចាំបាច់ មានសំឡេងផ្សេងទៀតនៅទីនេះ។ សូមជ្រើសសំឡេងដែលស័ក្តិសមនឹងភាសា និងតំបន់របស់អ្នក។",
+  "ມີສຽງທີ່ເໝາະກັບພາສາຂອງເຈົ້າຖືກເລືອກໃຫ້ແລ້ວ. ຖ້າຈຳເປັນ, ມີສຽງອື່ນຢູ່ບ່ອນນີ້. ເລືອກສຽງທີ່ເໝາະກັບພາສາ ແລະ ເຂດຂອງເຈົ້າ.",
+  "Vox linguae tuae apta iam electa est. Si opus est, aliae voces hic sunt. Eam elige quae linguae regionique tuae conveniat.",
+  "Una vox apta linguae vestrae iam electa est. Si necesse est, aliae voces hic sunt. Eligite eam quae linguae et regioni vestrae convenit.",
+  "Vox linguae vestrae apta iam electa est. Si opus est, aliae voces hic adsunt. Eligite eam quae linguae regionique vestrae conveniat.",
+  "Mongongo oyo ebongi na monoko na yo eponami. Soki esengeli, mingongo mosusu ezali awa. Pona oyo ebongi na monoko na yo mpe na mboka na yo.",
+  "Kua kōwhiria kētia he reo e tika ana mō tō reo. Mēnā e hiahiatia ana, kei konei ētahi atu reo. Kōwhiria tētahi e pai ana mō tō reo me tō rohe.",
+  "A voice that fits your language is already picked. If needed, other voices are here. Choose one that suits your language and region.",
+  "Głos odpowiedni dla twojego języka jest już wybrany. W razie potrzeby tu są inne głosy. Wybierz taki, który pasuje do twojego języka i regionu.",
+  "Já está escolhida uma voz adequada ao seu idioma. Se necessário, há outras vozes aqui. Escolha uma que corresponda ao seu idioma e à sua região.",
+  "Já está escolhida uma voz adequada ao seu idioma. Se necessário, há outras vozes aqui. Escolha uma que corresponda ao seu idioma e à sua região.",
+  "O voce potrivită pentru limba ta este deja aleasă. Dacă e nevoie, aici sunt și alte voci. Alege una potrivită pentru limba și regiunea ta.",
+  "Голос, подходящий для вашего языка, уже выбран. При необходимости здесь есть другие голоса. Выберите тот, что подходит вашему языку и региону.",
+  "Ua filifilia se leo e talafeagai ma lau gagana. Afai e manaʻomia, o loo i ai isi leo iinei. Filifili se leo e fetaui ma lau gagana ma lou eria.",
+  "Hlas vhodný pre váš jazyk je už vybraný. Ak treba, sú tu ďalšie hlasy. Vyberte taký, ktorý zodpovedá vášmu jazyku a regiónu.",
+  "Simiykiman allin kunka ñam akllasqa kachkan. Necesitaspaqa, huk kunkakunapas kaypi kachkan. Simiykiman llaqtaykiman allin kaqta akllay.",
+  "Ya hay elegida una voz adecuada para tu idioma. Si hace falta, aquí hay otras voces. Elige una que se ajuste a tu idioma y región.",
+  "Ya hay elegida una voz adecuada para tu idioma. Si hace falta, aquí hay otras voces. Elige una que se ajuste a tu idioma y región.",
+  "A voice that fits your language is already picked. If needed, other voices are here. Choose one that suits your language and region.",
+  "Sauti inayofaa lugha yako tayari imechaguliwa. Ikihitajika, kuna sauti nyingine hapa. Chagua inayofaa lugha yako na eneo lako.",
+  "เลือกเสียงที่เหมาะกับภาษาของคุณให้แล้วค่ะ ถ้าจำเป็น มีเสียงอื่นให้เลือกที่นี่ค่ะ โปรดเลือกเสียงที่เหมาะกับภาษาและภูมิภาคของคุณค่ะ",
+  "Kuo fili ha leʻo ʻoku fakahoa ki ho lea. Kapau ʻoku fiemaʻu, ʻoku ʻi ai ha ngaahi leʻo kehe ʻi heni. Fili ha taha ʻoku fakahoa ki ho lea mo ho feituʻu.",
+  "Голос, що підходить для вашої мови, уже вибрано. За потреби тут є й інші голоси. Виберіть той, що підходить вашій мові та регіону.",
+  "Một giọng phù hợp với ngôn ngữ của bạn đã được chọn sẵn. Nếu cần, có thêm các giọng khác ở đây. Hãy chọn giọng phù hợp với ngôn ngữ và khu vực của bạn.",
+  "A ti yan ohùn tó yẹ èdè yín. Tí ó bá pọndandan, àwọn ohùn mìíràn wà níbí. Ẹ yan èyí tó bá èdè àti agbègbè yín mu.",
+  "Ilizwi elilungele ulwimi lwakho sele likhethiwe. Ukuba kuyimfuneko, ezinye iilizwi zikule ndawo. Khetha elilungele ulwimi lwakho nommandla wakho.",
+  "Izwi elifanele ulimi lwakho selikhethiwe. Uma kunesidingo, amanye amazwi akhona lapha. Khetha elifanele ulimi lwakho nesifunda sakho.",
+  "A voice that fits your language is already picked. If needed, other voices are here. Choose one that suits your language and region."
  ],
  [
   "Narrator",
@@ -2904,6 +2923,12 @@ function sanitizeId(s){ return String(s).replace(/[^a-zA-Z0-9_]/g,'_'); }
    ============================================================ */
 function show(id){ document.getElementById(id).classList.remove('hidden'); }
 function hide(id){ document.getElementById(id).classList.add('hidden'); }
+/* 3-5-60: START AT THE TOP. A page never opens (or changes screen) part-way down: the browser's remembered scroll position is switched off,
+   and every screen switch (language picked -> player, Reset, session finished) puts the page back at the top. */
+function pageTop(){ try{ window.scrollTo(0,0); document.documentElement.scrollTop = 0; if(document.body) document.body.scrollTop = 0; }catch(e){} }
+try{ if('scrollRestoration' in history) history.scrollRestoration = 'manual'; }catch(e){}
+pageTop();
+window.addEventListener('load', function(){ pageTop(); setTimeout(pageTop, 60); setTimeout(pageTop, 400); });
 
 function populateCourseSelect(){
   const sel = document.getElementById('courseSelect');
@@ -3009,6 +3034,7 @@ document.getElementById('swapBtn').addEventListener('click', ()=>{
   onDrillLangChange();
 });
 function onLangChange(){
+  try{ syncSpeedsToLangs(); }catch(e){}   // 3-5-59 RC1
   buildActiveLines();
   renderCharacterCards();
   updateSheetMeta();
@@ -3081,6 +3107,7 @@ function updateStageChips(){
   });
 })();
 function onDrillLangChange(){
+  try{ syncSpeedsToLangs(); }catch(e){}   // 3-5-59 RC1: new language pair -> that pair's saved speeds
   pairChanged();   // 3-5-56
   speechSynthesis.cancel(); stopRecognition();
   S.token++;
@@ -3609,6 +3636,7 @@ function goHome(){
   anchorAudioStop();
   hide('drillScreen');
   document.querySelectorAll('.setup-card').forEach(c=>c.classList.remove('hidden'));
+  pageTop();
 }
 // 3-5-9-3: the old in-app Home button, now drawn as Reset. Same behavior as before: back to the language picker.
 document.getElementById('resetBtn').addEventListener('click', ()=> goHome());
@@ -7256,6 +7284,7 @@ document.getElementById('startBtn').addEventListener('click', async ()=>{
   await voicesReady();
   document.querySelectorAll('.setup-card').forEach(c=>c.classList.add('hidden'));
   show('drillScreen');
+  pageTop();
   updateLessonNavButtons();
   S.order = S.activeLines.map((_,i)=>i);
   if(S.random) shuffleOrder();
@@ -7268,10 +7297,7 @@ document.getElementById('startBtn').addEventListener('click', async ()=>{
   S.anyAudioStarted = false;
   anchorAudioStart();
   checkAudioActuallyPlaying();
-  document.getElementById('drillRateSlider').value = S.rate;
-  document.getElementById('drillRateVal').textContent = S.rate.toFixed(2)+'×';
-  document.getElementById('drillSrcRateSlider').value = S.srcRate;
-  document.getElementById('drillSrcRateVal').textContent = S.srcRate.toFixed(2)+'×';
+  applyLangSpeeds();   // 3-5-59 RC1: per-language saved speeds (falls back to 1.05 source / 0.92 target)
   syncStylePills();
   updateListenNote();
   applyStageMode();
@@ -7334,6 +7360,7 @@ function lpSpot(entry){
   if(course.introMode) S.loop=false;
   const key = sh && sh.spotlight && entry && entry.rowIdx!==undefined ? sh.spotlight[entry.rowIdx] : '';
   if(!key) return;
+  { const ad = document.getElementById('advancedDetails'); if(ad && (key==='voice' || key==='voicedemo')) ad.open = true; }   // 3-5-59 RC3: the voice picker now lives inside Advanced
   if(key==='voicedemo') return lpVoiceDemo(course);
   const el = {home:'#mainPageBtn', advanced:'details summary', voice:'#allVoicesRow', keepawake:'#keepAwakeLabel'}[key];
   const n = el && document.querySelector(el);
@@ -7627,7 +7654,7 @@ function advance(){
   runLine(S.idx+1);
 }
 function finishSession(){
-  hide('drillScreen'); show('doneScreen');
+  hide('drillScreen'); show('doneScreen'); pageTop();
   const mins = Math.max(1, Math.round((Date.now()-S.sessionStart)/60000));
   document.getElementById('doneStats').textContent =
     `${S.linesCompleted} line${S.linesCompleted===1?'':'s'} drilled in about ${mins} minute${mins===1?'':'s'}.`;
@@ -7728,12 +7755,76 @@ document.getElementById('randomBtn').addEventListener('click', ()=>{
 });
 document.getElementById('drillRateSlider').addEventListener('input', e=>{
   S.rate = parseFloat(e.target.value);
-  document.getElementById('drillRateVal').textContent = S.rate.toFixed(2)+'×';
+  saveLangSpeed(S.tgtCode, S.rate);
+  refreshSpeedUI();
 });
 document.getElementById('drillSrcRateSlider').addEventListener('input', e=>{
   S.srcRate = parseFloat(e.target.value);
-  document.getElementById('drillSrcRateVal').textContent = S.srcRate.toFixed(2)+'×';
+  saveLangSpeed(S.srcCode, S.srcRate);
+  refreshSpeedUI();
 });
+/* ============================================================
+   3-5-59 RC1: SPEEDS, PER LANGUAGE.
+   Each language remembers its own speed on this device under  speed_<code>  (e.g. speed_pt-BR).
+   The key has NO app id on purpose: every app on the same site shares it, so a learner's speeds follow them
+   from course to course. A language with nothing saved uses the old defaults: 1.05 as the source, 0.92 as the target.
+   The sliders live in Advanced (source on the left, target on the right); the main screen shows a read-only line.
+   ============================================================ */
+const DEFAULT_SRC_RATE = 1.15, DEFAULT_TGT_RATE = 0.92;   // 3-5-59 RC3: source default raised from 1.05
+function speedKey(code){ return 'speed_' + code; }
+function readLangSpeed(code){
+  if(!code) return null;
+  try{ const v = parseFloat(localStorage.getItem(speedKey(code))); if(isFinite(v) && v >= 0.6 && v <= 1.4) return v; }catch(e){}
+  return null;
+}
+function saveLangSpeed(code, v){
+  if(!code || !isFinite(v)) return;
+  try{ localStorage.setItem(speedKey(code), String(v)); }catch(e){}
+}
+function speedLangName(code){
+  try{ const l = langByCode(currentCourse(), code); if(l) return uiLabel(l) || l.label || code; }catch(e){}
+  return code || '';
+}
+function setTextIfChanged(el, t){ if(el && el.textContent !== t) el.textContent = t; }
+function refreshSpeedUI(){
+  const sSl = document.getElementById('drillSrcRateSlider'), tSl = document.getElementById('drillRateSlider');
+  if(!sSl || !tSl) return;
+  const hasSrc = !!S.srcCode && S.srcCode !== S.tgtCode;
+  if(Math.abs(parseFloat(tSl.value) - S.rate) > 0.026) tSl.value = S.rate;
+  if(Math.abs(parseFloat(sSl.value) - S.srcRate) > 0.026) sSl.value = S.srcRate;
+  const sName = hasSrc ? speedLangName(S.srcCode) : '', tName = speedLangName(S.tgtCode);
+  setTextIfChanged(document.getElementById('speedNameSrc'), sName);
+  setTextIfChanged(document.getElementById('speedNameTgt'), tName);
+  const sv = S.srcRate.toFixed(2) + '×', tv = S.rate.toFixed(2) + '×';
+  setTextIfChanged(document.getElementById('drillSrcRateVal'), sv);
+  setTextIfChanged(document.getElementById('drillRateVal'), tv);
+  const col = document.getElementById('speedColSrc'), grid = document.getElementById('speedGrid');
+  if(col) col.classList.toggle('hidden', !hasSrc);
+  if(grid) grid.classList.toggle('one', !hasSrc);
+  setTextIfChanged(document.getElementById('speedsSummary'), (hasSrc ? sName + ' ' + sv + ' \u00b7 ' : '') + tName + ' ' + tv);
+}
+function applyLangSpeeds(){
+  if(document.body.classList.contains('ml-mode')) return;   // multi-language setup keeps its own single speed slider
+  const hasSrc = !!S.srcCode && S.srcCode !== S.tgtCode;
+  const sv = hasSrc ? readLangSpeed(S.srcCode) : null, tv = readLangSpeed(S.tgtCode);
+  if(hasSrc) S.srcRate = sv != null ? sv : DEFAULT_SRC_RATE;
+  S.rate = tv != null ? tv : DEFAULT_TGT_RATE;
+  S._speedPair = (S.srcCode || '') + '|' + (S.tgtCode || '');
+  refreshSpeedUI();
+}
+function syncSpeedsToLangs(){
+  if(document.body.classList.contains('ml-mode')) return;
+  if(S._speedPair !== (S.srcCode || '') + '|' + (S.tgtCode || '')) applyLangSpeeds(); else refreshSpeedUI();
+}
+(function initSpeedSummary(){
+  const b = document.getElementById('speedsSummary'); if(!b) return;
+  b.addEventListener('click', e=>{
+    e.stopPropagation();
+    const d = document.getElementById('advancedDetails'); if(d) d.open = true;
+    const t = document.getElementById('speedSliders'); if(t && t.scrollIntoView) t.scrollIntoView({ behavior:'smooth', block:'center' });
+  });
+  setInterval(() => { try{ syncSpeedsToLangs(); }catch(e){} }, 400);   // safety net, like the interface-language check: catches every code path that changes the language pair
+})();
 document.getElementById('stopBtn').addEventListener('click', ()=>{
   speechSynthesis.cancel(); stopRecognition();
   S.running = false; S.token++;
@@ -7741,7 +7832,7 @@ document.getElementById('stopBtn').addEventListener('click', ()=>{
   finishSession();
 });
 document.getElementById('restartSameBtn').addEventListener('click', ()=>{
-  hide('doneScreen'); show('drillScreen');
+  hide('doneScreen'); show('drillScreen'); pageTop();
   if(S.random) shuffleOrder();
   S.idx = 0; S.running = true; S.paused=false; S.linesCompleted=0; S.sessionStart=Date.now();
   anchorAudioStart();
@@ -7750,6 +7841,7 @@ document.getElementById('restartSameBtn').addEventListener('click', ()=>{
 document.getElementById('newSetupBtn').addEventListener('click', ()=>{
   hide('doneScreen');
   document.querySelectorAll('.setup-card').forEach(c=>c.classList.remove('hidden'));
+  pageTop();
 });
 
 /* keyboard shortcuts during judged 'your turn' */
@@ -7810,10 +7902,15 @@ function applyCourseFlags(course){
   if(course.hideLangControls){
     byId('langPairCaption').classList.add('hidden');
     byId('langPairGrid').classList.add('hidden');
+  }
+  {   // 3-5-59 RC3: the language pair moved into Advanced, so this card only holds the notes: show it just while one is visible (every course now)
     const card = byId('langPairCard');
-    const update = ()=> card.classList.toggle('hidden', !card.querySelector('.note.warn:not(.hidden), .pron-fix:not(.hidden)'));
-    new MutationObserver(update).observe(card, {subtree:true, attributes:true, attributeFilter:['class'], childList:true});
-    update();
+    if(!card.__noteWatch){
+      card.__noteWatch = true;
+      const update = ()=> card.classList.toggle('hidden', !card.querySelector('.note.warn:not(.hidden), .pron-fix:not(.hidden)'));
+      new MutationObserver(update).observe(card, {subtree:true, attributes:true, attributeFilter:['class'], childList:true});
+      update();
+    }
   }
   if(course.directEntry){
     byId('homeScreen').classList.add('hidden');
@@ -8318,7 +8415,7 @@ chooseDefaultLangsForCourse(currentCourse());
 populateLangSelects();
 populateSheetSelect();
 S.rate = 0.92;
-S.srcRate = 1.05;      // 3-5-25: source (known) language plays at a natural, barely-brisk native pace; the target keeps its own slower speed
+S.srcRate = 1.15;      // 3-5-59 RC3: was 1.05. 3-5-25: source (known) language plays at a natural, barely-brisk native pace; the target keeps its own slower speed
 buildActiveLines();
 renderCharacterCards();
 updateSheetMeta();
@@ -8432,7 +8529,7 @@ function uiTranslate(text, lang){
   }
   return out === undefined ? text : lead + out + trail;
 }
-const UI_SKIP = '.source-line,.target-line,.speaker-tag,.tone-tag,.heard-words,.chip-only-label';
+const UI_SKIP = '.source-line,.target-line,.speaker-tag,.tone-tag,.heard-words,.chip-only-label,.speed-lang-name,.speeds-summary';
 function uiText(n){
   const p = n.parentElement;
   if(!p || p.closest(UI_SKIP) || p.tagName === 'SCRIPT' || p.tagName === 'STYLE') return;
@@ -8545,6 +8642,83 @@ function uiRefresh(force){
   .milestone .toggle-pill[data-val="exposure"]{ flex:1.25; }
   .milestone .toggle-pill[data-val="judge"]{ flex:1; }
   .milestone .toggle-pill[data-val="playthrough"]{ flex:1.5; }
+
+  /* ---- 3-5-59 RC1: controls grouped by job (lesson / playback / sentence options), speeds side by side ---- */
+  .ctl-group{ background:var(--card-hi); border:1px solid var(--border-soft); border-radius:var(--radius-md); padding:10px; margin:10px 0; }
+  .ctl-group.top-group{ margin-top:0; }
+  .ctl-group .milestone{ margin:0 0 10px; }
+  .ctl-group .player-nav{ margin:0; }
+  .ctl-group .transport{ margin-top:0; }
+  .ctl-group .chip-row{ margin:0; }
+  .options-group{ display:flex; flex-direction:column; gap:6px; }
+  /* lesson picker with its prev / next arrows built in, so the arrows read as "previous lesson", not browser-back */
+  .ctl-group{ padding:8px; }
+  /* ---- 3-5-59 RC3: one card, two lines ---- */
+  .top-rowA{ display:flex; align-items:center; gap:6px; margin:0; }
+  .top-rowA .milestone{ flex:0 0 50px; min-width:0; margin:0; }
+  body.no-style-pills .top-rowA .milestone{ flex:1 1 auto; }
+  .top-rowA .milestone .road{ flex:1 1 auto; min-width:0; }
+  .top-rowA .milestone .track{ height:34px; }
+  .top-rowA .milestone .cap{ font-size:10px; padding:0 2px; }
+  .top-rowA #drillStyleWrap{ flex:1 1 0; min-width:0; }
+  .top-rowA #drillStyleRow{ gap:5px; }
+  .top-rowA #drillStyleRow .toggle-pill{ flex:1 1 0; min-width:0; height:34px; padding:0 3px; font-size:12.5px; border-radius:17px; white-space:nowrap; overflow:hidden; text-overflow:clip; }
+  .top-rowA #drillStyleRow .toggle-pill[data-val="playthrough"]{ flex:1.2 1 0; }
+  .top-rowA #drillStyleRow .toggle-pill.pt-num .pt-w{ display:inline; }
+  .top-rowA #drillStyleRow .toggle-pill.pt-num .pt-n{ font-size:1.15em; margin-left:.3em; }
+  .top-rowB{ display:flex; align-items:center; gap:5px; margin:0 0 8px; }
+  .top-rowB .nav-btn.nav-home, .top-rowB .main-page-btn.help-page-btn{ flex:none; width:36px; height:36px; }
+  .top-rowB .nav-reset .home-icon svg{ width:30px; height:30px; }
+  .top-rowB .home-back-btn{ flex:none; width:auto; min-width:54px; height:36px; padding:0 6px; border-radius:18px; }
+  .top-rowB .nav-btn.nav-home, .top-rowB .main-page-btn.help-page-btn{ width:34px; height:34px; }
+  .top-rowB .nav-reset .home-icon svg{ width:28px; height:28px; }
+  .top-rowB .home-back-btn{ min-width:48px; height:34px; padding:0 4px; }
+  .top-rowB .home-back-btn svg{ width:38px; height:20px; }
+  .top-rowB .lesson-seg{ flex:1 1 0%; padding:1px; gap:0; }
+  .top-rowB .lesson-seg .nav-btn.nav-home-pill{ letter-spacing:-.02em; font-family:'Inter', Arial, sans-serif; }
+  .top-rowB .lesson-seg .icon-btn{ width:24px; height:32px; border-radius:16px; }
+  .top-rowB .lesson-seg .nav-btn.nav-home-pill{ height:34px; padding:0 2px; font-size:12px; gap:4px; }
+  @media (max-width:380px){
+    .top-rowA #drillStyleRow .toggle-pill{ font-size:11.5px; padding:0 2px; }
+    .top-rowB{ gap:4px; }
+    .top-rowB .lesson-seg .nav-home-pill .chev{ display:none; }
+  }
+  @media (max-width:340px){
+    .top-rowA{ gap:4px; }
+    .top-rowA .milestone{ flex-basis:40px; }
+    .top-rowA .milestone .cap{ font-size:9px; }
+    .top-rowA #drillStyleRow{ gap:3px; }
+    .top-rowA #drillStyleRow .toggle-pill{ font-size:11px; padding:0 1px; }
+    .top-rowA #drillStyleRow .toggle-pill.pt-num .pt-w{ display:none; }
+    .top-rowB{ gap:3px; }
+    .top-rowB .nav-btn.nav-home, .top-rowB .main-page-btn.help-page-btn{ width:30px; height:30px; }
+    .top-rowB .nav-reset .home-icon svg{ width:25px; height:25px; }
+    .top-rowB .home-back-btn{ min-width:42px; height:30px; }
+    .top-rowB .home-back-btn svg{ width:32px; height:17px; }
+    .top-rowB .lesson-seg .icon-btn{ width:21px; height:28px; }
+    .top-rowB .lesson-seg .nav-btn.nav-home-pill{ font-size:11px; height:30px; }
+  }
+  /* ALL VOICES: boxed and loud, so it reads as "this one sets every character"; the per-character cards below it are the individual ones */
+  .all-voices{ margin:14px 0 6px; padding:12px; border:2px solid var(--amber); border-radius:var(--radius-md); background:var(--card-hi); }
+  .all-voices-caption{ font-size:13.5px; color:var(--ink); }
+  .all-voices-caption span{ display:block; margin-top:2px; font-size:12px; color:var(--ink-soft); }
+  .lesson-seg{ position:relative; display:flex; align-items:center; gap:2px; flex:1 1 0%; min-width:0; padding:2px; border:1.5px solid var(--border-strong); border-radius:999px; background:var(--card); }
+  .lesson-seg .icon-btn{ width:36px; height:36px; flex:none; border:none; background:transparent; box-shadow:none; }
+  .lesson-seg .icon-btn:hover:not(:disabled){ background:var(--card-hi); transform:none; }
+  .lesson-seg .icon-btn:disabled{ opacity:.3; cursor:default; }
+  .lesson-seg .home-pill-wrap{ position:static; flex:1 1 0%; min-width:0; }
+  .lesson-seg .nav-btn.nav-home-pill{ height:36px; border-color:transparent; background:transparent; }
+  .speed-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .speed-grid.one{ grid-template-columns:1fr; }
+  .speed-col{ min-width:0; border-left:3px solid var(--amber); padding-left:10px; }
+  .speed-col.tgt{ border-left-color:var(--teal); }
+  .speed-col.hidden{ display:none; }
+  .speed-name{ font-size:12.5px; font-weight:700; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .speed-col input[type=range]{ display:block; width:100%; height:34px; margin:2px 0 0; accent-color:var(--amber); }
+  .speed-col.tgt input[type=range]{ accent-color:var(--teal); }
+  .speed-val{ font-family:'Source Code Pro', monospace; font-size:12px; color:var(--ink-soft); }
+  .speeds-summary{ display:block; width:100%; padding:4px; background:none; border:none; font:inherit; font-size:12.5px; color:var(--ink-soft); text-align:center; cursor:pointer; }
+  .speeds-summary:empty{ display:none; }
 
   /* ---- instructor guide (SOP) page; scoped so it can't touch the student page ---- */
   #instructorGuide .sg-scroll{ --ig-tint: rgba(240,90,34,.12); --ig-edge: rgba(240,90,34,.38); }
@@ -9155,6 +9329,6 @@ function uiRefresh(force){
 })();
 </script>
 
-<script type="text/plain" id="productsrc">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</script>
+<script type="text/plain" id="productsrc">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</script>
 </body>
 </html>

@@ -60,7 +60,7 @@ list to copy entries from.
 =====================================================================
 -->
 <!-- build:JysnMlnrMthd -->
-<!-- template_arch_3-5-59 + Essentials.product (0 patch(es)) -->
+<!-- template_arch_3-5-60 + Essentials.product (0 patch(es)) -->
 <!DOCTYPE html>
 <html lang="en" translate="no" class="notranslate">
 <head>
@@ -924,7 +924,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   .gender-options input{ accent-color:var(--amber); width:14px; height:14px; }
 
   /* 3-5-49: intro mode + spotlight */
-  body.lp-intro #langPairCaption, body.lp-intro #langPairGrid, body.lp-intro #drillStyleRow, body.lp-intro #practiceOnlyChip, body.lp-intro details{ opacity:.4; pointer-events:none; }
+  body.lp-intro #langPairCaption, body.lp-intro #langPairGrid, body.lp-intro #drillStyleRow, body.lp-intro #practiceOnlyChip, body.lp-intro details:not([open]){ opacity:.4; }
+  body.lp-intro details{ pointer-events:none; }   /* 3-5-60: Advanced holds the voice picker the intro points at, so it is only dimmed while closed */
   .lp-spot{ outline:3px solid var(--amber-bright,#F05A22); outline-offset:3px; border-radius:12px; animation:lpSpot 1s ease-in-out infinite; }
   @keyframes lpSpot{ 50%{ outline-offset:7px; outline-color:transparent; } }
   @media (prefers-reduced-motion:reduce){ .lp-spot{ animation:none; } }
@@ -1147,7 +1148,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 </style>
 </head>
 <body>
-<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.59</div>
+<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.60</div>
 <script>/* 3-5-26-1: if the build never ran on this file, the version token is still in the label -> say so in red instead of showing the raw token. (Token is split here so the build does not rewrite it.) */
 (function(){ try{ var b=document.getElementById('appVersionBadge'); if(b && b.textContent.indexOf('__APP_'+'VERSION__')>-1){ b.textContent='UNBUILT COPY - no product file'; b.style.color='#d92d20'; b.style.fontWeight='800'; b.style.textShadow='none'; } }catch(e){} })();
 </script>
@@ -1252,15 +1253,39 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
          previously sat below Advanced, out of the way; now it's one of
          the first things visible, with its "Line X of Y" label sitting
          inside the taller bar itself instead of on its own row below it. -->
+    <!-- 3-5-59 RC3: ONE card, TWO lines. Line 1: Home (house + back arrow), reset, lesson picker with its arrows, dark mode, help. Line 2 (RC4: rows swapped): small progress + the three play-mode pills. -->
+    <div class="ctl-group top-group">
+    <div class="top-rowB">
+      <button class="nav-btn main-page-btn home-back-btn" id="mainPageBtn" type="button" title="Home" aria-label="Home"><svg viewBox="0 0 44 24" width="42" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 12H3"></path><path d="M8 7l-5 5 5 5"></path><g transform="translate(18 0)"><path d="M3 11.5 12 4l9 7.5"></path><path d="M5.5 10v9.5a1 1 0 0 0 1 1H10v-6h4v6h3.5a1 1 0 0 0 1-1V10"></path></g></svg></button>
+      <button class="nav-btn nav-home nav-reset" id="resetBtn" type="button" title="Reset (back to language picker)" aria-label="Reset">
+        <span class="home-icon"><svg viewBox="0 0 40 40" width="34" height="34" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M33.5 17A14 14 0 0 0 9.2 11.6"></path><polyline points="8.5 4.5 8.8 11.8 16 11.2"></polyline><path d="M6.5 23A14 14 0 0 0 30.8 28.4"></path><polyline points="31.5 35.5 31.2 28.2 24 28.8"></polyline><text x="20" y="22.6" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="7" font-weight="700" letter-spacing=".2" fill="currentColor" stroke="none">RESET</text></svg></span>
+      </button>
+      <div class="lesson-seg">
+      <button class="icon-btn" id="prevLessonBtn" title="Previous lesson"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+      <div class="home-pill-wrap">
+        <button class="nav-btn nav-home-pill" id="lessonDropdownBtn" title="Choose lesson">
+          <span id="playerHomeLabel">Lesson 0 of 20</span>
+          <span class="chev"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span>
+        </button>
+        <div class="home-dropdown-list hidden" id="homeDropdownList"><!-- populated by renderLessonDropdownInto() --></div>
+      </div>
+      <button class="icon-btn" id="nextLessonBtn" title="Next lesson"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+      </div>
+      <button class="nav-btn nav-home" id="themeToggleBtn" title="Toggle dark mode">
+        <span class="home-icon theme-icon-moon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></span>
+        <span class="home-icon theme-icon-sun"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><line x1="12" y1="2" x2="12" y2="4.5"></line><line x1="12" y1="19.5" x2="12" y2="22"></line><line x1="4.5" y1="12" x2="2" y2="12"></line><line x1="22" y1="12" x2="19.5" y2="12"></line><line x1="18.36" y1="5.64" x2="16.6" y2="7.4"></line><line x1="7.4" y1="16.6" x2="5.64" y2="18.36"></line><line x1="18.36" y1="18.36" x2="16.6" y2="16.6"></line><line x1="7.4" y1="7.4" x2="5.64" y2="5.64"></line></svg></span>
+      </button>
+      <button class="nav-btn main-page-btn help-page-btn" id="studentHelpBtn" type="button" title="How to use this" aria-label="How to use this">?</button>
+    </div>
+    <div class="top-rowA">
     <div class="milestone">
-      <!-- 3-5-9-3: HOME (house icon) button, left of the progress bar. Goes to index.html in the same folder. -->
-      <button class="nav-btn main-page-btn" id="mainPageBtn" type="button" title="Home" aria-label="Home"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"></path><path d="M5.5 10v9.5a1 1 0 0 0 1 1H10v-6h4v6h3.5a1 1 0 0 0 1-1V10"></path></svg></button>
       <div class="road">
         <div class="track">
           <div class="fill" id="roadFill" style="width:0%"></div>
           <div class="cap"><span id="capLeft">1/1</span><span id="capRight"></span></div>
         </div>
       </div>
+    </div>
       <!-- Session style pills, moved out of Advanced (2026-09) so switching
            between Hands-free and Practice is always one tap away. -->
       <!-- drillStyleWrap: hidden by course flags (format:'narrator' or hideStyleToggle). Kept in the
@@ -1272,26 +1297,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <button class="toggle-pill" data-val="playthrough" title="Plays lesson after lesson, hands-free, and loops back to Lesson 1"><span class="pt-w">Playthrough</span><span class="pt-n"></span></button>
       </div>
       </div>
-      <button class="nav-btn main-page-btn help-page-btn" id="studentHelpBtn" type="button" title="How to use this" aria-label="How to use this">?</button>
     </div>
-    <div class="player-nav">
-      <button class="icon-btn" id="prevLessonBtn" title="Previous lesson"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
-      <button class="nav-btn nav-home nav-reset" id="resetBtn" type="button" title="Reset (back to language picker)" aria-label="Reset">
-        <span class="home-icon"><svg viewBox="0 0 40 40" width="34" height="34" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M33.5 17A14 14 0 0 0 9.2 11.6"></path><polyline points="8.5 4.5 8.8 11.8 16 11.2"></polyline><path d="M6.5 23A14 14 0 0 0 30.8 28.4"></path><polyline points="31.5 35.5 31.2 28.2 24 28.8"></polyline><text x="20" y="22.6" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="7" font-weight="700" letter-spacing=".2" fill="currentColor" stroke="none">RESET</text></svg></span>
-      </button>
-      <div class="home-pill-wrap">
-        <button class="nav-btn nav-home-pill" id="lessonDropdownBtn" title="Choose lesson">
-          <span id="playerHomeLabel">Lesson 0 of 20</span>
-          <span class="chev"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span>
-        </button>
-        <div class="home-dropdown-list hidden" id="homeDropdownList"><!-- populated by renderLessonDropdownInto() --></div>
-      </div>
-      <button class="nav-btn nav-home" id="themeToggleBtn" title="Toggle dark mode">
-        <span class="home-icon theme-icon-moon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></span>
-        <span class="home-icon theme-icon-sun"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><line x1="12" y1="2" x2="12" y2="4.5"></line><line x1="12" y1="19.5" x2="12" y2="22"></line><line x1="4.5" y1="12" x2="2" y2="12"></line><line x1="22" y1="12" x2="19.5" y2="12"></line><line x1="18.36" y1="5.64" x2="16.6" y2="7.4"></line><line x1="7.4" y1="16.6" x2="5.64" y2="18.36"></line><line x1="18.36" y1="18.36" x2="16.6" y2="16.6"></line><line x1="7.4" y1="7.4" x2="5.64" y2="5.64"></line></svg></span>
-      </button>
-      <button class="icon-btn" id="nextLessonBtn" title="Next lesson"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
-    </div>
+    </div>  <!-- /top-group -->
     <div class="stage">
       <div class="speaker-tag" id="speakerTag">&nbsp;</div>
       <div class="tone-tag" id="toneTag">&nbsp;</div>
@@ -1320,11 +1327,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     </div>
 
     <!-- 3-5-37: chip row just BELOW the word card (outside it, so tapping never pauses/plays). Left = Practice only (source language -> none). Next to it = Latin script (only for a target language with a Latin column). -->
-    <div class="chip-row">
-      <button class="stage-chip" id="practiceOnlyChip" type="button" aria-pressed="false"><span class="chip-tick"></span><span class="chip-only-label" id="practiceOnlyLabel">Target only</span></button>
-      <button class="stage-chip hidden" id="latnAudioChip" type="button" title="Show the Latin-letter version on screen (the sound stays in the original script)" aria-pressed="false"><span class="chip-tick"></span><span>Latin script</span></button>
-    </div>
 
+    <!-- 3-5-59 RC1: PLAYBACK group (just under the text): previous / play / next line, repeat, loop, shuffle, stop -->
+    <div class="ctl-group playback-group">
     <div class="transport">
       <div class="transport-main">
         <button class="icon-btn" id="prevBtn" title="Previous line"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></svg></button>
@@ -1338,6 +1343,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <button class="icon-btn small" id="stopBtn" title="End session"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"></rect></svg></button>
       </div>
     </div>
+    </div>  <!-- /playback-group -->
 
     <!-- hidden — kept so existing JS bindings (id references) still resolve; -->
     <!-- this simple duo is now mirrored from the language-pair card below   -->
@@ -1346,18 +1352,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       <select id="drillTgtLangSelect"></select>
     </div>
 
-    <div class="rate-card" id="settingsPanel">
-      <div class="rate-caption">Speed</div>
-      <div class="rate-row">
-        <span class="rate-row-label">Source language</span>
-        <input type="range" id="drillSrcRateSlider" min="0.6" max="1.4" step="0.05" value="1.05">
-        <span id="drillSrcRateVal">1.05×</span>
+    <!-- 3-5-59 RC1: SENTENCE OPTIONS group: Target-only / Latin-script chips and a read-only line showing the current speeds (the sliders live in Advanced). -->
+    <div class="ctl-group options-group" id="sentenceOptions">
+      <div class="chip-row">
+        <button class="stage-chip" id="practiceOnlyChip" type="button" aria-pressed="false"><span class="chip-tick"></span><span class="chip-only-label" id="practiceOnlyLabel">Target only</span></button>
+        <button class="stage-chip hidden" id="latnAudioChip" type="button" title="Show the Latin-letter version on screen (the sound stays in the original script)" aria-pressed="false"><span class="chip-tick"></span><span>Latin script</span></button>
       </div>
-      <div class="rate-row">
-        <span class="rate-row-label">Target language</span>
-        <input type="range" id="drillRateSlider" min="0.6" max="1.4" step="0.05" value="0.92">
-        <span id="drillRateVal">0.92×</span>
-      </div>
+      <button type="button" class="speeds-summary" id="speedsSummary" title="Change speeds"></button>
     </div>
 
     <!-- Language pair — surfaced out of Advanced (2026-09): switching
@@ -1370,7 +1371,19 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     <!-- langPairCard / langPairCaption / langPairGrid: the caption and selects are hidden by the course
          flag hideLangControls (they stay in the DOM -- JS binds to them). The card itself is then shown
          only while one of the voice/gender warning notes below is visible. -->
-    <div class="card" id="langPairCard" style="margin-top:10px;">
+    <div class="card" id="langPairCard" style="margin-top:10px;"><!-- 3-5-59 RC3: now holds only the voice / pronunciation notes; shown only while one of them is visible -->
+      <div class="note warn hidden" id="osVoiceHelp"></div>
+      <div class="note pron-fix hidden" id="pronFixRow"></div>
+      <div class="note warn hidden" id="voiceCoverageWarning"></div>
+      <div class="note warn hidden" id="genderCoverageWarning"></div>
+    </div>
+
+    <div class="card" style="margin-top:10px;">
+      <details id="advancedDetails">
+        <summary class="section-title">Advanced<span class="chev">▾</span></summary>
+        <div class="details-body">
+
+          <!-- 3-5-59 RC3: Advanced now opens with the language pair, then speeds, then the ALL-VOICES picker, then the per-character voices. -->
       <div class="lang-pair-caption" id="langPairCaption"><span class="src">Source language</span><span>→</span><span class="tgt">Target language</span></div>
       <div class="lang-grid" id="langPairGrid" style="margin-top:0; padding-top:0; border-top:none;">
         <div class="lang-col src">
@@ -1381,6 +1394,22 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <select id="tgtLangSelect"></select>
         </div>
       </div>
+
+          <!-- 3-5-59 RC1: speed sliders moved here; source language on the left, target on the right (same sides as the language pair). Each is remembered per language (localStorage speed_<code>). -->
+          <div class="subgroup-label" id="speedSliders">Speed</div>
+          <div class="speed-grid" id="speedGrid">
+            <div class="speed-col src" id="speedColSrc">
+              <div class="speed-name speed-lang-name" id="speedNameSrc"></div>
+              <input type="range" id="drillSrcRateSlider" min="0.6" max="1.4" step="0.05" value="1.15">
+              <span class="speed-val" id="drillSrcRateVal">1.15×</span>
+            </div>
+            <div class="speed-col tgt" id="speedColTgt">
+              <div class="speed-name speed-lang-name" id="speedNameTgt"></div>
+              <input type="range" id="drillRateSlider" min="0.6" max="1.4" step="0.05" value="0.92">
+              <span class="speed-val" id="drillRateVal">0.92×</span>
+            </div>
+          </div>
+
       <!-- 3-5-15: ALL VOICES -- picks one voice per language for every character at once (and the Variant voice).
            It overrides whatever was picked in Advanced; Advanced can then still be changed one character at a time. -->
       <div class="all-voices hidden" id="allVoicesRow">
@@ -1397,17 +1426,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           </div>
         </div>
       </div>
-      <div class="note warn hidden" id="osVoiceHelp"></div>
-      <div class="note pron-fix hidden" id="pronFixRow"></div>
-      <div class="note warn hidden" id="voiceCoverageWarning"></div>
-      <div class="note warn hidden" id="genderCoverageWarning"></div>
-    </div>
-
-    <div class="card" style="margin-top:10px;">
-      <details>
-        <summary class="section-title">Advanced<span class="chev">▾</span></summary>
-        <div class="details-body">
-
           <div class="subgroup-label">Characters &amp; voices</div>
           <div id="charactersList"></div>
 
@@ -2394,6 +2412,12 @@ function sanitizeId(s){ return String(s).replace(/[^a-zA-Z0-9_]/g,'_'); }
    ============================================================ */
 function show(id){ document.getElementById(id).classList.remove('hidden'); }
 function hide(id){ document.getElementById(id).classList.add('hidden'); }
+/* 3-5-60: START AT THE TOP. A page never opens (or changes screen) part-way down: the browser's remembered scroll position is switched off,
+   and every screen switch (language picked -> player, Reset, session finished) puts the page back at the top. */
+function pageTop(){ try{ window.scrollTo(0,0); document.documentElement.scrollTop = 0; if(document.body) document.body.scrollTop = 0; }catch(e){} }
+try{ if('scrollRestoration' in history) history.scrollRestoration = 'manual'; }catch(e){}
+pageTop();
+window.addEventListener('load', function(){ pageTop(); setTimeout(pageTop, 60); setTimeout(pageTop, 400); });
 
 function populateCourseSelect(){
   const sel = document.getElementById('courseSelect');
@@ -2499,6 +2523,7 @@ document.getElementById('swapBtn').addEventListener('click', ()=>{
   onDrillLangChange();
 });
 function onLangChange(){
+  try{ syncSpeedsToLangs(); }catch(e){}   // 3-5-59 RC1
   buildActiveLines();
   renderCharacterCards();
   updateSheetMeta();
@@ -2571,6 +2596,7 @@ function updateStageChips(){
   });
 })();
 function onDrillLangChange(){
+  try{ syncSpeedsToLangs(); }catch(e){}   // 3-5-59 RC1: new language pair -> that pair's saved speeds
   pairChanged();   // 3-5-56
   speechSynthesis.cancel(); stopRecognition();
   S.token++;
@@ -3099,6 +3125,7 @@ function goHome(){
   anchorAudioStop();
   hide('drillScreen');
   document.querySelectorAll('.setup-card').forEach(c=>c.classList.remove('hidden'));
+  pageTop();
 }
 // 3-5-9-3: the old in-app Home button, now drawn as Reset. Same behavior as before: back to the language picker.
 document.getElementById('resetBtn').addEventListener('click', ()=> goHome());
@@ -6746,6 +6773,7 @@ document.getElementById('startBtn').addEventListener('click', async ()=>{
   await voicesReady();
   document.querySelectorAll('.setup-card').forEach(c=>c.classList.add('hidden'));
   show('drillScreen');
+  pageTop();
   updateLessonNavButtons();
   S.order = S.activeLines.map((_,i)=>i);
   if(S.random) shuffleOrder();
@@ -6758,10 +6786,7 @@ document.getElementById('startBtn').addEventListener('click', async ()=>{
   S.anyAudioStarted = false;
   anchorAudioStart();
   checkAudioActuallyPlaying();
-  document.getElementById('drillRateSlider').value = S.rate;
-  document.getElementById('drillRateVal').textContent = S.rate.toFixed(2)+'×';
-  document.getElementById('drillSrcRateSlider').value = S.srcRate;
-  document.getElementById('drillSrcRateVal').textContent = S.srcRate.toFixed(2)+'×';
+  applyLangSpeeds();   // 3-5-59 RC1: per-language saved speeds (falls back to 1.05 source / 0.92 target)
   syncStylePills();
   updateListenNote();
   applyStageMode();
@@ -6824,6 +6849,7 @@ function lpSpot(entry){
   if(course.introMode) S.loop=false;
   const key = sh && sh.spotlight && entry && entry.rowIdx!==undefined ? sh.spotlight[entry.rowIdx] : '';
   if(!key) return;
+  { const ad = document.getElementById('advancedDetails'); if(ad && (key==='voice' || key==='voicedemo')) ad.open = true; }   // 3-5-59 RC3: the voice picker now lives inside Advanced
   if(key==='voicedemo') return lpVoiceDemo(course);
   const el = {home:'#mainPageBtn', advanced:'details summary', voice:'#allVoicesRow', keepawake:'#keepAwakeLabel'}[key];
   const n = el && document.querySelector(el);
@@ -7117,7 +7143,7 @@ function advance(){
   runLine(S.idx+1);
 }
 function finishSession(){
-  hide('drillScreen'); show('doneScreen');
+  hide('drillScreen'); show('doneScreen'); pageTop();
   const mins = Math.max(1, Math.round((Date.now()-S.sessionStart)/60000));
   document.getElementById('doneStats').textContent =
     `${S.linesCompleted} line${S.linesCompleted===1?'':'s'} drilled in about ${mins} minute${mins===1?'':'s'}.`;
@@ -7218,12 +7244,76 @@ document.getElementById('randomBtn').addEventListener('click', ()=>{
 });
 document.getElementById('drillRateSlider').addEventListener('input', e=>{
   S.rate = parseFloat(e.target.value);
-  document.getElementById('drillRateVal').textContent = S.rate.toFixed(2)+'×';
+  saveLangSpeed(S.tgtCode, S.rate);
+  refreshSpeedUI();
 });
 document.getElementById('drillSrcRateSlider').addEventListener('input', e=>{
   S.srcRate = parseFloat(e.target.value);
-  document.getElementById('drillSrcRateVal').textContent = S.srcRate.toFixed(2)+'×';
+  saveLangSpeed(S.srcCode, S.srcRate);
+  refreshSpeedUI();
 });
+/* ============================================================
+   3-5-59 RC1: SPEEDS, PER LANGUAGE.
+   Each language remembers its own speed on this device under  speed_<code>  (e.g. speed_pt-BR).
+   The key has NO app id on purpose: every app on the same site shares it, so a learner's speeds follow them
+   from course to course. A language with nothing saved uses the old defaults: 1.05 as the source, 0.92 as the target.
+   The sliders live in Advanced (source on the left, target on the right); the main screen shows a read-only line.
+   ============================================================ */
+const DEFAULT_SRC_RATE = 1.15, DEFAULT_TGT_RATE = 0.92;   // 3-5-59 RC3: source default raised from 1.05
+function speedKey(code){ return 'speed_' + code; }
+function readLangSpeed(code){
+  if(!code) return null;
+  try{ const v = parseFloat(localStorage.getItem(speedKey(code))); if(isFinite(v) && v >= 0.6 && v <= 1.4) return v; }catch(e){}
+  return null;
+}
+function saveLangSpeed(code, v){
+  if(!code || !isFinite(v)) return;
+  try{ localStorage.setItem(speedKey(code), String(v)); }catch(e){}
+}
+function speedLangName(code){
+  try{ const l = langByCode(currentCourse(), code); if(l) return uiLabel(l) || l.label || code; }catch(e){}
+  return code || '';
+}
+function setTextIfChanged(el, t){ if(el && el.textContent !== t) el.textContent = t; }
+function refreshSpeedUI(){
+  const sSl = document.getElementById('drillSrcRateSlider'), tSl = document.getElementById('drillRateSlider');
+  if(!sSl || !tSl) return;
+  const hasSrc = !!S.srcCode && S.srcCode !== S.tgtCode;
+  if(Math.abs(parseFloat(tSl.value) - S.rate) > 0.026) tSl.value = S.rate;
+  if(Math.abs(parseFloat(sSl.value) - S.srcRate) > 0.026) sSl.value = S.srcRate;
+  const sName = hasSrc ? speedLangName(S.srcCode) : '', tName = speedLangName(S.tgtCode);
+  setTextIfChanged(document.getElementById('speedNameSrc'), sName);
+  setTextIfChanged(document.getElementById('speedNameTgt'), tName);
+  const sv = S.srcRate.toFixed(2) + '×', tv = S.rate.toFixed(2) + '×';
+  setTextIfChanged(document.getElementById('drillSrcRateVal'), sv);
+  setTextIfChanged(document.getElementById('drillRateVal'), tv);
+  const col = document.getElementById('speedColSrc'), grid = document.getElementById('speedGrid');
+  if(col) col.classList.toggle('hidden', !hasSrc);
+  if(grid) grid.classList.toggle('one', !hasSrc);
+  setTextIfChanged(document.getElementById('speedsSummary'), (hasSrc ? sName + ' ' + sv + ' \u00b7 ' : '') + tName + ' ' + tv);
+}
+function applyLangSpeeds(){
+  if(document.body.classList.contains('ml-mode')) return;   // multi-language setup keeps its own single speed slider
+  const hasSrc = !!S.srcCode && S.srcCode !== S.tgtCode;
+  const sv = hasSrc ? readLangSpeed(S.srcCode) : null, tv = readLangSpeed(S.tgtCode);
+  if(hasSrc) S.srcRate = sv != null ? sv : DEFAULT_SRC_RATE;
+  S.rate = tv != null ? tv : DEFAULT_TGT_RATE;
+  S._speedPair = (S.srcCode || '') + '|' + (S.tgtCode || '');
+  refreshSpeedUI();
+}
+function syncSpeedsToLangs(){
+  if(document.body.classList.contains('ml-mode')) return;
+  if(S._speedPair !== (S.srcCode || '') + '|' + (S.tgtCode || '')) applyLangSpeeds(); else refreshSpeedUI();
+}
+(function initSpeedSummary(){
+  const b = document.getElementById('speedsSummary'); if(!b) return;
+  b.addEventListener('click', e=>{
+    e.stopPropagation();
+    const d = document.getElementById('advancedDetails'); if(d) d.open = true;
+    const t = document.getElementById('speedSliders'); if(t && t.scrollIntoView) t.scrollIntoView({ behavior:'smooth', block:'center' });
+  });
+  setInterval(() => { try{ syncSpeedsToLangs(); }catch(e){} }, 400);   // safety net, like the interface-language check: catches every code path that changes the language pair
+})();
 document.getElementById('stopBtn').addEventListener('click', ()=>{
   speechSynthesis.cancel(); stopRecognition();
   S.running = false; S.token++;
@@ -7231,7 +7321,7 @@ document.getElementById('stopBtn').addEventListener('click', ()=>{
   finishSession();
 });
 document.getElementById('restartSameBtn').addEventListener('click', ()=>{
-  hide('doneScreen'); show('drillScreen');
+  hide('doneScreen'); show('drillScreen'); pageTop();
   if(S.random) shuffleOrder();
   S.idx = 0; S.running = true; S.paused=false; S.linesCompleted=0; S.sessionStart=Date.now();
   anchorAudioStart();
@@ -7240,6 +7330,7 @@ document.getElementById('restartSameBtn').addEventListener('click', ()=>{
 document.getElementById('newSetupBtn').addEventListener('click', ()=>{
   hide('doneScreen');
   document.querySelectorAll('.setup-card').forEach(c=>c.classList.remove('hidden'));
+  pageTop();
 });
 
 /* keyboard shortcuts during judged 'your turn' */
@@ -7300,10 +7391,15 @@ function applyCourseFlags(course){
   if(course.hideLangControls){
     byId('langPairCaption').classList.add('hidden');
     byId('langPairGrid').classList.add('hidden');
+  }
+  {   // 3-5-59 RC3: the language pair moved into Advanced, so this card only holds the notes: show it just while one is visible (every course now)
     const card = byId('langPairCard');
-    const update = ()=> card.classList.toggle('hidden', !card.querySelector('.note.warn:not(.hidden), .pron-fix:not(.hidden)'));
-    new MutationObserver(update).observe(card, {subtree:true, attributes:true, attributeFilter:['class'], childList:true});
-    update();
+    if(!card.__noteWatch){
+      card.__noteWatch = true;
+      const update = ()=> card.classList.toggle('hidden', !card.querySelector('.note.warn:not(.hidden), .pron-fix:not(.hidden)'));
+      new MutationObserver(update).observe(card, {subtree:true, attributes:true, attributeFilter:['class'], childList:true});
+      update();
+    }
   }
   if(course.directEntry){
     byId('homeScreen').classList.add('hidden');
@@ -7808,7 +7904,7 @@ chooseDefaultLangsForCourse(currentCourse());
 populateLangSelects();
 populateSheetSelect();
 S.rate = 0.92;
-S.srcRate = 1.05;      // 3-5-25: source (known) language plays at a natural, barely-brisk native pace; the target keeps its own slower speed
+S.srcRate = 1.15;      // 3-5-59 RC3: was 1.05. 3-5-25: source (known) language plays at a natural, barely-brisk native pace; the target keeps its own slower speed
 buildActiveLines();
 renderCharacterCards();
 updateSheetMeta();
@@ -7922,7 +8018,7 @@ function uiTranslate(text, lang){
   }
   return out === undefined ? text : lead + out + trail;
 }
-const UI_SKIP = '.source-line,.target-line,.speaker-tag,.tone-tag,.heard-words,.chip-only-label';
+const UI_SKIP = '.source-line,.target-line,.speaker-tag,.tone-tag,.heard-words,.chip-only-label,.speed-lang-name,.speeds-summary';
 function uiText(n){
   const p = n.parentElement;
   if(!p || p.closest(UI_SKIP) || p.tagName === 'SCRIPT' || p.tagName === 'STYLE') return;
@@ -8035,6 +8131,83 @@ function uiRefresh(force){
   .milestone .toggle-pill[data-val="exposure"]{ flex:1.25; }
   .milestone .toggle-pill[data-val="judge"]{ flex:1; }
   .milestone .toggle-pill[data-val="playthrough"]{ flex:1.5; }
+
+  /* ---- 3-5-59 RC1: controls grouped by job (lesson / playback / sentence options), speeds side by side ---- */
+  .ctl-group{ background:var(--card-hi); border:1px solid var(--border-soft); border-radius:var(--radius-md); padding:10px; margin:10px 0; }
+  .ctl-group.top-group{ margin-top:0; }
+  .ctl-group .milestone{ margin:0 0 10px; }
+  .ctl-group .player-nav{ margin:0; }
+  .ctl-group .transport{ margin-top:0; }
+  .ctl-group .chip-row{ margin:0; }
+  .options-group{ display:flex; flex-direction:column; gap:6px; }
+  /* lesson picker with its prev / next arrows built in, so the arrows read as "previous lesson", not browser-back */
+  .ctl-group{ padding:8px; }
+  /* ---- 3-5-59 RC3: one card, two lines ---- */
+  .top-rowA{ display:flex; align-items:center; gap:6px; margin:0; }
+  .top-rowA .milestone{ flex:0 0 50px; min-width:0; margin:0; }
+  body.no-style-pills .top-rowA .milestone{ flex:1 1 auto; }
+  .top-rowA .milestone .road{ flex:1 1 auto; min-width:0; }
+  .top-rowA .milestone .track{ height:34px; }
+  .top-rowA .milestone .cap{ font-size:10px; padding:0 2px; }
+  .top-rowA #drillStyleWrap{ flex:1 1 0; min-width:0; }
+  .top-rowA #drillStyleRow{ gap:5px; }
+  .top-rowA #drillStyleRow .toggle-pill{ flex:1 1 0; min-width:0; height:34px; padding:0 3px; font-size:12.5px; border-radius:17px; white-space:nowrap; overflow:hidden; text-overflow:clip; }
+  .top-rowA #drillStyleRow .toggle-pill[data-val="playthrough"]{ flex:1.2 1 0; }
+  .top-rowA #drillStyleRow .toggle-pill.pt-num .pt-w{ display:inline; }
+  .top-rowA #drillStyleRow .toggle-pill.pt-num .pt-n{ font-size:1.15em; margin-left:.3em; }
+  .top-rowB{ display:flex; align-items:center; gap:5px; margin:0 0 8px; }
+  .top-rowB .nav-btn.nav-home, .top-rowB .main-page-btn.help-page-btn{ flex:none; width:36px; height:36px; }
+  .top-rowB .nav-reset .home-icon svg{ width:30px; height:30px; }
+  .top-rowB .home-back-btn{ flex:none; width:auto; min-width:54px; height:36px; padding:0 6px; border-radius:18px; }
+  .top-rowB .nav-btn.nav-home, .top-rowB .main-page-btn.help-page-btn{ width:34px; height:34px; }
+  .top-rowB .nav-reset .home-icon svg{ width:28px; height:28px; }
+  .top-rowB .home-back-btn{ min-width:48px; height:34px; padding:0 4px; }
+  .top-rowB .home-back-btn svg{ width:38px; height:20px; }
+  .top-rowB .lesson-seg{ flex:1 1 0%; padding:1px; gap:0; }
+  .top-rowB .lesson-seg .nav-btn.nav-home-pill{ letter-spacing:-.02em; font-family:'Inter', Arial, sans-serif; }
+  .top-rowB .lesson-seg .icon-btn{ width:24px; height:32px; border-radius:16px; }
+  .top-rowB .lesson-seg .nav-btn.nav-home-pill{ height:34px; padding:0 2px; font-size:12px; gap:4px; }
+  @media (max-width:380px){
+    .top-rowA #drillStyleRow .toggle-pill{ font-size:11.5px; padding:0 2px; }
+    .top-rowB{ gap:4px; }
+    .top-rowB .lesson-seg .nav-home-pill .chev{ display:none; }
+  }
+  @media (max-width:340px){
+    .top-rowA{ gap:4px; }
+    .top-rowA .milestone{ flex-basis:40px; }
+    .top-rowA .milestone .cap{ font-size:9px; }
+    .top-rowA #drillStyleRow{ gap:3px; }
+    .top-rowA #drillStyleRow .toggle-pill{ font-size:11px; padding:0 1px; }
+    .top-rowA #drillStyleRow .toggle-pill.pt-num .pt-w{ display:none; }
+    .top-rowB{ gap:3px; }
+    .top-rowB .nav-btn.nav-home, .top-rowB .main-page-btn.help-page-btn{ width:30px; height:30px; }
+    .top-rowB .nav-reset .home-icon svg{ width:25px; height:25px; }
+    .top-rowB .home-back-btn{ min-width:42px; height:30px; }
+    .top-rowB .home-back-btn svg{ width:32px; height:17px; }
+    .top-rowB .lesson-seg .icon-btn{ width:21px; height:28px; }
+    .top-rowB .lesson-seg .nav-btn.nav-home-pill{ font-size:11px; height:30px; }
+  }
+  /* ALL VOICES: boxed and loud, so it reads as "this one sets every character"; the per-character cards below it are the individual ones */
+  .all-voices{ margin:14px 0 6px; padding:12px; border:2px solid var(--amber); border-radius:var(--radius-md); background:var(--card-hi); }
+  .all-voices-caption{ font-size:13.5px; color:var(--ink); }
+  .all-voices-caption span{ display:block; margin-top:2px; font-size:12px; color:var(--ink-soft); }
+  .lesson-seg{ position:relative; display:flex; align-items:center; gap:2px; flex:1 1 0%; min-width:0; padding:2px; border:1.5px solid var(--border-strong); border-radius:999px; background:var(--card); }
+  .lesson-seg .icon-btn{ width:36px; height:36px; flex:none; border:none; background:transparent; box-shadow:none; }
+  .lesson-seg .icon-btn:hover:not(:disabled){ background:var(--card-hi); transform:none; }
+  .lesson-seg .icon-btn:disabled{ opacity:.3; cursor:default; }
+  .lesson-seg .home-pill-wrap{ position:static; flex:1 1 0%; min-width:0; }
+  .lesson-seg .nav-btn.nav-home-pill{ height:36px; border-color:transparent; background:transparent; }
+  .speed-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .speed-grid.one{ grid-template-columns:1fr; }
+  .speed-col{ min-width:0; border-left:3px solid var(--amber); padding-left:10px; }
+  .speed-col.tgt{ border-left-color:var(--teal); }
+  .speed-col.hidden{ display:none; }
+  .speed-name{ font-size:12.5px; font-weight:700; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .speed-col input[type=range]{ display:block; width:100%; height:34px; margin:2px 0 0; accent-color:var(--amber); }
+  .speed-col.tgt input[type=range]{ accent-color:var(--teal); }
+  .speed-val{ font-family:'Source Code Pro', monospace; font-size:12px; color:var(--ink-soft); }
+  .speeds-summary{ display:block; width:100%; padding:4px; background:none; border:none; font:inherit; font-size:12.5px; color:var(--ink-soft); text-align:center; cursor:pointer; }
+  .speeds-summary:empty{ display:none; }
 
   /* ---- instructor guide (SOP) page; scoped so it can't touch the student page ---- */
   #instructorGuide .sg-scroll{ --ig-tint: rgba(240,90,34,.12); --ig-edge: rgba(240,90,34,.38); }
