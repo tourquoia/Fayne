@@ -1197,6 +1197,9 @@ html:not([data-theme="dark"]) .brand-arch-bg{ display:flex; }
 }
 /* all three pictures in every mode: header arch, big background arch, and the arch-2 footer strip
    (RC2 had switched the footer picture off in night mode) */
+/* lesson-picker dropdown must open IN FRONT of the word card: the blur above makes every card its own
+   layer, so the top box (which holds the dropdown) needs to sit higher than the cards below it */
+#drillScreen .ctl-group.top-group{ position:relative; z-index:40; }
 html[data-theme="dark"] .arch-foot{ background:url(arch-2.png) right bottom / auto 100% no-repeat; height:112px; }
 @media (min-width:700px){ html[data-theme="dark"] .arch-foot{ height:150px; } }
 </style>
