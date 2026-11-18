@@ -1342,8 +1342,10 @@ html:not([data-theme="dark"]) .brand-arch-bg{ display:flex; }
 .progress-card, .lesson-seg, .settings-panel, #noSoundHint{
   -webkit-backdrop-filter:blur(var(--glass-blur)); backdrop-filter:blur(var(--glass-blur));
 }
-/* the footer strip picture is redundant now that the big arch is back in day mode */
-html:not([data-theme="dark"]) .arch-foot{ background:none; height:auto; }
+/* all three pictures in every mode: header arch, big background arch, and the arch-2 footer strip
+   (RC2 had switched the footer picture off in night mode) */
+html[data-theme="dark"] .arch-foot{ background:url(arch-2.png) right bottom / auto 100% no-repeat; height:112px; }
+@media (min-width:700px){ html[data-theme="dark"] .arch-foot{ height:150px; } }
 </style>
 </head>
 <body>
