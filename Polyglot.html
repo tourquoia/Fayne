@@ -19,6 +19,7 @@ template skips that, the course is then missed by every later template round, an
      (it prints RECOVERED). Handing back the product file too is optional. Never hand back a hand-edited copy of this template.
   To update an existing course: edit the data region of its product file, run step 4. Check anything at any time: build.py --check.
   A loose copy someone already made (still has the slot marker comments):  build.py --adopt <File.html>
+3-5-62 (GLOBAL): VERSION RULE CHANGED. N goes up only when ALL web apps are updated (global template change or new template); one-course, index-only or MP3Maker-only work keeps the current number. A letter on a zip name (3-5-61b) is just the owner's save suffix, not a version. arch/index.html and arch/index2.html (hand-kept) show the build number bold at the bottom right (#appVersionBadge, same look as the players); on EVERY zip build set it to the template version (template_arch_3-5-62 -> v3.5.62) and check it. Full wording: rule 4 in the build kit README.
 3-5-61 RC7: the language-picker page (and the multi-language setup page) now has the Home button (house + back arrow) at its top left, same look as in the player card; it goes to index.html. Search "3-5-61 RC7".
 3-5-61 INDEX: arch/index.html now switches to the phone's language (script 'INDEX LANGUAGE' before the closing body tag; test with index.html?lang=es). arch/index2.html is NO LONGER a clone of index.html (the 3-5-57 sync rule is void): it is a hand-kept folder listing (like FTP) of the site's files via GitHub's API, for opening pages not linked from index.html.
 3-5-61 RC6: the arches picture at the top left of the orange bar is now ALSO a Home button (same action as the house button in the controls card: stops audio, goes to index.html). Search "3-5-61 RC6".
@@ -152,12 +153,12 @@ RULES FOR ANYONE (OR ANY CLAUDE) EDITING OR REPLACING THIS TEMPLATE:
  2. Never put course content (lessons, dialogues, titles) in the template. It belongs in _build/products/<Name>.product.txt.
  3. If you develop the template separately and hand it back: keep every slot line, keep the course flags
     (search "COURSE FLAGS" and "MULTI-LANGUAGE MODE"), then give the zip + template to Claude to swap in.
- 4. VERSION RULE (owner decision, final): a version is ALWAYS three numbers, 3-5-N. 3 = version, 5 = subversion, N = the working number (36 now).
-    EVERY time anything changes (a fix, a test, a tiny edit) N goes up by exactly one: 3-5-36 -> 3-5-37 -> 3-5-38. NEVER a fourth number (no 3-5-32-1),
-    NEVER the digits run together (not 3530). The one number names everything: the template (template_arch_3-5-36.html), the zip (3-5-36.zip), the
-    zip's top folder (3-5-36) and the code-comment tag ("3-5-36: ..."). Exactly one template_arch_*.html may exist in the folder: rename it, delete
-    the old one, run python3 _build/build.py (add --check to test only) and rebuild every course. The on-screen label (v3.5.36) is read from the file name.
-    This rule replaces every older numbering note in this file (sub-version scheme, 3-5-N-k, "test step", "next test series").
+ 4. VERSION RULE (owner decision, final; reworded 3-5-62): a version is ALWAYS three numbers, 3-5-N (62 now). N goes up by exactly one ONLY when ALL the web apps are updated together
+    (a global change made through the template, or a new template). Work that does not touch every web app (one course, an index page, MP3 Maker alone) keeps the current N.
+    NEVER a fourth number, NEVER digits run together (not 3562). The one number names the template (template_arch_3-5-62.html), the zip (3-5-62.zip), the zip's top folder (3-5-62)
+    and the code-comment tag ("3-5-62: ..."). A letter on a zip name (3-5-61b) is only the owner's save suffix, not part of the version. Exactly one template_arch_*.html may exist:
+    rename it, delete the old one, run python3 _build/build.py and rebuild every course. The on-screen label (v3.5.62) is read from the file name.
+    The hand-kept index pages show the build number too (bold, bottom right): on EVERY zip build set it to the current version. Full wording: README rule 4.
  5. Layout: the zip and its top folder are named by the revision (3-5-36), with hyphens. Inside that folder: the template, _build, arch (everything built) and non-arch (hand-kept files, Luna only; never written).
  6. After a change, compare old vs new playback on every course before handing back; do not print big data to the screen.
  7. NEVER CHANGE THE SILENT ANCHOR TRACK (the 0.5 s <audio id="mediaSessionAnchor"> loop). A longer one makes speech
@@ -165,7 +166,7 @@ RULES FOR ANYONE (OR ANY CLAUDE) EDITING OR REPLACING THIS TEMPLATE:
 =====================================================================
 -->
 <!-- build:JysnMlnrMthd -->
-<!-- template_arch_3-5-61 + Polyglot.product (0 patch(es)) -->
+<!-- template_arch_3-5-62 + Polyglot.product (0 patch(es)) -->
 <!DOCTYPE html>
 <html lang="en" translate="no" class="notranslate">
 <head>
@@ -1354,7 +1355,7 @@ html[data-theme="dark"] .arch-foot{ background:url(arch-2.png) right bottom / au
 </style>
 </head>
 <body>
-<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.61</div>
+<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.62</div>
 <script>/* 3-5-26-1: if the build never ran on this file, the version token is still in the label -> say so in red instead of showing the raw token. (Token is split here so the build does not rewrite it.) */
 (function(){ try{ var b=document.getElementById('appVersionBadge'); if(b && b.textContent.indexOf('__APP_'+'VERSION__')>-1){ b.textContent='UNBUILT COPY - no product file'; b.style.color='#d92d20'; b.style.fontWeight='800'; b.style.textShadow='none'; } }catch(e){} })();
 </script>

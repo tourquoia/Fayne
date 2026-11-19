@@ -624,6 +624,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   .pair-row .track-title-en { font-size: clamp(11px, 3.2vw, 14px); }
   .pair-tag { font-size: clamp(9.5px, 2.6vw, 11px); }
 </style>
+<style>
+/* BUILD BADGE (3-5-62): bottom-right, bold, same as the app pages (#appVersionBadge in the template). HAND-KEPT on this page: on EVERY zip build set the text of #appVersionBadge to the template version (template_arch_3-5-62 -> v3.5.62). Click-through, small, theme-aware. Do not remove. */
+#appVersionBadge{ position:fixed; right:6px; bottom:4px; right:calc(6px + env(safe-area-inset-right, 0px)); bottom:calc(4px + env(safe-area-inset-bottom, 0px));
+  z-index:40; font:700 14px/1 'Source Code Pro', ui-monospace, Menlo, monospace; color:#000; opacity:1; text-shadow:0 0 3px var(--bg-page, var(--bg, #fff));
+  pointer-events:none; user-select:none; -webkit-user-select:none; }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) #appVersionBadge{ color:#F2EDE8; text-shadow:0 0 3px #000; } }
+:root[data-theme="dark"] #appVersionBadge{ color:#F2EDE8; text-shadow:0 0 3px #000; }
+</style>
 </head>
 <body>
 
@@ -1778,5 +1786,6 @@ if(n){var sub=document.querySelector('#installBtn .sub');if(sub)sub.style.displa
   el.setAttribute('data-label',lab);el.setAttribute('aria-label',lab+suf);});}
 }catch(e){}})();
 </script>
+<div id="appVersionBadge" aria-hidden="true" translate="no">v3.5.62</div>
 </body>
 </html>
