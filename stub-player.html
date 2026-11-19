@@ -19,10 +19,15 @@ template skips that, the course is then missed by every later template round, an
      (it prints RECOVERED). Handing back the product file too is optional. Never hand back a hand-edited copy of this template.
   To update an existing course: edit the data region of its product file, run step 4. Check anything at any time: build.py --check.
   A loose copy someone already made (still has the slot marker comments):  build.py --adopt <File.html>
+3-5-61 RC7: the language-picker page (and the multi-language setup page) now has the Home button (house + back arrow) at its top left, same look as in the player card; it goes to index.html. Search "3-5-61 RC7".
+3-5-61 INDEX: arch/index.html now switches to the phone's language (script 'INDEX LANGUAGE' before the closing body tag; test with index.html?lang=es). arch/index2.html is NO LONGER a clone of index.html (the 3-5-57 sync rule is void): it is a hand-kept folder listing (like FTP) of the site's files via GitHub's API, for opening pages not linked from index.html.
+3-5-61 RC6: the arches picture at the top left of the orange bar is now ALSO a Home button (same action as the house button in the controls card: stops audio, goes to index.html). Search "3-5-61 RC6".
 3-5-61 RC4: speed slider icons are the coloured tortoise and hare (option C; search v3561rc4).
 3-5-61 RC3: (a) Playthrough pill shows 'x1' beside its word when first tapped (hint that another tap cycles x2, x3), only if the word + x1 fit on the pill (re-checked on resize and when the interface language changes). (b) 'Keep screen on' moved up into the options row, opposite the 'only' chip (right side, text left of its box); if that language's text is too long to share the row, the text goes ABOVE the box, and if even that does not fit beside the chip it drops to its own line (see fitKeepAwake).
 3-5-61 RC2: (1) Keep-screen-on is ONE line, text left of the tick box, source language only (the English 'Screen will stay on.' line is gone; a failed wake-lock shows only a warning sign, English text only as its tooltip). (2) Bottom of every page tightened: footer links inline, the 170 px ad-clearance spacer cut to 6 px (the --ad-safe-space variable is untouched; raise the spacer again if a sticky ad bar is ever added). (3) Arch art is now two SEPARATE files that sit beside the html: arch-1.png (small, top-left of the orange header) and arch-2.png (long, bottom of the page behind the notice pill). Light mode only; dark mode still uses arch-dark.png. (4) Light mode is all cream, no white (search v3561rc2). (5) Welcome page: lesson window about 60 percent of its height, language tiles shorter with a smaller gap.
 3-5-61: PLAYER LOOK. Solid cream cards; night-mode and help buttons moved into the orange header; repeat/loop/shuffle folded into ONE mode button (loop, shuffle, repeat line, play once); the speeds line replaced by a turtle/rabbit MASTER speed slider (0.85-1.15x of each language's own speed from Advanced, clamped to 0.6-1.4x, double-tap resets).
+3-5-61 (later in the same number): cards are now TRANSLUCENT, not solid (style block v3561rc5; the opacity numbers in it are the knob), the big background arch shows in day and night, and all three pictures (header arch, big arch, arch-2 footer strip) show in both modes; the top box sits above the cards (z-index) so the lesson dropdown opens in front of the word card; intro narration now goes pauses, the three top buttons (Hands-free loops, Your turn, Playthrough), pick the language, Advanced, voices, Home.
+TRANSLATION RULE (owner decision, tested): arch/index.html and index2.html are English-only and have browser auto-translate ON (it works on Safari there). The apps (every course built from this template) must keep translate="no" / notranslate, because auto-translate on them strips or breaks the on-screen text they rewrite while playing. Do not turn it off on the index and do not turn it on in the template.
 3-5-60 (this is 3-5-59 RC4, approved and renamed; no code changes from RC4): CONTROLS REGROUPED. Drill screen is now three boxes: LESSON (home, progress, style pills, help; lesson picker with prev/next arrows built into it; reset; theme), PLAYBACK (under the text), SENTENCE OPTIONS (Target-only / Latin-script chips and a read-only speeds line). Speed sliders moved into Advanced, side by side (source left, target right), labelled with the language names, and remembered per language on the device as speed_<code> (shared by every app on the site). Defaults: 1.15 source (was 1.05), 0.92 target. RC3: top of the drill screen is ONE card with TWO lines (small progress + the three mode pills / home with back arrow, reset, lesson picker, dark mode, help); the language pair, speeds and a boxed ALL VOICES picker are all inside Advanced (voice notes stay visible outside it).
 3-5-59: OLD-iPHONE FIX (iPhone SE 1st gen / iOS 15 and older Safari). The 3-5-57 Portuguese "usa" respelling used a regex lookbehind, which Safari before 16.4 cannot parse; that one SyntaxError stopped the whole main script, so the page never finished opening (blank language picker). Rewritten without lookbehind (capture the character before, put it back); same results on every other device. Nothing else changed.
 3-5-58: CASUAL ALTERNATE (course flag casualPairs, default off). A row may carry ONE casual form (a very casual line nearly everyone says, e.g. pt-BR 'beleza') beside the normal target line, in the same way a gender variant sits beside it. Sheet data: casual {rowIdx:{lang:text}} and latnCasual {rowIdx:{lang:text}} (one string each, no second form). Playback: source line, then the normal target line twice as always, then the word 'casual' said in the TARGET language (CASUAL_LABEL_DEFAULTS / course.casualLabels; the gender label is said in the source language, this one is not), then the casual line, played twice like any target line. The casual line never repeats the source audio. CALLBACKS: a callback to a row with a casual form plays the regular form and then the casual form (label + line), the same way it plays every gendered form. ONE ALTERNATE TYPE PER ROW: a row with a gender variant AND a casual cell plays the gender set only, the casual cell is ignored and a console warning is printed (the spreadsheet build must stop and flag such rows). Casual rows are never callback material when they are slot or frame rows. Not built: a separate Casual voice card (casual lines use the speaker's own voice), and MP3 Maker support (it does not do variants either). Practice (Your turn) treats the casual line like a gender variant: hear it, then say it. Search "3-5-58".
@@ -164,7 +169,7 @@ RULES FOR ANYONE (OR ANY CLAUDE) EDITING OR REPLACING THIS TEMPLATE:
 <!DOCTYPE html>
 <html lang="en" translate="no" class="notranslate">
 <head>
-<meta name="google" content="notranslate"> <!-- prevents iOS Safari auto-translate from stripping page content -->
+<meta name="google" content="notranslate"> <!-- apps only: prevents Safari/iOS auto-translate from stripping the page content the app rewrites (the index pages are the exception and allow translation) -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light dark">
@@ -1316,7 +1321,11 @@ html[data-theme="dark"]{ --cream:#2B2520; --cream-2:#342C25; }
 html:not([data-theme="dark"]) .brand-arch-bg{ display:none; }
 html:not([data-theme="dark"]) .lang-tile-icon{ background:#FFF4E2; }
 /* header picture (Arch 1) */
-.topbar-arch{ position:absolute; left:max(12px, calc((100% - 520px)/2)); top:50%; transform:translateY(-50%); height:40px; width:auto; border-radius:11px; box-shadow:0 0 0 1.5px rgba(255,248,236,.85); pointer-events:none; }
+.topbar-arch{ position:absolute; left:max(12px, calc((100% - 520px)/2)); top:50%; transform:translateY(-50%); height:40px; width:auto; border-radius:11px; box-shadow:0 0 0 1.5px rgba(255,248,236,.85); pointer-events:auto; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:filter .12s, box-shadow .12s; }
+/* 3-5-61 RC6: the header arch is ALSO a Home button (same as the house button in the controls card). */
+.topbar-arch:hover{ filter:brightness(1.08); }
+.topbar-arch:active{ filter:brightness(1.35); box-shadow:0 0 0 4px rgba(240,90,34,.35), 0 0 0 1.5px rgba(255,248,236,.85); }
+.topbar-arch:focus-visible{ outline:2px solid #FFF7EC; outline-offset:2px; }
 .topbar{ padding-left:calc(max(12px, (100% - 520px)/2) + 84px); padding-right:calc(max(12px, (100% - 520px)/2) + 84px); }
 /* bottom of the page: tight, with the long picture (Arch 2) behind the notice pill */
 .student-guide-foot br{ display:none; }
@@ -1428,7 +1437,7 @@ html[data-theme="dark"] .arch-foot{ background:url(arch-2.png) right bottom / au
      title). Once they answer, put that text inside the
      <span class="topbar-word"> below and also update <title> above. -->
 <header class="topbar">
-<img class="topbar-arch" src="arch-1.png" alt="" aria-hidden="true">
+<img class="topbar-arch" id="topbarArchHome" src="arch-1.png" alt="Home" role="button" tabindex="0" title="Home">
   <span class="topbar-word">Arch Stub Player</span>
   <span class="topbar-tools"><button class="nav-btn nav-home" id="themeToggleBtn" title="Toggle dark mode">
         <span class="home-icon theme-icon-moon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></span>
@@ -1507,6 +1516,9 @@ html[data-theme="dark"] .arch-foot{ background:url(arch-2.png) right bottom / au
     </button>
     <input type="file" id="courseFileInput" accept=".xlsx,.xls" class="hidden">
     <div class="note" id="courseLoadNote2"></div>
+    <!-- 3-5-61 RC7: Home button on the language-picker page too (same look and place as the one in the player card). Class-based, no id; handled by the click listener next to the mainPageBtn one. -->
+    <div class="top-rowB welcome-home-row"><button class="nav-btn main-page-btn home-back-btn" type="button" title="Home" aria-label="Home"><svg viewBox="0 0 44 24" width="42" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 12H3"></path><path d="M8 7l-5 5 5 5"></path><g transform="translate(18 0)"><path d="M3 11.5 12 4l9 7.5"></path><path d="M5.5 10v9.5a1 1 0 0 0 1 1H10v-6h4v6h3.5a1 1 0 0 0 1-1V10"></path></g></svg></button></div>
+
     <!-- 3-5-27: progress card replaces the welcome-page lesson dropdown (old pill kept hidden so existing JS bindings still resolve; the PLAYER dropdown is untouched). -->
     <div class="progress-card" id="progressCard"></div>
     <div class="home-lesson-picker-wrap" id="homeLessonPickerWrap" style="display:none">
@@ -3294,6 +3306,20 @@ document.getElementById('mainPageBtn').addEventListener('click', ()=>{
   try{ speechSynthesis.cancel(); stopRecognition(); S.running = false; S.token++; anchorAudioStop(); }catch(e){}
   location.href = 'index.html';
 });
+// 3-5-61 RC7: the Home button on the language-picker page (and on the multi-language setup page) does the same as the house button in the player card.
+document.addEventListener('click', (e)=>{
+  const b = e.target.closest && e.target.closest('.welcome-home-row .home-back-btn');
+  if(!b) return;
+  try{ speechSynthesis.cancel(); stopRecognition(); S.running = false; S.token++; anchorAudioStop(); }catch(err){}
+  location.href = 'index.html';
+});
+// 3-5-61 RC6: the arches picture in the top bar is a second Home button -- it simply presses the house button above.
+(function(){
+  const a = document.getElementById('topbarArchHome'), h = document.getElementById('mainPageBtn');
+  if(!a || !h) return;
+  a.addEventListener('click', ()=> h.click());
+  a.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); h.click(); } });
+})();
 document.getElementById('lessonDropdownBtn').addEventListener('click', (e)=>{
   e.stopPropagation();
   const list = document.getElementById('homeDropdownList');
@@ -7712,6 +7738,7 @@ function initMultiLang(course){
     `<div class="ml-headrow"><span>Language</span><span class="sp"></span><span>Voice</span></div><div class="ml-slots" id="mlRows">${rows}</div></section>`;
   byId('mlThemeBtn').innerHTML = byId('themeToggleBtn').innerHTML;
   byId('mlThemeBtn').addEventListener('click', ()=> byId('themeToggleBtn').click());
+  { const hr = document.querySelector('#homeScreen .welcome-home-row'); if(hr) box.insertBefore(hr.cloneNode(true), box.firstChild); }
   for(let i=0;i<ml.slots;i++){
     byId('mlLang'+i).value = S.ml.slotLang[i];
     byId('mlLang'+i).addEventListener('change', e=>{ S.ml.slotLang[i] = e.target.value; S.ml.slotVoice[i] = ''; mlPopulateVoices(); });
